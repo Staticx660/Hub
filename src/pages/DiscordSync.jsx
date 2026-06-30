@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import {
   RefreshCw, Save, AlertCircle, CheckCircle, Loader2,
-  Server, Link2
+  Server, Link2, Terminal
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,6 +18,7 @@ export default function DiscordSync() {
   const [syncing, setSyncing] = useState(false);
   const [syncReport, setSyncReport] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [registering, setRegistering] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -107,6 +108,25 @@ export default function DiscordSync() {
       toast({ title: "Sync failed", description: e.message, variant: "destructive" });
     } finally {
       setSyncing(false);
+    }
+  };
+
+  const handleRegisterCommands = async () => {
+    setRegistering(true);
+    try {
+      const res = await base44.functions.invoke("registerDiscordCommands", {});
+      if (res.data?.error) {
+        toast({ title: "Registration failed", description: res.data.error, variant: "destructive" });
+      } else {
+        toast({
+          title: "Slash command registered",
+          description: `/loa-request is now available in your Discord server.`
+        });
+      }
+    } catch (e) {
+      toast({ title: "Registration failed", description: e.message, variant: "destructive" });
+    } finally {
+      setRegistering(false);
     }
   };
 
@@ -214,6 +234,21 @@ export default function DiscordSync() {
             </div>
           </div>
         )}
+      </div>
+
+      {/* Slash command registration */}
+      <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-6">
+        <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+          <Terminal className="w-4 h-4 text-cyan-400" /> Slash Commands
+        </h2>
+        <p className="text-sm text-slate-400 mb-4">
+          Register the <code className="text-cyan-400 bg-slate-800 px-1.5 py-0.5 rounded text-xs">/loa-request</code> slash command in your Discord server.
+          This lets members submit LOA requests directly from Discord.
+        </p>
+        <Button onClick={handleRegisterCommands} disabled={registering} className="bg-cyan-600 hover:bg-cyan-700">
+          {registering ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Terminal className="w-4 h-4 mr-2" />}
+          {registering ? "Registering..." : "Register Slash Command"}
+        </Button>
       </div>
 
       {/* Sync panel */}

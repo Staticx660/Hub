@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Link } from "react-router-dom";
 import { 
-  Plus, Shield, Flame, HeartPulse, Landmark, Lock, Bike, 
+  Plus, Shield, Flame, HeartPulse, Landmark, Lock, Bike, Radio,
   Edit, Trash2, Settings, X, Users
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
 
-const categories = ["Police & Sheriff", "Fire & EMS", "Hospitals & Medical", "Government & State", "Private Security", "Motorcycle Clubs", "Civilians", "Other"];
+const categories = ["Police & Sheriff", "Fire & EMS", "Hospitals & Medical", "Government & State", "Private Security", "Motorcycle Clubs", "Civilians", "Communications", "Other"];
 
 const categoryIcons = {
   "Police & Sheriff": Shield,
@@ -22,6 +22,7 @@ const categoryIcons = {
   "Private Security": Lock,
   "Motorcycle Clubs": Bike,
   "Civilians": Users,
+  "Communications": Radio,
   "Other": Shield,
 };
 
@@ -104,6 +105,18 @@ const defaultRanks = {
     { name: "Active Civilian", level: 3, color: "#64748B" },
     { name: "New Civilian", level: 2, color: "#94A3B8" },
     { name: "Visitor", level: 1, color: "#CBD5E1" },
+  ],
+  "Communications": [
+    { name: "Director of Communications", level: 10, color: "#FFD700" },
+    { name: "Deputy Director", level: 9, color: "#C0C0C0" },
+    { name: "Communications Chief", level: 8, color: "#CD7F32" },
+    { name: "Senior Dispatcher", level: 7, color: "#EF4444" },
+    { name: "Dispatcher", level: 6, color: "#F97316" },
+    { name: "Senior Operator", level: 5, color: "#EAB308" },
+    { name: "Communications Operator", level: 4, color: "#22C55E" },
+    { name: "Trainee Operator", level: 3, color: "#3B82F6" },
+    { name: "Probationary", level: 2, color: "#94A3B8" },
+    { name: "Recruit", level: 1, color: "#CBD5E1" },
   ],
   "Other": [
     { name: "Director", level: 5, color: "#22C55E" },

@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { Link } from "react-router-dom";
 import { 
   Users, Clock, CalendarDays, Shield, Flame, HeartPulse, 
-  Landmark, Lock, Bike, TrendingUp, AlertCircle, ArrowRight, Activity
+  Landmark, Lock, Bike, Radio, TrendingUp, AlertCircle, ArrowRight, Activity
 } from "lucide-react";
 
 const categoryIcons = {
@@ -14,6 +14,7 @@ const categoryIcons = {
   "Private Security": Lock,
   "Motorcycle Clubs": Bike,
   "Civilians": Users,
+  "Communications": Radio,
   "Other": Shield,
 };
 
@@ -25,6 +26,7 @@ const categoryColors = {
   "Private Security": "from-purple-500/20 to-purple-600/5 border-purple-500/20",
   "Motorcycle Clubs": "from-orange-500/20 to-orange-600/5 border-orange-500/20",
   "Civilians": "from-teal-500/20 to-teal-600/5 border-teal-500/20",
+  "Communications": "from-cyan-500/20 to-cyan-600/5 border-cyan-500/20",
   "Other": "from-slate-500/20 to-slate-600/5 border-slate-500/20",
 };
 
@@ -36,6 +38,7 @@ const categoryIconColors = {
   "Private Security": "text-purple-400",
   "Motorcycle Clubs": "text-orange-400",
   "Civilians": "text-teal-400",
+  "Communications": "text-cyan-400",
   "Other": "text-slate-400",
 };
 
