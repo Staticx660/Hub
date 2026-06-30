@@ -184,7 +184,13 @@ Deno.serve(async (req) => {
       }
     }
 
-    return Response.json({ success: true, report, debugMembers: debug ? debugMembers : undefined, mappedRoleIds: debug ? Object.keys(roleMap) : undefined });
+    return Response.json({
+      success: true,
+      report,
+      debugMembers: debug ? debugMembers : undefined,
+      mappedRoleIds: debug ? Object.keys(roleMap) : undefined,
+      mappedSupervisorRoleIds: debug ? [...supervisorRoles] : undefined
+    });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }
