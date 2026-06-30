@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { Plus, Edit, Trash2, Search, MoreHorizontal, UserCheck, Ban, Clock } from "lucide-react";
+import { Plus, Edit, Trash2, Search, MoreHorizontal, UserCheck, UserX, Ban, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -276,18 +276,31 @@ export default function Roster() {
                           <DropdownMenuItem onClick={() => openEdit(m)} className="text-slate-300">
                             <Edit className="w-3.5 h-3.5 mr-2" /> Edit Member
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => updateStatus(m.id, "Active")} className="text-emerald-400">
-                            <UserCheck className="w-3.5 h-3.5 mr-2" /> Set Active
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => updateStatus(m.id, "On LOA")} className="text-amber-400">
-                            <Clock className="w-3.5 h-3.5 mr-2" /> Set LOA
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => updateStatus(m.id, "Suspended")} className="text-red-400">
-                            <Ban className="w-3.5 h-3.5 mr-2" /> Suspend
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleDelete(m.id)} className="text-red-400">
-                            <Trash2 className="w-3.5 h-3.5 mr-2" /> Remove
-                          </DropdownMenuItem>
+                          {m.status !== "Active" && (
+                            <DropdownMenuItem onClick={() => updateStatus(m.id, "Active")} className="text-emerald-400">
+                              <UserCheck className="w-3.5 h-3.5 mr-2" /> Set Active
+                            </DropdownMenuItem>
+                          )}
+                          {m.status === "Active" && (
+                            <DropdownMenuItem onClick={() => updateStatus(m.id, "Inactive")} className="text-slate-400">
+                              <UserX className="w-3.5 h-3.5 mr-2" /> Mark Inactive
+                            </DropdownMenuItem>
+                          )}
+                          {m.status === "Active" && (
+                            <DropdownMenuItem onClick={() => updateStatus(m.id, "On LOA")} className="text-amber-400">
+                              <Clock className="w-3.5 h-3.5 mr-2" /> Set LOA
+                            </DropdownMenuItem>
+                          )}
+                          {m.status === "Active" && (
+                            <DropdownMenuItem onClick={() => updateStatus(m.id, "Suspended")} className="text-red-400">
+                              <Ban className="w-3.5 h-3.5 mr-2" /> Suspend
+                            </DropdownMenuItem>
+                          )}
+                          {m.status === "Inactive" && (
+                            <DropdownMenuItem onClick={() => handleDelete(m.id)} className="text-red-400">
+                              <Trash2 className="w-3.5 h-3.5 mr-2" /> Remove
+                            </DropdownMenuItem>
+                          )}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </td>

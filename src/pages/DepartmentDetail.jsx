@@ -240,24 +240,37 @@ export default function DepartmentDetail() {
                             <DropdownMenuItem onClick={() => openEdit(member)} className="text-slate-300">
                               <Edit className="w-3.5 h-3.5 mr-2" /> Edit
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => updateStatus(member.id, "Active")} className="text-emerald-400">
-                              <UserCheck className="w-3.5 h-3.5 mr-2" /> Set Active
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => updateStatus(member.id, "On LOA")} className="text-amber-400">
-                              <Clock className="w-3.5 h-3.5 mr-2" /> Set LOA
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => updateStatus(member.id, "Suspended")} className="text-red-400">
-                              <Ban className="w-3.5 h-3.5 mr-2" /> Suspend
-                            </DropdownMenuItem>
+                            {member.status !== "Active" && (
+                              <DropdownMenuItem onClick={() => updateStatus(member.id, "Active")} className="text-emerald-400">
+                                <UserCheck className="w-3.5 h-3.5 mr-2" /> Set Active
+                              </DropdownMenuItem>
+                            )}
+                            {member.status === "Active" && (
+                              <DropdownMenuItem onClick={() => updateStatus(member.id, "Inactive")} className="text-slate-400">
+                                <UserX className="w-3.5 h-3.5 mr-2" /> Mark Inactive
+                              </DropdownMenuItem>
+                            )}
+                            {member.status === "Active" && (
+                              <DropdownMenuItem onClick={() => updateStatus(member.id, "On LOA")} className="text-amber-400">
+                                <Clock className="w-3.5 h-3.5 mr-2" /> Set LOA
+                              </DropdownMenuItem>
+                            )}
+                            {member.status === "Active" && (
+                              <DropdownMenuItem onClick={() => updateStatus(member.id, "Suspended")} className="text-red-400">
+                                <Ban className="w-3.5 h-3.5 mr-2" /> Suspend
+                              </DropdownMenuItem>
+                            )}
                             <DropdownMenuItem onClick={() => updateSlotStatus(member.id, "Open")} className="text-emerald-400">
                               <Eye className="w-3.5 h-3.5 mr-2" /> Mark Slot Open
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => updateSlotStatus(member.id, "Unavailable")} className="text-red-400">
                               <UserX className="w-3.5 h-3.5 mr-2" /> Mark Unavailable
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleDelete(member.id)} className="text-red-400">
-                              <Trash2 className="w-3.5 h-3.5 mr-2" /> Remove
-                            </DropdownMenuItem>
+                            {member.status === "Inactive" && (
+                              <DropdownMenuItem onClick={() => handleDelete(member.id)} className="text-red-400">
+                                <Trash2 className="w-3.5 h-3.5 mr-2" /> Remove
+                              </DropdownMenuItem>
+                            )}
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </td>
