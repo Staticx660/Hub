@@ -5,7 +5,7 @@ import {
   Server, Link2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 
 export default function DiscordSync() {
@@ -54,8 +54,8 @@ export default function DiscordSync() {
     loadData();
   }, []);
 
-  const handleRoleChange = (deptId, roleId) => {
-    setRoleMappings(prev => ({ ...prev, [deptId]: roleId === "__none__" ? "" : roleId }));
+  const handleRoleChange = (deptId, value) => {
+    setRoleMappings(prev => ({ ...prev, [deptId]: value }));
   };
 
   const handleSaveMappings = async () => {
@@ -157,31 +157,32 @@ export default function DiscordSync() {
                 <p className="text-sm font-medium text-white truncate">{dept.name}</p>
                 <p className="text-xs text-slate-500">{dept.category}</p>
               </div>
-              <Select
-                value={roleMappings[dept.id] || "__none__"}
-                onValueChange={(v) => handleRoleChange(dept.id, v)}
-              >
-                <SelectTrigger className="w-64 bg-slate-800 border-slate-700 text-white">
-                  <SelectValue placeholder="No role mapped" />
-                </SelectTrigger>
-                <SelectContent className="bg-slate-800 border-slate-700 max-h-64">
-                  <SelectItem value="__none__" className="text-slate-400">— None —</SelectItem>
-                  {roles.filter(r => r.name !== "@everyone").map(r => (
-                    <SelectItem key={r.id} value={r.id} className="text-white">
-                      {r.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Input
+                value={roleMappings[dept.id] || ""}
+                onChange={(e) => handleRoleChange(dept.id, e.target.value)}
+                placeholder="Paste Discord Role ID"
+                className="w-64 bg-slate-800 border-slate-700 text-white placeholder:text-slate-600 font-mono text-xs"
+              />
             </div>
           ))}
           {departments.length === 0 && (
             <p className="text-sm text-slate-400 py-4 text-center">No departments yet. Create departments first.</p>
           )}
-          {roles.length === 0 && departments.length > 0 && (
-            <p className="text-sm text-amber-400 py-4 text-center">No roles loaded from Discord. Check your bot token.</p>
-          )}
         </div>
+
+        {/* Available roles reference */}
+        {roles.length > 0 && (
+          <div className="mt-4 pt-4 border-t border-slate-800">
+            <p className="text-xs text-slate-500 mb-2">Available Discord Roles (copy the ID you need):</p>
+            <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
+              {roles.filter(r => r.name !== "@everyone").map(r => (
+                <div key={r.id} className="px-2 py-1 rounded bg-slate-800 border border-slate-700 text-xs text-slate-400 font-mono">
+                  <span className="text-slate-300">{r.name}</span> → {r.id}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Sync panel */}
