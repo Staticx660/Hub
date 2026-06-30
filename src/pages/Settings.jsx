@@ -28,7 +28,15 @@ export default function Settings() {
     if (!inviteEmail) return;
     try {
       await base44.users.inviteUser(inviteEmail, inviteRole);
-      toast({ title: "Invitation sent", description: `Invited ${inviteEmail} as ${inviteRole}` });
+      const appName = "RPCommand";
+      const roleLabel = inviteRole === "admin" ? "Administrator" : "Staff Member";
+      const loginUrl = window.location.origin + "/login";
+      await base44.integrations.Core.SendEmail({
+        to: inviteEmail,
+        subject: `You've been invited to ${appName}`,
+        body: `Hello,\n\nYou have been invited to join ${appName} as a ${roleLabel}.\n\nTo accept your invitation, please visit the link below to register or log in:\n${loginUrl}\n\nIf you did not expect this invitation, you can safely ignore this email.\n\n— ${appName} Team`
+      });
+      toast({ title: "Invitation sent", description: `Invited ${inviteEmail} as ${inviteRole} — notification email sent` });
       setInviteEmail("");
     } catch (e) {
       toast({ title: "Error", description: e.message, variant: "destructive" });
