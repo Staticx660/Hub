@@ -15,8 +15,8 @@ Deno.serve(async (req) => {
 
     const headers = { Authorization: `Bot ${botToken}` };
 
-    // Get guild info
-    const guildRes = await fetch(`https://discord.com/api/v10/guilds/${guildId}`, { headers });
+    // Get guild info (with_counts gives approximate_member_count)
+    const guildRes = await fetch(`https://discord.com/api/v10/guilds/${guildId}?with_counts=true`, { headers });
     let guild = null;
     let guildError = null;
     if (guildRes.ok) {
