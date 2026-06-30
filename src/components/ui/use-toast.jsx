@@ -134,6 +134,8 @@ function toast({ ...props }) {
     },
   });
 
+  setTimeout(() => dismiss(), props.duration || 5000);
+
   return {
     id,
     dismiss,
