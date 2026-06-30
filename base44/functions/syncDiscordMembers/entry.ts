@@ -89,6 +89,10 @@ Deno.serve(async (req) => {
       }
     }
 
+    let body = {};
+    try { body = await req.json(); } catch {}
+    const debug = body.debug === true;
+
     const report = {
       totalDiscordMembers: members.length,
       added: 0,
@@ -96,6 +100,8 @@ Deno.serve(async (req) => {
       skipped: 0,
       errors: []
     };
+
+    const debugMembers = [];
 
     for (const member of members) {
       if (!member.user || member.user.bot) {
@@ -112,6 +118,13 @@ Deno.serve(async (req) => {
           matchedDept = roleMap[roleId];
           break;
         }
+      }
+
+      if (debug) {
+        debugMembers.push({
+          name: member.nick || member.user.global_name || member.user.username,
+          roles: memberRoles
+        });
       }
 
       if (!matchedDept) {
@@ -171,7 +184,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    return Response.json({ success: true, report });
+    return Response.json({ success: true, report, debugMembers: debug ? debugMembers : undefined, mappedRoleIds: debug ? Object.keys(roleMap) : undefined });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }
