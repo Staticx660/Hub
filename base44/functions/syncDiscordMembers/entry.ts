@@ -132,12 +132,13 @@ Deno.serve(async (req) => {
 
       const memberRoles = member.roles || [];
 
-      // Find which department this member belongs to (first matching role)
-      let matchedDept = null;
+      // Find ALL departments this member belongs to via Discord roles
+      const matchedDepts = [];
+      const seenDeptIds = new Set();
       for (const roleId of memberRoles) {
-        if (roleMap[roleId]) {
-          matchedDept = roleMap[roleId];
-          break;
+        if (roleMap[roleId] && !seenDeptIds.has(roleMap[roleId].id)) {
+          matchedDepts.push(roleMap[roleId]);
+          seenDeptIds.add(roleMap[roleId].id);
         }
       }
 
@@ -148,10 +149,14 @@ Deno.serve(async (req) => {
         });
       }
 
-      if (!matchedDept) {
+      if (matchedDepts.length === 0) {
         report.skipped++;
         continue;
       }
+
+      // Primary department = first match; additional = the rest
+      const matchedDept = matchedDepts[0];
+      const additionalDeptIds = matchedDepts.slice(1).map(d => d.id);
 
       const discordId = member.user.id;
       const discordUsername = member.user.username;
@@ -168,6 +173,11 @@ Deno.serve(async (req) => {
         // Update existing member if anything changed
         const updates = {};
         if (existing.department_id !== matchedDept.id) updates.department_id = matchedDept.id;
+        const existingAdditional = (existing.additional_department_ids || []).slice().sort();
+        const newAdditional = additionalDeptIds.slice().sort();
+        if (JSON.stringify(existingAdditional) !== JSON.stringify(newAdditional)) {
+          updates.additional_department_ids = additionalDeptIds;
+        }
         if (existing.discord_username !== discordUsername) updates.discord_username = discordUsername;
         if (existing.name !== displayName) updates.name = displayName;
         if (avatarUrl && existing.avatar_url !== avatarUrl) updates.avatar_url = avatarUrl;
@@ -192,6 +202,7 @@ Deno.serve(async (req) => {
             discord_id: discordId,
             discord_username: discordUsername,
             department_id: matchedDept.id,
+            additional_department_ids: additionalDeptIds,
             status: "Active",
             slot_status: "Filled",
             is_admin: isSupervisor,
