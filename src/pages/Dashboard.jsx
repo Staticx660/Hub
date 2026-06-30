@@ -13,6 +13,7 @@ const categoryIcons = {
   "Government & State": Landmark,
   "Private Security": Lock,
   "Motorcycle Clubs": Bike,
+  "Civilians": Users,
   "Other": Shield,
 };
 
@@ -23,6 +24,7 @@ const categoryColors = {
   "Government & State": "from-amber-500/20 to-amber-600/5 border-amber-500/20",
   "Private Security": "from-purple-500/20 to-purple-600/5 border-purple-500/20",
   "Motorcycle Clubs": "from-orange-500/20 to-orange-600/5 border-orange-500/20",
+  "Civilians": "from-teal-500/20 to-teal-600/5 border-teal-500/20",
   "Other": "from-slate-500/20 to-slate-600/5 border-slate-500/20",
 };
 
@@ -33,6 +35,7 @@ const categoryIconColors = {
   "Government & State": "text-amber-400",
   "Private Security": "text-purple-400",
   "Motorcycle Clubs": "text-orange-400",
+  "Civilians": "text-teal-400",
   "Other": "text-slate-400",
 };
 
@@ -124,7 +127,7 @@ export default function Dashboard() {
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
             {departments.map((dept) => {
               const Icon = categoryIcons[dept.category] || Shield;
-              const deptMembers = members.filter(m => m.department_id === dept.id);
+              const deptMembers = members.filter(m => m.department_id === dept.id || (m.additional_department_ids || []).includes(dept.id));
               const activeCount = deptMembers.filter(m => m.status === "Active").length;
               return (
                 <Link

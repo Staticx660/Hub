@@ -39,6 +39,7 @@ export default function Roster() {
     department_id: "", rank: "", callsign: "", join_date: "",
     notes: "", phone_number: "", status: "Active", slot_status: "Filled",
     is_admin: false,
+    additional_department_ids: [],
   });
   const { toast } = useToast();
 
@@ -61,7 +62,17 @@ export default function Roster() {
       department_id: "", rank: "", callsign: "", join_date: "",
       notes: "", phone_number: "", status: "Active", slot_status: "Filled",
       is_admin: false,
+      additional_department_ids: [],
     });
+  };
+
+  const toggleAdditionalDept = (deptId) => {
+    const current = form.additional_department_ids || [];
+    if (current.includes(deptId)) {
+      setForm({...form, additional_department_ids: current.filter(d => d !== deptId)});
+    } else {
+      setForm({...form, additional_department_ids: [...current, deptId]});
+    }
   };
 
   const handleSave = async () => {
@@ -118,6 +129,7 @@ export default function Roster() {
       status: member.status || "Active",
       slot_status: member.slot_status || "Filled",
       is_admin: member.is_admin || false,
+      additional_department_ids: member.additional_department_ids || [],
     });
     setShowForm(true);
   };
@@ -134,7 +146,7 @@ export default function Roster() {
       m.name?.toLowerCase().includes(search.toLowerCase()) ||
       m.badge_number?.toLowerCase().includes(search.toLowerCase()) ||
       m.callsign?.toLowerCase().includes(search.toLowerCase());
-    const matchDept = filterDept === "all" || m.department_id === filterDept;
+    const matchDept = filterDept === "all" || m.department_id === filterDept || (m.additional_department_ids || []).includes(filterDept);
     const matchStatus = filterStatus === "all" || m.status === filterStatus;
     return matchSearch && matchDept && matchStatus;
   }).sort((a, b) => (b.rank_level || 0) - (a.rank_level || 0));
@@ -224,9 +236,16 @@ export default function Roster() {
                       </div>
                     </td>
                     <td className="px-5 py-3">
-                      <Link to={`/departments/${m.department_id}`} className="text-sm text-blue-400 hover:text-blue-300">
-                        {getDeptName(m.department_id)}
-                      </Link>
+                      <div className="flex flex-wrap gap-1">
+                        <Link to={`/departments/${m.department_id}`} className="text-sm text-blue-400 hover:text-blue-300">
+                          {getDeptName(m.department_id)}
+                        </Link>
+                        {(m.additional_department_ids || []).map(depId => (
+                          <Link key={depId} to={`/departments/${depId}`} className="text-sm text-teal-400 hover:text-teal-300">
+                            {getDeptName(depId)}
+                          </Link>
+                        ))}
+                      </div>
                     </td>
                     <td className="px-5 py-3">
                       <span className="text-sm text-slate-300 flex items-center gap-1.5">
@@ -365,6 +384,23 @@ export default function Roster() {
               <div>
                 <Label className="text-slate-300">Phone Number</Label>
                 <Input value={form.phone_number} onChange={e => setForm({...form, phone_number: e.target.value})} className="bg-slate-800 border-slate-700 text-white mt-1" />
+              </div>
+            </div>
+            <div>
+              <Label className="text-slate-300">Additional Departments</Label>
+              <p className="text-xs text-slate-500 mt-0.5 mb-2">Also show this member in other departments</p>
+              <div className="space-y-2 max-h-32 overflow-y-auto">
+                {departments.filter(d => d.id !== form.department_id).map(d => (
+                  <label key={d.id} className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={(form.additional_department_ids || []).includes(d.id)}
+                      onChange={() => toggleAdditionalDept(d.id)}
+                      className="rounded border-slate-600"
+                    />
+                    <span className="text-sm text-slate-300">{d.name}</span>
+                  </label>
+                ))}
               </div>
             </div>
             <div className="flex items-center gap-2">

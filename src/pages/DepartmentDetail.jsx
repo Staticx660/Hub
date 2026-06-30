@@ -33,6 +33,7 @@ export default function DepartmentDetail() {
   const { id } = useParams();
   const [department, setDepartment] = useState(null);
   const [members, setMembers] = useState([]);
+  const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null);
@@ -41,17 +42,21 @@ export default function DepartmentDetail() {
     name: "", discord_id: "", discord_username: "", badge_number: "",
     rank: "", callsign: "", join_date: "", notes: "", phone_number: "",
     status: "Active", slot_status: "Filled", is_admin: false,
+    additional_department_ids: [],
   });
   const { toast } = useToast();
 
   const loadData = async () => {
     try {
-      const [dept, mems] = await Promise.all([
+      const [dept, allMems, allDepts] = await Promise.all([
         base44.entities.Department.get(id),
-        base44.entities.RosterMember.filter({ department_id: id }),
+        base44.entities.RosterMember.list(),
+        base44.entities.Department.list(),
       ]);
       setDepartment(dept);
-      setMembers(mems.sort((a, b) => (b.rank_level || 0) - (a.rank_level || 0)));
+      setDepartments(allDepts);
+      const deptMems = allMems.filter(m => m.department_id === id || (m.additional_department_ids || []).includes(id));
+      setMembers(deptMems.sort((a, b) => (b.rank_level || 0) - (a.rank_level || 0)));
     } catch (e) {
       console.error(e);
     } finally {
@@ -87,7 +92,16 @@ export default function DepartmentDetail() {
   };
 
   const resetForm = () => {
-    setForm({ name: "", discord_id: "", discord_username: "", badge_number: "", rank: "", callsign: "", join_date: "", notes: "", phone_number: "", status: "Active", slot_status: "Filled", is_admin: false });
+    setForm({ name: "", discord_id: "", discord_username: "", badge_number: "", rank: "", callsign: "", join_date: "", notes: "", phone_number: "", status: "Active", slot_status: "Filled", is_admin: false, additional_department_ids: [] });
+  };
+
+  const toggleAdditionalDept = (deptId) => {
+    const current = form.additional_department_ids || [];
+    if (current.includes(deptId)) {
+      setForm({...form, additional_department_ids: current.filter(d => d !== deptId)});
+    } else {
+      setForm({...form, additional_department_ids: [...current, deptId]});
+    }
   };
 
   const handleDelete = async (memberId) => {
@@ -116,6 +130,7 @@ export default function DepartmentDetail() {
       badge_number: member.badge_number || "", rank: member.rank || "", callsign: member.callsign || "",
       join_date: member.join_date || "", notes: member.notes || "", phone_number: member.phone_number || "",
       status: member.status || "Active", slot_status: member.slot_status || "Filled", is_admin: member.is_admin || false,
+      additional_department_ids: member.additional_department_ids || [],
     });
     setShowForm(true);
   };
@@ -335,6 +350,23 @@ export default function DepartmentDetail() {
             <div className="flex items-center gap-2">
               <input type="checkbox" id="is_admin" checked={form.is_admin} onChange={e => setForm({...form, is_admin: e.target.checked})} className="rounded border-slate-600" />
               <Label htmlFor="is_admin" className="text-slate-300">Department Admin</Label>
+            </div>
+            <div>
+              <Label className="text-slate-300">Additional Departments</Label>
+              <p className="text-xs text-slate-500 mt-0.5 mb-2">Also show this member in other departments</p>
+              <div className="space-y-2 max-h-32 overflow-y-auto">
+                {departments.filter(d => d.id !== id).map(d => (
+                  <label key={d.id} className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={(form.additional_department_ids || []).includes(d.id)}
+                      onChange={() => toggleAdditionalDept(d.id)}
+                      className="rounded border-slate-600"
+                    />
+                    <span className="text-sm text-slate-300">{d.name}</span>
+                  </label>
+                ))}
+              </div>
             </div>
             <div>
               <Label className="text-slate-300">Notes</Label>

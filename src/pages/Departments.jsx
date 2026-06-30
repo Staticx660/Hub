@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
 
-const categories = ["Police & Sheriff", "Fire & EMS", "Hospitals & Medical", "Government & State", "Private Security", "Motorcycle Clubs", "Other"];
+const categories = ["Police & Sheriff", "Fire & EMS", "Hospitals & Medical", "Government & State", "Private Security", "Motorcycle Clubs", "Civilians", "Other"];
 
 const categoryIcons = {
   "Police & Sheriff": Shield,
@@ -21,6 +21,7 @@ const categoryIcons = {
   "Government & State": Landmark,
   "Private Security": Lock,
   "Motorcycle Clubs": Bike,
+  "Civilians": Users,
   "Other": Shield,
 };
 
@@ -160,7 +161,7 @@ export default function Departments() {
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {departments.map((dept) => {
             const Icon = categoryIcons[dept.category] || Shield;
-            const deptMembers = members.filter(m => m.department_id === dept.id);
+            const deptMembers = members.filter(m => m.department_id === dept.id || (m.additional_department_ids || []).includes(dept.id));
             return (
               <div key={dept.id} className="bg-slate-900/80 border border-slate-800 rounded-xl overflow-hidden group">
                 <div className="p-5">
