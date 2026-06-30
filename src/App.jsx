@@ -23,6 +23,7 @@ import Certifications from '@/pages/Certifications';
 import Documents from '@/pages/Documents';
 import Vehicles from '@/pages/Vehicles';
 import Uniforms from '@/pages/Uniforms';
+import DiscordSync from '@/pages/DiscordSync';
 import Settings from '@/pages/Settings';
 
 const AuthenticatedApp = () => {
@@ -64,6 +65,7 @@ const AuthenticatedApp = () => {
           <Route path="/documents" element={<Documents />} />
           <Route path="/vehicles" element={<Vehicles />} />
           <Route path="/uniforms" element={<Uniforms />} />
+          <Route path="/discord-sync" element={<DiscordSync />} />
           <Route path="/settings" element={<Settings />} />
         </Route>
       </Route>

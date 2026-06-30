@@ -35,6 +35,9 @@
     "discord_server_id": {
       "type": "string"
     },
+    "discord_role_id": {
+      "type": "string"
+    },
     "shift_quota_weekly": {
       "type": "number"
     },
