@@ -35,6 +35,13 @@ export default function Shifts() {
 
   useEffect(() => { loadData(); }, []);
 
+  useEffect(() => {
+    const unsubscribe = base44.entities.Shift.subscribe(() => {
+      loadData();
+    });
+    return unsubscribe;
+  }, []);
+
   const handleClockIn = async () => {
     try {
       const member = members.find(m => m.id === form.member_id);
