@@ -31,9 +31,13 @@ Deno.serve(async (req) => {
 
     // Build role-to-department mapping
     const roleMap = {};
+    const supervisorRoles = new Set();
     for (const dept of departments) {
       if (dept.discord_role_id) {
         roleMap[dept.discord_role_id] = dept;
+      }
+      if (dept.discord_supervisor_role_id) {
+        supervisorRoles.add(dept.discord_supervisor_role_id);
       }
     }
 
@@ -122,6 +126,8 @@ Deno.serve(async (req) => {
         ? `https://cdn.discordapp.com/avatars/${discordId}/${member.user.avatar}.png`
         : null;
 
+      const isSupervisor = memberRoles.some(r => supervisorRoles.has(r));
+
       const existing = existingByDiscordId[discordId];
 
       if (existing) {
@@ -132,6 +138,7 @@ Deno.serve(async (req) => {
         if (existing.name !== displayName) updates.name = displayName;
         if (avatarUrl && existing.avatar_url !== avatarUrl) updates.avatar_url = avatarUrl;
         if (existing.status === "Inactive" || existing.status === "Terminated") updates.status = "Active";
+        if (existing.is_admin !== isSupervisor) updates.is_admin = isSupervisor;
 
         if (Object.keys(updates).length > 0) {
           try {
@@ -153,6 +160,7 @@ Deno.serve(async (req) => {
             department_id: matchedDept.id,
             status: "Active",
             slot_status: "Filled",
+            is_admin: isSupervisor,
             avatar_url: avatarUrl,
             join_date: new Date().toISOString().split('T')[0]
           });

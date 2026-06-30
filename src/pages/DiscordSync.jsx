@@ -13,6 +13,7 @@ export default function DiscordSync() {
   const [roles, setRoles] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [roleMappings, setRoleMappings] = useState({});
+  const [supervisorMappings, setSupervisorMappings] = useState({});
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [syncReport, setSyncReport] = useState(null);
@@ -39,12 +40,17 @@ export default function DiscordSync() {
         }
 
         const mappings = {};
+        const supMappings = {};
         for (const dept of depts || []) {
           if (dept.discord_role_id) {
             mappings[dept.id] = dept.discord_role_id;
           }
+          if (dept.discord_supervisor_role_id) {
+            supMappings[dept.id] = dept.discord_supervisor_role_id;
+          }
         }
         setRoleMappings(mappings);
+        setSupervisorMappings(supMappings);
       } catch (e) {
         toast({ title: "Error", description: e.message, variant: "destructive" });
       } finally {
@@ -58,13 +64,21 @@ export default function DiscordSync() {
     setRoleMappings(prev => ({ ...prev, [deptId]: value }));
   };
 
+  const handleSupervisorChange = (deptId, value) => {
+    setSupervisorMappings(prev => ({ ...prev, [deptId]: value }));
+  };
+
   const handleSaveMappings = async () => {
     setSaving(true);
     try {
       for (const dept of departments) {
         const newRoleId = roleMappings[dept.id] || "";
-        if ((dept.discord_role_id || "") !== newRoleId) {
-          await base44.entities.Department.update(dept.id, { discord_role_id: newRoleId });
+        const newSupRoleId = supervisorMappings[dept.id] || "";
+        const updates = {};
+        if ((dept.discord_role_id || "") !== newRoleId) updates.discord_role_id = newRoleId;
+        if ((dept.discord_supervisor_role_id || "") !== newSupRoleId) updates.discord_supervisor_role_id = newSupRoleId;
+        if (Object.keys(updates).length > 0) {
+          await base44.entities.Department.update(dept.id, updates);
         }
       }
       toast({ title: "Saved", description: "Department role mappings updated." });
@@ -150,19 +164,36 @@ export default function DiscordSync() {
             Save Mappings
           </Button>
         </div>
-        <div className="space-y-2">
+        <div className="space-y-1">
+          <div className="flex items-center gap-4 pb-2 border-b border-slate-800">
+            <div className="flex-1">
+              <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Department</p>
+            </div>
+            <div className="flex flex-col gap-1.5 w-52">
+              <p className="text-xs font-medium text-slate-400">Member Role ID</p>
+              <p className="text-xs font-medium text-amber-500/70">Supervisor Role ID</p>
+            </div>
+          </div>
           {departments.map(dept => (
-            <div key={dept.id} className="flex items-center gap-4 py-2 border-b border-slate-800 last:border-0">
+            <div key={dept.id} className="flex items-center gap-4 py-3 border-b border-slate-800 last:border-0">
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-white truncate">{dept.name}</p>
                 <p className="text-xs text-slate-500">{dept.category}</p>
               </div>
-              <Input
-                value={roleMappings[dept.id] || ""}
-                onChange={(e) => handleRoleChange(dept.id, e.target.value)}
-                placeholder="Paste Discord Role ID"
-                className="w-64 bg-slate-800 border-slate-700 text-white placeholder:text-slate-600 font-mono text-xs"
-              />
+              <div className="flex flex-col gap-1.5">
+                <Input
+                  value={roleMappings[dept.id] || ""}
+                  onChange={(e) => handleRoleChange(dept.id, e.target.value)}
+                  placeholder="Member Role ID"
+                  className="w-52 bg-slate-800 border-slate-700 text-white placeholder:text-slate-600 font-mono text-xs h-8"
+                />
+                <Input
+                  value={supervisorMappings[dept.id] || ""}
+                  onChange={(e) => handleSupervisorChange(dept.id, e.target.value)}
+                  placeholder="Supervisor Role ID"
+                  className="w-52 bg-slate-800 border-amber-700/50 text-white placeholder:text-slate-600 font-mono text-xs h-8"
+                />
+              </div>
             </div>
           ))}
           {departments.length === 0 && (
