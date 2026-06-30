@@ -6,32 +6,27 @@ Deno.serve(async (req) => {
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const body = await req.json().catch(() => ({}));
-    const guild_id = body.guild_id;
+    const botToken = Deno.env.get("DISCORD_BOT_TOKEN");
+    const guildId = Deno.env.get("DISCORD_GUILD_ID");
 
-    const { accessToken } = await base44.asServiceRole.connectors.getConnection("discord");
-
-    // List guilds the user is in
-    const guildsRes = await fetch("https://discord.com/api/v10/users/@me/guilds", {
-      headers: { Authorization: `Bearer ${accessToken}` }
-    });
-
-    if (!guildsRes.ok) {
-      const errText = await guildsRes.text();
-      return Response.json({ error: `Discord guilds API error (${guildsRes.status}): ${errText}` }, { status: 502 });
+    if (!botToken || !guildId) {
+      return Response.json({ error: 'DISCORD_BOT_TOKEN and DISCORD_GUILD_ID secrets must be set.' }, { status: 500 });
     }
 
-    const guilds = await guildsRes.json();
+    const headers = { Authorization: `Bot ${botToken}` };
 
-    if (!guild_id) {
-      return Response.json({ guilds });
+    // Get guild info
+    const guildRes = await fetch(`https://discord.com/api/v10/guilds/${guildId}`, { headers });
+    let guild = null;
+    let guildError = null;
+    if (guildRes.ok) {
+      guild = await guildRes.json();
+    } else {
+      guildError = `Discord guild API error (${guildRes.status}): ${await guildRes.text()}`;
     }
 
-    // List roles for the selected guild
-    const rolesRes = await fetch(`https://discord.com/api/v10/guilds/${guild_id}/roles`, {
-      headers: { Authorization: `Bearer ${accessToken}` }
-    });
-
+    // List roles
+    const rolesRes = await fetch(`https://discord.com/api/v10/guilds/${guildId}/roles`, { headers });
     let roles = [];
     let rolesError = null;
     if (rolesRes.ok) {
@@ -40,16 +35,7 @@ Deno.serve(async (req) => {
       rolesError = `Discord roles API error (${rolesRes.status})`;
     }
 
-    // Quick test: can we list members? (bot-only endpoint — returns error for user tokens)
-    let membersError = null;
-    const testMembersRes = await fetch(`https://discord.com/api/v10/guilds/${guild_id}/members?limit=1`, {
-      headers: { Authorization: `Bearer ${accessToken}` }
-    });
-    if (!testMembersRes.ok) {
-      membersError = `Discord members API error (${testMembersRes.status}): listing all guild members requires a Discord bot with the Server Members Intent.`;
-    }
-
-    return Response.json({ roles, rolesError, membersError });
+    return Response.json({ guild, guildError, roles, rolesError });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }

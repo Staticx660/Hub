@@ -3,17 +3,24 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-
-    const body = await req.json().catch(() => ({}));
-    const guild_id = body.guild_id;
-
-    if (!guild_id) {
-      return Response.json({ error: 'guild_id is required' }, { status: 400 });
+    // Auth is optional — manual UI triggers pass a user token; scheduled automations don't
+    try {
+      const user = await base44.auth.me();
+      if (user && user.role !== 'admin') {
+        return Response.json({ error: 'Admin access required' }, { status: 403 });
+      }
+    } catch {
+      // No user context — scheduled automation run, proceed with service role
     }
 
-    const { accessToken } = await base44.asServiceRole.connectors.getConnection("discord");
+    const botToken = Deno.env.get("DISCORD_BOT_TOKEN");
+    const guildId = Deno.env.get("DISCORD_GUILD_ID");
+
+    if (!botToken || !guildId) {
+      return Response.json({ error: 'DISCORD_BOT_TOKEN and DISCORD_GUILD_ID secrets must be set.' }, { status: 500 });
+    }
+
+    const headers = { Authorization: `Bot ${botToken}` };
 
     // Get departments that have a discord_role_id configured
     const departments = await base44.asServiceRole.entities.Department.filter({ is_active: true });
@@ -40,20 +47,18 @@ Deno.serve(async (req) => {
     let lastMemberId = null;
 
     while (hasMore && members.length < 5000) {
-      const url = new URL(`https://discord.com/api/v10/guilds/${guild_id}/members`);
+      const url = new URL(`https://discord.com/api/v10/guilds/${guildId}/members`);
       url.searchParams.set("limit", "1000");
       if (lastMemberId) {
         url.searchParams.set("after", lastMemberId);
       }
 
-      const membersRes = await fetch(url.toString(), {
-        headers: { Authorization: `Bearer ${accessToken}` }
-      });
+      const membersRes = await fetch(url.toString(), { headers });
 
       if (!membersRes.ok) {
         const errText = await membersRes.text();
         return Response.json({
-          error: `Failed to list guild members (Discord API ${membersRes.status}): ${errText}. Listing all members requires a Discord bot with the Server Members Intent enabled.`
+          error: `Failed to list guild members (Discord API ${membersRes.status}): ${errText}. Make sure the bot has the Server Members Intent enabled.`
         }, { status: 502 });
       }
 
