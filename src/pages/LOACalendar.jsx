@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
+import { useAuth } from "@/lib/AuthContext";
 import moment from "moment";
 
 export default function LOACalendar() {
@@ -18,6 +19,8 @@ export default function LOACalendar() {
   const [currentMonth, setCurrentMonth] = useState(moment());
   const [form, setForm] = useState({ member_id: "", department_id: "", start_date: "", end_date: "", reason: "" });
   const { toast } = useToast();
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
 
   const loadData = async () => {
     try {
@@ -167,14 +170,16 @@ export default function LOACalendar() {
                   <p className="text-xs text-slate-400">{r.start_date} → {r.end_date}</p>
                   {r.reason && <p className="text-xs text-slate-500 mt-1">{r.reason}</p>}
                 </div>
-                <div className="flex gap-2">
-                  <Button size="sm" onClick={() => handleReview(r.id, "Approved")} className="bg-emerald-600 hover:bg-emerald-700">
-                    <Check className="w-3.5 h-3.5 mr-1" /> Approve
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={() => handleReview(r.id, "Denied")} className="border-red-500/30 text-red-400 hover:bg-red-500/10">
-                    <X className="w-3.5 h-3.5 mr-1" /> Deny
-                  </Button>
-                </div>
+                {isAdmin && (
+                  <div className="flex gap-2">
+                    <Button size="sm" onClick={() => handleReview(r.id, "Approved")} className="bg-emerald-600 hover:bg-emerald-700">
+                      <Check className="w-3.5 h-3.5 mr-1" /> Approve
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => handleReview(r.id, "Denied")} className="border-red-500/30 text-red-400 hover:bg-red-500/10">
+                      <X className="w-3.5 h-3.5 mr-1" /> Deny
+                    </Button>
+                  </div>
+                )}
               </div>
             ))}
           </div>

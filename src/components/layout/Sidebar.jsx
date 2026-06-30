@@ -6,6 +6,7 @@ import {
   Shield, Flame, HeartPulse, Landmark, Lock, Bike, LogOut, Menu, X, RefreshCw } from
 "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { useAuth } from "@/lib/AuthContext";
 
 const categoryIcons = {
   "Police & Sheriff": Shield,
@@ -18,27 +19,31 @@ const categoryIcons = {
 
 const navItems = [
 { label: "Dashboard", path: "/", icon: LayoutDashboard },
-{ label: "Departments", path: "/departments", icon: Shield },
-{ label: "Roster", path: "/roster", icon: Users },
-{ label: "Shifts", path: "/shifts", icon: Clock },
+{ label: "Departments", path: "/departments", icon: Shield, adminOnly: true },
+{ label: "Roster", path: "/roster", icon: Users, adminOnly: true },
+{ label: "Shifts", path: "/shifts", icon: Clock, adminOnly: true },
 { label: "LOA Calendar", path: "/loa", icon: CalendarDays },
-{ label: "Org Chart", path: "/org-chart", icon: Network },
-{ label: "Certifications", path: "/certifications", icon: Award },
-{ label: "Documents", path: "/documents", icon: FileText },
-{ label: "Vehicles", path: "/vehicles", icon: Car },
-{ label: "Uniforms", path: "/uniforms", icon: Shirt },
-{ label: "Discord Sync", path: "/discord-sync", icon: RefreshCw },
-{ label: "Settings", path: "/settings", icon: Settings }];
+{ label: "Org Chart", path: "/org-chart", icon: Network, adminOnly: true },
+{ label: "Certifications", path: "/certifications", icon: Award, adminOnly: true },
+{ label: "Documents", path: "/documents", icon: FileText, adminOnly: true },
+{ label: "Vehicles", path: "/vehicles", icon: Car, adminOnly: true },
+{ label: "Uniforms", path: "/uniforms", icon: Shirt, adminOnly: true },
+{ label: "Discord Sync", path: "/discord-sync", icon: RefreshCw, adminOnly: true },
+{ label: "Settings", path: "/settings", icon: Settings, adminOnly: true }];
 
 
 export default function Sidebar() {
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
 
   const handleLogout = () => {
     base44.auth.logout("/login");
   };
+
+  const visibleNavItems = navItems.filter(item => !item.adminOnly || isAdmin);
 
   const sidebarContent =
   <div className="flex flex-col h-full">
@@ -62,7 +67,7 @@ export default function Sidebar() {
       </div>
 
       <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
-        {navItems.map((item) => {
+        {visibleNavItems.map((item) => {
         const isActive = location.pathname === item.path;
         return (
           <Link
