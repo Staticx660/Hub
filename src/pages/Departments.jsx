@@ -120,7 +120,7 @@ export default function Departments() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null);
-  const [form, setForm] = useState({ name: "", category: "", description: "", max_slots: "", discord_webhook_url: "", shift_quota_weekly: "" });
+  const [form, setForm] = useState({ name: "", category: "", description: "", max_slots: "", discord_webhook_url: "", shift_quota_weekly: "", ranks: [] });
   const { toast } = useToast();
 
   const loadData = async () => {
@@ -147,9 +147,7 @@ export default function Departments() {
         max_slots: form.max_slots ? parseInt(form.max_slots) : null,
         shift_quota_weekly: form.shift_quota_weekly ? parseInt(form.shift_quota_weekly) : null,
       };
-      if (!data.ranks && defaultRanks[data.category]) {
-        data.ranks = defaultRanks[data.category];
-      }
+      data.ranks = form.ranks || [];
       if (editing) {
         await base44.entities.Department.update(editing.id, data);
         toast({ title: "Department updated" });
@@ -159,7 +157,7 @@ export default function Departments() {
       }
       setShowForm(false);
       setEditing(null);
-      setForm({ name: "", category: "", description: "", max_slots: "", discord_webhook_url: "", shift_quota_weekly: "" });
+      setForm({ name: "", category: "", description: "", max_slots: "", discord_webhook_url: "", shift_quota_weekly: "", ranks: [] });
       loadData();
     } catch (e) {
       toast({ title: "Error", description: e.message, variant: "destructive" });
@@ -186,8 +184,32 @@ export default function Departments() {
       max_slots: dept.max_slots?.toString() || "",
       discord_webhook_url: dept.discord_webhook_url || "",
       shift_quota_weekly: dept.shift_quota_weekly?.toString() || "",
+      ranks: dept.ranks || [],
     });
     setShowForm(true);
+  };
+
+  const addRank = () => {
+    setForm({...form, ranks: [...(form.ranks || []), { name: "", level: 1, color: "#64748B" }]});
+  };
+
+  const updateRank = (idx, field, value) => {
+    const ranks = [...(form.ranks || [])];
+    ranks[idx] = { ...ranks[idx], [field]: field === "level" ? (parseInt(value) || 0) : value };
+    setForm({...form, ranks});
+  };
+
+  const removeRank = (idx) => {
+    setForm({...form, ranks: (form.ranks || []).filter((_, i) => i !== idx)});
+  };
+
+  const loadDefaultRanks = () => {
+    if (form.category && defaultRanks[form.category]) {
+      setForm({...form, ranks: defaultRanks[form.category]});
+      toast({ title: "Default ranks loaded" });
+    } else {
+      toast({ title: "Select a category first", variant: "destructive" });
+    }
   };
 
   if (loading) {
@@ -205,7 +227,7 @@ export default function Departments() {
           <h1 className="text-2xl font-bold text-white">Departments</h1>
           <p className="text-slate-400 text-sm mt-1">Manage all department rosters</p>
         </div>
-        <Button onClick={() => { setEditing(null); setForm({ name: "", category: "", description: "", max_slots: "", discord_webhook_url: "", shift_quota_weekly: "" }); setShowForm(true); }} className="bg-blue-600 hover:bg-blue-700">
+        <Button onClick={() => { setEditing(null); setForm({ name: "", category: "", description: "", max_slots: "", discord_webhook_url: "", shift_quota_weekly: "", ranks: [] }); setShowForm(true); }} className="bg-blue-600 hover:bg-blue-700">
           <Plus className="w-4 h-4 mr-2" /> New Department
         </Button>
       </div>
@@ -269,7 +291,7 @@ export default function Departments() {
       )}
 
       <Dialog open={showForm} onOpenChange={setShowForm}>
-        <DialogContent className="bg-slate-900 border-slate-700 text-white max-w-lg">
+        <DialogContent className="bg-slate-900 border-slate-700 text-white max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editing ? "Edit Department" : "New Department"}</DialogTitle>
           </DialogHeader>
@@ -280,7 +302,13 @@ export default function Departments() {
             </div>
             <div>
               <Label className="text-slate-300">Category *</Label>
-              <Select value={form.category} onValueChange={v => setForm({...form, category: v})}>
+              <Select value={form.category} onValueChange={v => {
+                if (!editing && (!form.ranks || form.ranks.length === 0) && defaultRanks[v]) {
+                  setForm({...form, category: v, ranks: defaultRanks[v]});
+                } else {
+                  setForm({...form, category: v});
+                }
+              }}>
                 <SelectTrigger className="bg-slate-800 border-slate-700 text-white mt-1"><SelectValue placeholder="Select category" /></SelectTrigger>
                 <SelectContent className="bg-slate-800 border-slate-700">
                   {categories.map(c => <SelectItem key={c} value={c} className="text-white">{c}</SelectItem>)}
@@ -304,6 +332,43 @@ export default function Departments() {
             <div>
               <Label className="text-slate-300">Discord Webhook URL</Label>
               <Input value={form.discord_webhook_url} onChange={e => setForm({...form, discord_webhook_url: e.target.value})} className="bg-slate-800 border-slate-700 text-white mt-1" placeholder="https://discord.com/api/webhooks/..." />
+            </div>
+            <div>
+              <div className="flex items-center justify-between">
+                <Label className="text-slate-300">Ranks</Label>
+                <button type="button" onClick={loadDefaultRanks} className="text-xs text-blue-400 hover:text-blue-300">Load Defaults</button>
+              </div>
+              <div className="space-y-2 mt-2 max-h-48 overflow-y-auto">
+                {(form.ranks || []).map((rank, idx) => (
+                  <div key={idx} className="flex items-center gap-2">
+                    <input
+                      type="color"
+                      value={rank.color || "#64748B"}
+                      onChange={e => updateRank(idx, "color", e.target.value)}
+                      className="w-8 h-8 rounded border border-slate-600 bg-slate-800 cursor-pointer shrink-0"
+                    />
+                    <Input
+                      value={rank.name}
+                      onChange={e => updateRank(idx, "name", e.target.value)}
+                      className="bg-slate-800 border-slate-700 text-white flex-1 h-8"
+                      placeholder="Rank name"
+                    />
+                    <Input
+                      type="number"
+                      value={rank.level}
+                      onChange={e => updateRank(idx, "level", e.target.value)}
+                      className="bg-slate-800 border-slate-700 text-white w-20 h-8"
+                      placeholder="Level"
+                    />
+                    <button type="button" onClick={() => removeRank(idx)} className="p-1.5 rounded-lg hover:bg-red-500/10 text-slate-400 hover:text-red-400 shrink-0">
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ))}
+                <Button variant="outline" size="sm" type="button" onClick={addRank} className="w-full border-slate-700 text-slate-300 hover:bg-slate-800">
+                  <Plus className="w-3.5 h-3.5 mr-1" /> Add Rank
+                </Button>
+              </div>
             </div>
             <div className="flex justify-end gap-3 mt-6">
               <Button variant="ghost" onClick={() => setShowForm(false)} className="text-slate-400">Cancel</Button>
