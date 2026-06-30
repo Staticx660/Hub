@@ -19,6 +19,7 @@ export default function DiscordSync() {
   const [syncReport, setSyncReport] = useState(null);
   const [saving, setSaving] = useState(false);
   const [registering, setRegistering] = useState(false);
+  const [loaRoleMappings, setLoaRoleMappings] = useState({});
   const { toast } = useToast();
 
   useEffect(() => {
@@ -42,6 +43,7 @@ export default function DiscordSync() {
 
         const mappings = {};
         const supMappings = {};
+        const loaMappings = {};
         for (const dept of depts || []) {
           if (dept.discord_role_id) {
             mappings[dept.id] = dept.discord_role_id;
@@ -49,9 +51,13 @@ export default function DiscordSync() {
           if (dept.discord_supervisor_role_id) {
             supMappings[dept.id] = dept.discord_supervisor_role_id;
           }
+          if (dept.loa_discord_role_id) {
+            loaMappings[dept.id] = dept.loa_discord_role_id;
+          }
         }
         setRoleMappings(mappings);
         setSupervisorMappings(supMappings);
+        setLoaRoleMappings(loaMappings);
       } catch (e) {
         toast({ title: "Error", description: e.message, variant: "destructive" });
       } finally {
@@ -69,15 +75,21 @@ export default function DiscordSync() {
     setSupervisorMappings(prev => ({ ...prev, [deptId]: value }));
   };
 
+  const handleLoaRoleChange = (deptId, value) => {
+    setLoaRoleMappings(prev => ({ ...prev, [deptId]: value }));
+  };
+
   const handleSaveMappings = async () => {
     setSaving(true);
     try {
       for (const dept of departments) {
         const newRoleId = roleMappings[dept.id] || "";
         const newSupRoleId = supervisorMappings[dept.id] || "";
+        const newLoaRoleId = loaRoleMappings[dept.id] || "";
         const updates = {};
         if ((dept.discord_role_id || "") !== newRoleId) updates.discord_role_id = newRoleId;
         if ((dept.discord_supervisor_role_id || "") !== newSupRoleId) updates.discord_supervisor_role_id = newSupRoleId;
+        if ((dept.loa_discord_role_id || "") !== newLoaRoleId) updates.loa_discord_role_id = newLoaRoleId;
         if (Object.keys(updates).length > 0) {
           await base44.entities.Department.update(dept.id, updates);
         }
@@ -192,6 +204,7 @@ export default function DiscordSync() {
             <div className="flex flex-col gap-1.5 w-52">
               <p className="text-xs font-medium text-slate-400">Member Role ID</p>
               <p className="text-xs font-medium text-amber-500/70">Supervisor Role ID</p>
+              <p className="text-xs font-medium text-cyan-500/70">LOA Role ID</p>
             </div>
           </div>
           {departments.map(dept => (
@@ -212,6 +225,12 @@ export default function DiscordSync() {
                   onChange={(e) => handleSupervisorChange(dept.id, e.target.value)}
                   placeholder="Supervisor Role ID"
                   className="w-52 bg-slate-800 border-amber-700/50 text-white placeholder:text-slate-600 font-mono text-xs h-8"
+                />
+                <Input
+                  value={loaRoleMappings[dept.id] || ""}
+                  onChange={(e) => handleLoaRoleChange(dept.id, e.target.value)}
+                  placeholder="LOA Role ID"
+                  className="w-52 bg-slate-800 border-cyan-700/50 text-white placeholder:text-slate-600 font-mono text-xs h-8"
                 />
               </div>
             </div>

@@ -27,11 +27,15 @@
       "enum": [
         "Pending",
         "Approved",
-        "Denied"
+        "Denied",
+        "Removed"
       ],
       "default": "Pending"
     },
     "reviewed_by": {
+      "type": "string"
+    },
+    "removal_reason": {
       "type": "string"
     }
   },

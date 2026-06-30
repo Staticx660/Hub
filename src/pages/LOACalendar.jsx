@@ -3,6 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { CalendarDays, Plus, Check, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -18,6 +19,9 @@ export default function LOACalendar() {
   const [showForm, setShowForm] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(moment());
   const [form, setForm] = useState({ member_id: "", department_id: "", start_date: "", end_date: "", reason: "" });
+  const [showRemove, setShowRemove] = useState(false);
+  const [removeTarget, setRemoveTarget] = useState(null);
+  const [removeReason, setRemoveReason] = useState("");
   const { toast } = useToast();
   const { user } = useAuth();
   const isAdmin = user?.role === "admin";
@@ -61,10 +65,31 @@ export default function LOACalendar() {
       const req = requests.find(r => r.id === id);
       if (req?.member_id) {
         await base44.entities.RosterMember.update(req.member_id, { status: "On LOA" });
+        try {
+          await base44.functions.invoke("manageLOARole", { member_id: req.member_id, action: "add" });
+        } catch (e) { console.error("Discord role update failed:", e); }
       }
     }
     toast({ title: `LOA ${status.toLowerCase()}` });
     loadData();
+  };
+
+  const handleRemove = async () => {
+    if (!removeTarget) return;
+    try {
+      await base44.entities.RosterMember.update(removeTarget.member_id, { status: "Active" });
+      await base44.entities.LOARequest.update(removeTarget.id, { status: "Removed", removal_reason: removeReason });
+      try {
+        await base44.functions.invoke("manageLOARole", { member_id: removeTarget.member_id, action: "remove" });
+      } catch (e) { console.error("Discord role update failed:", e); }
+      toast({ title: "Member removed from LOA" });
+      setShowRemove(false);
+      setRemoveTarget(null);
+      setRemoveReason("");
+      loadData();
+    } catch (e) {
+      toast({ title: "Error", description: e.message, variant: "destructive" });
+    }
   };
 
   const getDaysInMonth = () => {
@@ -186,6 +211,33 @@ export default function LOACalendar() {
         )}
       </div>
 
+      {/* Active LOAs */}
+      <div>
+        <h2 className="text-lg font-semibold text-white mb-3">Active LOAs</h2>
+        {requests.filter(r => r.status === "Approved").length === 0 ? (
+          <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-8 text-center text-slate-500">
+            No active LOAs
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {requests.filter(r => r.status === "Approved").map((r) => (
+              <div key={r.id} className="bg-slate-900/80 border border-slate-800 rounded-xl px-5 py-4 flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-white">{r.member_name}</p>
+                  <p className="text-xs text-slate-400">{r.start_date} → {r.end_date}</p>
+                  {r.reason && <p className="text-xs text-slate-500 mt-1">{r.reason}</p>}
+                </div>
+                {isAdmin && (
+                  <Button size="sm" variant="outline" onClick={() => { setRemoveTarget(r); setShowRemove(true); }} className="border-amber-500/30 text-amber-400 hover:bg-amber-500/10">
+                    Remove from LOA
+                  </Button>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
       <Dialog open={showForm} onOpenChange={setShowForm}>
         <DialogContent className="bg-slate-900 border-slate-700 text-white max-w-md">
           <DialogHeader><DialogTitle>New LOA Request</DialogTitle></DialogHeader>
@@ -227,6 +279,25 @@ export default function LOACalendar() {
             <div className="flex justify-end gap-3">
               <Button variant="ghost" onClick={() => setShowForm(false)} className="text-slate-400">Cancel</Button>
               <Button onClick={handleSubmit} disabled={!form.member_id || !form.start_date || !form.end_date} className="bg-blue-600 hover:bg-blue-700">Submit</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showRemove} onOpenChange={setShowRemove}>
+        <DialogContent className="bg-slate-900 border-slate-700 text-white max-w-md">
+          <DialogHeader><DialogTitle>Remove from LOA</DialogTitle></DialogHeader>
+          <div className="space-y-4 mt-4">
+            <p className="text-sm text-slate-400">
+              End {removeTarget?.member_name}'s leave of absence early and return them to active status.
+            </p>
+            <div>
+              <Label className="text-slate-300">Reason</Label>
+              <Textarea value={removeReason} onChange={e => setRemoveReason(e.target.value)} className="bg-slate-800 border-slate-700 text-white mt-1" placeholder="Reason for early removal" rows={3} />
+            </div>
+            <div className="flex justify-end gap-3">
+              <Button variant="ghost" onClick={() => setShowRemove(false)} className="text-slate-400">Cancel</Button>
+              <Button onClick={handleRemove} className="bg-amber-600 hover:bg-amber-700">Remove from LOA</Button>
             </div>
           </div>
         </DialogContent>
