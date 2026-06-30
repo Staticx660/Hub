@@ -17,7 +17,7 @@ Deno.serve(async (req) => {
     // Extract the application ID from the bot token (first segment is base64-encoded bot ID)
     const applicationId = atob(token.split('.')[0]);
 
-    // Register the /loa-request slash command for this guild
+    // Register slash commands for this guild
     const commands = [
       {
         name: 'loa-request',
@@ -39,6 +39,36 @@ Deno.serve(async (req) => {
             type: 3,
             name: 'reason',
             description: 'Reason for LOA',
+            required: false
+          }
+        ]
+      },
+      {
+        name: 'clock-in',
+        description: 'Clock in and start your shift',
+        options: [
+          {
+            type: 3,
+            name: 'department',
+            description: 'Department name (if in multiple departments)',
+            required: false
+          },
+          {
+            type: 3,
+            name: 'notes',
+            description: 'Notes for this shift',
+            required: false
+          }
+        ]
+      },
+      {
+        name: 'clock-out',
+        description: 'Clock out and end your current shift',
+        options: [
+          {
+            type: 3,
+            name: 'notes',
+            description: 'Notes for this shift',
             required: false
           }
         ]

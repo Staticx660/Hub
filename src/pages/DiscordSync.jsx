@@ -131,8 +131,8 @@ export default function DiscordSync() {
         toast({ title: "Registration failed", description: res.data.error, variant: "destructive" });
       } else {
         toast({
-          title: "Slash command registered",
-          description: `/loa-request is now available in your Discord server.`
+          title: "Slash commands registered",
+          description: `/loa-request, /clock-in, and /clock-out are now available in your Discord server.`
         });
       }
     } catch (e) {

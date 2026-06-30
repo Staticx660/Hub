@@ -57,26 +57,8 @@ Deno.serve(async (req) => {
     if (body.type === 2) {
       const commandName = body.data?.name;
 
-      if (commandName !== 'loa-request') {
-        return Response.json({
-          type: 4,
-          data: { content: 'Unknown command.' }
-        });
-      }
-
       const options = body.data?.options || [];
       const getOption = (name) => options.find(o => o.name === name)?.value;
-
-      const startDate = getOption('start_date');
-      const endDate = getOption('end_date');
-      const reason = getOption('reason') || 'No reason provided';
-
-      if (!startDate || !endDate) {
-        return Response.json({
-          type: 4,
-          data: { content: 'Both start_date and end_date are required.' }
-        });
-      }
 
       const discordId = body.member?.user?.id;
       const displayName = body.member?.nick || body.member?.user?.global_name || body.member?.user?.username;
@@ -97,38 +79,173 @@ Deno.serve(async (req) => {
       if (!member) {
         return Response.json({
           type: 4,
-          data: { content: 'You are not on the roster yet. Ask an admin to add you before submitting LOA requests.' }
+          data: { content: 'You are not on the roster yet. Ask an admin to add you first.' }
         });
       }
 
-      // Create the LOA request
-      await base44.asServiceRole.entities.LOARequest.create({
-        member_id: member.id,
-        member_name: member.name || displayName,
-        department_id: member.department_id,
-        start_date: startDate,
-        end_date: endDate,
-        reason: reason,
-        status: 'Pending'
-      });
+      // ── LOA Request ──
+      if (commandName === 'loa-request') {
+        const startDate = getOption('start_date');
+        const endDate = getOption('end_date');
+        const reason = getOption('reason') || 'No reason provided';
+
+        if (!startDate || !endDate) {
+          return Response.json({
+            type: 4,
+            data: { content: 'Both start_date and end_date are required.' }
+          });
+        }
+
+        await base44.asServiceRole.entities.LOARequest.create({
+          member_id: member.id,
+          member_name: member.name || displayName,
+          department_id: member.department_id,
+          start_date: startDate,
+          end_date: endDate,
+          reason: reason,
+          status: 'Pending'
+        });
+
+        return Response.json({
+          type: 4,
+          data: {
+            content: `✅ Your LOA request from **${startDate}** to **${endDate}** has been submitted and is pending approval.`,
+            embeds: [{
+              title: 'LOA Request Submitted',
+              color: 0x3B82F6,
+              fields: [
+                { name: 'Member', value: member.name || displayName, inline: true },
+                { name: 'Start Date', value: startDate, inline: true },
+                { name: 'End Date', value: endDate, inline: true },
+                { name: 'Reason', value: reason, inline: false }
+              ],
+              timestamp: new Date().toISOString(),
+              footer: { text: 'RPCommand - LOA System' }
+            }]
+          }
+        });
+      }
+
+      // ── Clock In ──
+      if (commandName === 'clock-in') {
+        // Check for an existing active shift
+        const activeShifts = await base44.asServiceRole.entities.Shift.filter({
+          member_id: member.id,
+          status: 'In Progress'
+        });
+
+        if (activeShifts && activeShifts.length > 0) {
+          const active = activeShifts[0];
+          return Response.json({
+            type: 4,
+            data: {
+              content: `⏰ You are already clocked in (since ${new Date(active.start_time).toLocaleString('en-US', { timeZone: 'America/New_York' })}). Use \`/clock-out\` first.`,
+              ephemeral: true
+            }
+          });
+        }
+
+        // Determine department — allow specifying if member is in multiple
+        const deptInput = getOption('department');
+        let departmentId = member.department_id;
+
+        if (deptInput) {
+          const allDepts = await base44.asServiceRole.entities.Department.list();
+          const matched = allDepts.find(d => d.name.toLowerCase().includes(deptInput.toLowerCase()));
+          if (matched) {
+            const memberDeptIds = [member.department_id, ...(member.additional_department_ids || [])];
+            if (memberDeptIds.includes(matched.id)) {
+              departmentId = matched.id;
+            } else {
+              return Response.json({
+                type: 4,
+                data: { content: `You are not a member of **${matched.name}**.`, ephemeral: true }
+              });
+            }
+          }
+        }
+
+        const notes = getOption('notes') || '';
+
+        await base44.asServiceRole.entities.Shift.create({
+          member_id: member.id,
+          member_name: member.name || displayName,
+          department_id: departmentId,
+          start_time: new Date().toISOString(),
+          status: 'In Progress',
+          notes: notes
+        });
+
+        return Response.json({
+          type: 4,
+          data: {
+            content: `🟢 **${member.name || displayName}** has clocked in and is now on duty.`,
+            embeds: [{
+              title: 'Shift Started',
+              color: 0x10B981,
+              fields: [
+                { name: 'Member', value: member.name || displayName, inline: true },
+                { name: 'Started At', value: new Date().toLocaleString('en-US', { timeZone: 'America/New_York' }), inline: true }
+              ],
+              timestamp: new Date().toISOString(),
+              footer: { text: 'RPCommand - Shift System' }
+            }]
+          }
+        });
+      }
+
+      // ── Clock Out ──
+      if (commandName === 'clock-out') {
+        const activeShifts = await base44.asServiceRole.entities.Shift.filter({
+          member_id: member.id,
+          status: 'In Progress'
+        });
+
+        if (!activeShifts || activeShifts.length === 0) {
+          return Response.json({
+            type: 4,
+            data: { content: '⏰ You are not currently clocked in. Use `/clock-in` to start a shift.', ephemeral: true }
+          });
+        }
+
+        const active = activeShifts[0];
+        const endTime = new Date();
+        const startTime = new Date(active.start_time);
+        const hours = ((endTime - startTime) / 3600000);
+
+        const notes = getOption('notes');
+        const updateData = {
+          end_time: endTime.toISOString(),
+          status: 'Completed',
+          duration_hours: parseFloat(hours.toFixed(2))
+        };
+        if (notes) updateData.notes = (active.notes ? active.notes + '\n' : '') + notes;
+
+        await base44.asServiceRole.entities.Shift.update(active.id, updateData);
+
+        return Response.json({
+          type: 4,
+          data: {
+            content: `🔴 **${member.name || displayName}** has clocked out.`,
+            embeds: [{
+              title: 'Shift Ended',
+              color: 0xEF4444,
+              fields: [
+                { name: 'Member', value: member.name || displayName, inline: true },
+                { name: 'Duration', value: `${hours.toFixed(2)} hours`, inline: true },
+                { name: 'Started', value: startTime.toLocaleString('en-US', { timeZone: 'America/New_York' }), inline: false },
+                { name: 'Ended', value: endTime.toLocaleString('en-US', { timeZone: 'America/New_York' }), inline: false }
+              ],
+              timestamp: new Date().toISOString(),
+              footer: { text: 'RPCommand - Shift System' }
+            }]
+          }
+        });
+      }
 
       return Response.json({
         type: 4,
-        data: {
-          content: `✅ Your LOA request from **${startDate}** to **${endDate}** has been submitted and is pending approval.`,
-          embeds: [{
-            title: 'LOA Request Submitted',
-            color: 0x3B82F6,
-            fields: [
-              { name: 'Member', value: member.name || displayName, inline: true },
-              { name: 'Start Date', value: startDate, inline: true },
-              { name: 'End Date', value: endDate, inline: true },
-              { name: 'Reason', value: reason, inline: false }
-            ],
-            timestamp: new Date().toISOString(),
-            footer: { text: 'RPCommand - LOA System' }
-          }]
-        }
+        data: { content: 'Unknown command.' }
       });
     }
 
