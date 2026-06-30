@@ -1,0 +1,44 @@
+{
+  "name": "Vehicle",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "department_id": {
+      "type": "string"
+    },
+    "model": {
+      "type": "string"
+    },
+    "plate": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Available",
+        "Assigned",
+        "Out of Service",
+        "Impounded"
+      ],
+      "default": "Available"
+    },
+    "assigned_to_id": {
+      "type": "string"
+    },
+    "assigned_to_name": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "name",
+    "department_id"
+  ]
+}

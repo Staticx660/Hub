@@ -1,0 +1,73 @@
+{
+  "name": "Department",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "Police & Sheriff",
+        "Fire & EMS",
+        "Hospitals & Medical",
+        "Government & State",
+        "Private Security",
+        "Motorcycle Clubs",
+        "Other"
+      ]
+    },
+    "description": {
+      "type": "string"
+    },
+    "logo_url": {
+      "type": "string"
+    },
+    "accent_color": {
+      "type": "string"
+    },
+    "max_slots": {
+      "type": "number"
+    },
+    "discord_webhook_url": {
+      "type": "string"
+    },
+    "discord_server_id": {
+      "type": "string"
+    },
+    "shift_quota_weekly": {
+      "type": "number"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "custom_url_slug": {
+      "type": "string"
+    },
+    "ranks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "level": {
+            "type": "number"
+          },
+          "insignia_url": {
+            "type": "string"
+          },
+          "color": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "required": [
+    "name",
+    "category"
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "name": "Shift",
+  "type": "object",
+  "properties": {
+    "member_id": {
+      "type": "string"
+    },
+    "department_id": {
+      "type": "string"
+    },
+    "member_name": {
+      "type": "string"
+    },
+    "start_time": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "end_time": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "duration_hours": {
+      "type": "number"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "In Progress",
+        "Completed",
+        "Cancelled"
+      ],
+      "default": "In Progress"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "member_id",
+    "department_id",
+    "start_time"
+  ]
+}

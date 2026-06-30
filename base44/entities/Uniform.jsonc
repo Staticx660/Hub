@@ -1,0 +1,40 @@
+{
+  "name": "Uniform",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "department_id": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "image_url": {
+      "type": "string"
+    },
+    "rank_requirement": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Available",
+        "Assigned",
+        "Retired"
+      ],
+      "default": "Available"
+    },
+    "assigned_to_id": {
+      "type": "string"
+    },
+    "assigned_to_name": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "name",
+    "department_id"
+  ]
+}

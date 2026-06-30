@@ -1,0 +1,88 @@
+{
+  "name": "RosterMember",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "discord_id": {
+      "type": "string"
+    },
+    "discord_username": {
+      "type": "string"
+    },
+    "badge_number": {
+      "type": "string"
+    },
+    "department_id": {
+      "type": "string"
+    },
+    "rank": {
+      "type": "string"
+    },
+    "rank_level": {
+      "type": "number",
+      "default": 0
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Active",
+        "On LOA",
+        "Suspended",
+        "Inactive",
+        "Terminated"
+      ],
+      "default": "Active"
+    },
+    "slot_status": {
+      "type": "string",
+      "enum": [
+        "Filled",
+        "Open",
+        "Unavailable",
+        "Reserved"
+      ],
+      "default": "Filled"
+    },
+    "callsign": {
+      "type": "string"
+    },
+    "join_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "certifications": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "notes": {
+      "type": "string"
+    },
+    "avatar_url": {
+      "type": "string"
+    },
+    "phone_number": {
+      "type": "string"
+    },
+    "is_admin": {
+      "type": "boolean",
+      "default": false
+    },
+    "assigned_vehicle": {
+      "type": "string"
+    },
+    "assigned_uniform": {
+      "type": "string"
+    },
+    "supervisor_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "name",
+    "department_id"
+  ]
+}
