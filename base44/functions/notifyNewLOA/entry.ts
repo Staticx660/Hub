@@ -14,11 +14,33 @@ Deno.serve(async (req) => {
       return Response.json({ skipped: true, reason: 'No department_id on LOA request' });
     }
 
-    // Fetch the department to get its Discord webhook URL
-    const department = await base44.asServiceRole.entities.Department.get(loaRequest.department_id);
+    // Collect all department IDs: the LOA's department + the member's additional departments
+    const departmentIds = new Set([loaRequest.department_id]);
 
-    if (!department || !department.discord_webhook_url) {
-      return Response.json({ skipped: true, reason: 'No webhook URL configured for this department' });
+    if (loaRequest.member_id) {
+      try {
+        const member = await base44.asServiceRole.entities.RosterMember.get(loaRequest.member_id);
+        if (member && Array.isArray(member.additional_department_ids)) {
+          for (const deptId of member.additional_department_ids) {
+            if (deptId) departmentIds.add(deptId);
+          }
+        }
+      } catch {}
+    }
+
+    // Fetch all departments and collect webhook URLs
+    const departments = [];
+    for (const deptId of departmentIds) {
+      try {
+        const dept = await base44.asServiceRole.entities.Department.get(deptId);
+        if (dept && dept.discord_webhook_url) {
+          departments.push(dept);
+        }
+      } catch {}
+    }
+
+    if (departments.length === 0) {
+      return Response.json({ skipped: true, reason: 'No webhook URLs configured for any of the member\'s departments' });
     }
 
     const embed = {
@@ -27,7 +49,6 @@ Deno.serve(async (req) => {
       color: 0xF59E0B,
       fields: [
         { name: 'Member', value: loaRequest.member_name || 'Unknown', inline: true },
-        { name: 'Department', value: department.name || 'Unknown', inline: true },
         { name: 'Start Date', value: loaRequest.start_date || 'N/A', inline: true },
         { name: 'End Date', value: loaRequest.end_date || 'N/A', inline: true },
         { name: 'Reason', value: loaRequest.reason || 'No reason provided', inline: false },
@@ -36,18 +57,33 @@ Deno.serve(async (req) => {
       footer: { text: 'RPCommand - LOA System' },
     };
 
-    const response = await fetch(department.discord_webhook_url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ embeds: [embed] }),
-    });
-
-    if (!response.ok) {
-      const text = await response.text();
-      return Response.json({ error: `Discord webhook error: ${text}` }, { status: 500 });
+    // Send to every department's webhook
+    const results = [];
+    for (const dept of departments) {
+      try {
+        const deptEmbed = {
+          ...embed,
+          fields: [
+            ...embed.fields,
+            { name: 'Department', value: dept.name || 'Unknown', inline: true },
+          ],
+        };
+        const response = await fetch(dept.discord_webhook_url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ embeds: [deptEmbed] }),
+        });
+        results.push({ department: dept.name, ok: response.ok });
+        if (!response.ok) {
+          const text = await response.text();
+          console.error(`Webhook failed for ${dept.name}: ${text}`);
+        }
+      } catch (e) {
+        results.push({ department: dept.name, ok: false, error: e.message });
+      }
     }
 
-    return Response.json({ success: true });
+    return Response.json({ success: true, notified: results });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }
