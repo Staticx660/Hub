@@ -1,9 +1,20 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
-import { verifyKey } from 'npm:discord-interactions@3.4.0';
+
+function hexToBytes(hex) {
+  const bytes = new Uint8Array(hex.length / 2);
+  for (let i = 0; i < hex.length; i += 2) {
+    bytes[i / 2] = parseInt(hex.substr(i, 2), 16);
+  }
+  return bytes;
+}
+
+function strToBytes(str) {
+  return new TextEncoder().encode(str);
+}
 
 Deno.serve(async (req) => {
   try {
-    // Read raw body for signature verification
+    // Read raw body — needed for signature verification
     const rawBody = await req.text();
     const signature = req.headers.get('X-Signature-Ed25519');
     const timestamp = req.headers.get('X-Signature-Timestamp');
@@ -13,9 +24,23 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'DISCORD_PUBLIC_KEY not configured' }, { status: 500 });
     }
 
-    // Verify the Discord interaction signature
+    // Verify Discord interaction signature using Deno's built-in Web Crypto (Ed25519)
     if (signature && timestamp) {
-      const isValid = verifyKey(rawBody, signature, timestamp, publicKey);
+      const cryptoKey = await crypto.subtle.importKey(
+        'raw',
+        hexToBytes(publicKey.trim()),
+        { name: 'Ed25519' },
+        false,
+        ['verify']
+      );
+
+      const isValid = await crypto.subtle.verify(
+        'Ed25519',
+        cryptoKey,
+        hexToBytes(signature),
+        strToBytes(timestamp + rawBody)
+      );
+
       if (!isValid) {
         return Response.json({ error: 'Invalid request signature' }, { status: 401 });
       }
@@ -23,7 +48,7 @@ Deno.serve(async (req) => {
 
     const body = JSON.parse(rawBody);
 
-    // Handle PING verification (Discord sends this to confirm the endpoint)
+    // Handle PING — Discord sends this to verify the endpoint is reachable
     if (body.type === 1) {
       return Response.json({ type: 1 });
     }
