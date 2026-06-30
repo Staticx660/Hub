@@ -35,7 +35,14 @@ Deno.serve(async (req) => {
       rolesError = `Discord roles API error (${rolesRes.status})`;
     }
 
-    return Response.json({ guild, guildError, roles, rolesError });
+    return Response.json({
+      guild,
+      guildError,
+      roles,
+      rolesError,
+      approximate_member_count: guild?.approximate_member_count,
+      approximate_presence_count: guild?.approximate_presence_count
+    });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }

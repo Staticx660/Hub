@@ -45,6 +45,31 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'No departments have a Discord role ID configured. Map departments to Discord roles on the Discord Sync page first.' }, { status: 400 });
     }
 
+    let body = {};
+    try { body = await req.json(); } catch {}
+    const debug = body.debug === true;
+
+    // Get approximate member count for diagnostics
+    let approximateMemberCount = null;
+    try {
+      const guildInfoRes = await fetch(`https://discord.com/api/v10/guilds/${guildId}?with_counts=true`, { headers });
+      if (guildInfoRes.ok) {
+        const guildInfo = await guildInfoRes.json();
+        approximateMemberCount = guildInfo.approximate_member_count;
+      }
+    } catch {}
+
+    // Get all guild roles for debug diagnostics
+    let allGuildRoles = null;
+    if (debug) {
+      try {
+        const rolesRes = await fetch(`https://discord.com/api/v10/guilds/${guildId}/roles`, { headers });
+        if (rolesRes.ok) {
+          allGuildRoles = (await rolesRes.json()).map(r => ({ id: r.id, name: r.name }));
+        }
+      } catch {}
+    }
+
     // List guild members (paginated)
     let members = [];
     let hasMore = true;
@@ -88,10 +113,6 @@ Deno.serve(async (req) => {
         existingByDiscordId[m.discord_id] = m;
       }
     }
-
-    let body = {};
-    try { body = await req.json(); } catch {}
-    const debug = body.debug === true;
 
     const report = {
       totalDiscordMembers: members.length,
@@ -189,7 +210,10 @@ Deno.serve(async (req) => {
       report,
       debugMembers: debug ? debugMembers : undefined,
       mappedRoleIds: debug ? Object.keys(roleMap) : undefined,
-      mappedSupervisorRoleIds: debug ? [...supervisorRoles] : undefined
+      mappedSupervisorRoleIds: debug ? [...supervisorRoles] : undefined,
+      approximateMemberCount: debug ? approximateMemberCount : undefined,
+      botFetchedCount: debug ? members.length : undefined,
+      allGuildRoles: debug ? allGuildRoles : undefined
     });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
