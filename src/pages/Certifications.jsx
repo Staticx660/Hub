@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
+import { useAuth } from "@/lib/AuthContext";
 import { Award, Plus, Edit, Trash2, UserPlus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +20,8 @@ export default function Certifications() {
   const [assignMemberId, setAssignMemberId] = useState("");
   const [form, setForm] = useState({ name: "", department_id: "", description: "", color: "#3B82F6" });
   const { toast } = useToast();
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
 
   const loadData = async () => {
     try {
@@ -99,9 +102,9 @@ export default function Certifications() {
           <h1 className="text-2xl font-bold text-white">Certifications</h1>
           <p className="text-sm text-slate-400 mt-1">Manage certifications and assignments</p>
         </div>
-        <Button onClick={() => { setEditing(null); setForm({ name: "", department_id: "", description: "", color: "#3B82F6" }); setShowForm(true); }} className="bg-blue-600 hover:bg-blue-700">
+        {isAdmin && <Button onClick={() => { setEditing(null); setForm({ name: "", department_id: "", description: "", color: "#3B82F6" }); setShowForm(true); }} className="bg-blue-600 hover:bg-blue-700">
           <Plus className="w-4 h-4 mr-2" /> New Certification
-        </Button>
+        </Button>}
       </div>
 
       {certs.length === 0 ? (
@@ -125,7 +128,7 @@ export default function Certifications() {
                       <p className="text-xs text-slate-500">{getDeptName(cert.department_id)}</p>
                     </div>
                   </div>
-                  <div className="flex gap-1">
+                  <div className={isAdmin ? "flex gap-1" : "hidden"}>
                     <button onClick={() => setShowAssign(cert)} className="p-1.5 rounded-lg hover:bg-slate-700 text-slate-400"><UserPlus className="w-3.5 h-3.5" /></button>
                     <button onClick={() => { setEditing(cert); setForm({ name: cert.name, department_id: cert.department_id, description: cert.description || "", color: cert.color || "#3B82F6" }); setShowForm(true); }} className="p-1.5 rounded-lg hover:bg-slate-700 text-slate-400"><Edit className="w-3.5 h-3.5" /></button>
                     <button onClick={() => handleDelete(cert.id)} className="p-1.5 rounded-lg hover:bg-red-500/10 text-slate-400 hover:text-red-400"><Trash2 className="w-3.5 h-3.5" /></button>
@@ -138,7 +141,7 @@ export default function Certifications() {
                     {certified.map(m => (
                       <span key={m.id} className="text-[11px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 flex items-center gap-1">
                         {m.name}
-                        <button onClick={() => removeCert(m.id, cert.name)} className="hover:text-red-400"><X className="w-2.5 h-2.5" /></button>
+                        {isAdmin && <button onClick={() => removeCert(m.id, cert.name)} className="hover:text-red-400"><X className="w-2.5 h-2.5" /></button>}
                       </span>
                     ))}
                   </div>

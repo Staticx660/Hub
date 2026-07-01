@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
+import { useAuth } from "@/lib/AuthContext";
 import { Car, Plus, Edit, Trash2, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,6 +28,8 @@ export default function Vehicles() {
   const [filterDept, setFilterDept] = useState("all");
   const [form, setForm] = useState({ name: "", department_id: "", model: "", plate: "", status: "Available", assigned_to_id: "", category: "", notes: "" });
   const { toast } = useToast();
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
 
   const loadData = async () => {
     try {
@@ -85,9 +88,9 @@ export default function Vehicles() {
           <h1 className="text-2xl font-bold text-white">Vehicles</h1>
           <p className="text-sm text-slate-400 mt-1">Fleet management and assignments</p>
         </div>
-        <Button onClick={() => { setEditing(null); setForm({ name: "", department_id: "", model: "", plate: "", status: "Available", assigned_to_id: "", category: "", notes: "" }); setShowForm(true); }} className="bg-blue-600 hover:bg-blue-700">
+        {isAdmin && <Button onClick={() => { setEditing(null); setForm({ name: "", department_id: "", model: "", plate: "", status: "Available", assigned_to_id: "", category: "", notes: "" }); setShowForm(true); }} className="bg-blue-600 hover:bg-blue-700">
           <Plus className="w-4 h-4 mr-2" /> Add Vehicle
-        </Button>
+        </Button>}
       </div>
 
       <Select value={filterDept} onValueChange={setFilterDept}>
@@ -112,7 +115,7 @@ export default function Vehicles() {
                   <h3 className="font-semibold text-white">{v.name}</h3>
                   <p className="text-xs text-slate-500">{v.model}{v.plate ? ` · ${v.plate}` : ""}</p>
                 </div>
-                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className={`flex gap-1 ${isAdmin ? "opacity-0 group-hover:opacity-100 transition-opacity" : "hidden"}`}>
                   <button onClick={() => { setEditing(v); setForm({ name: v.name, department_id: v.department_id, model: v.model || "", plate: v.plate || "", status: v.status || "Available", assigned_to_id: v.assigned_to_id || "", category: v.category || "", notes: v.notes || "" }); setShowForm(true); }} className="p-1.5 rounded-lg hover:bg-slate-700 text-slate-400"><Edit className="w-3.5 h-3.5" /></button>
                   <button onClick={() => handleDelete(v.id)} className="p-1.5 rounded-lg hover:bg-red-500/10 text-slate-400 hover:text-red-400"><Trash2 className="w-3.5 h-3.5" /></button>
                 </div>

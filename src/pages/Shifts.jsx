@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
+import { useAuth } from "@/lib/AuthContext";
 import { Clock, Plus, Download, Play, Square, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +20,8 @@ export default function Shifts() {
   const [filterStatus, setFilterStatus] = useState("all");
   const [form, setForm] = useState({ member_id: "", department_id: "", start_time: "", notes: "" });
   const { toast } = useToast();
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
 
   const loadData = async () => {
     try {
@@ -134,9 +137,9 @@ export default function Shifts() {
           <Button variant="outline" onClick={exportPDF} className="border-slate-700 text-slate-300 hover:bg-slate-800">
             <Download className="w-4 h-4 mr-2" /> Export PDF
           </Button>
-          <Button onClick={() => setShowForm(true)} className="bg-blue-600 hover:bg-blue-700">
+          {isAdmin && <Button onClick={() => setShowForm(true)} className="bg-blue-600 hover:bg-blue-700">
             <Plus className="w-4 h-4 mr-2" /> Log Shift
-          </Button>
+          </Button>}
         </div>
       </div>
 
@@ -189,7 +192,7 @@ export default function Shifts() {
                     </span>
                   </td>
                   <td className="px-5 py-3 text-right">
-                    {s.status === "In Progress" && (
+                    {isAdmin && s.status === "In Progress" && (
                       <Button size="sm" variant="outline" onClick={() => handleClockOut(s)} className="border-slate-700 text-slate-300 hover:bg-slate-800">
                         <Square className="w-3 h-3 mr-1" /> Clock Out
                       </Button>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
+import { useAuth } from "@/lib/AuthContext";
 import { Shirt, Plus, Edit, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +21,8 @@ export default function Uniforms() {
   const [filterDept, setFilterDept] = useState("all");
   const [form, setForm] = useState({ name: "", department_id: "", description: "", rank_requirement: "", status: "Available", assigned_to_id: "" });
   const { toast } = useToast();
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
 
   const loadData = async () => {
     try {
@@ -78,9 +81,9 @@ export default function Uniforms() {
           <h1 className="text-2xl font-bold text-white">Uniforms</h1>
           <p className="text-sm text-slate-400 mt-1">Manage uniform assignments</p>
         </div>
-        <Button onClick={() => { setEditing(null); setForm({ name: "", department_id: "", description: "", rank_requirement: "", status: "Available", assigned_to_id: "" }); setShowForm(true); }} className="bg-blue-600 hover:bg-blue-700">
+        {isAdmin && <Button onClick={() => { setEditing(null); setForm({ name: "", department_id: "", description: "", rank_requirement: "", status: "Available", assigned_to_id: "" }); setShowForm(true); }} className="bg-blue-600 hover:bg-blue-700">
           <Plus className="w-4 h-4 mr-2" /> Add Uniform
-        </Button>
+        </Button>}
       </div>
 
       <Select value={filterDept} onValueChange={setFilterDept}>
@@ -105,7 +108,7 @@ export default function Uniforms() {
                   <h3 className="font-semibold text-white">{u.name}</h3>
                   <p className="text-xs text-slate-500">{getDeptName(u.department_id)}</p>
                 </div>
-                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className={`flex gap-1 ${isAdmin ? "opacity-0 group-hover:opacity-100 transition-opacity" : "hidden"}`}>
                   <button onClick={() => { setEditing(u); setForm({ name: u.name, department_id: u.department_id, description: u.description || "", rank_requirement: u.rank_requirement || "", status: u.status || "Available", assigned_to_id: u.assigned_to_id || "" }); setShowForm(true); }} className="p-1.5 rounded-lg hover:bg-slate-700 text-slate-400"><Edit className="w-3.5 h-3.5" /></button>
                   <button onClick={() => handleDelete(u.id)} className="p-1.5 rounded-lg hover:bg-red-500/10 text-slate-400 hover:text-red-400"><Trash2 className="w-3.5 h-3.5" /></button>
                 </div>

@@ -57,16 +57,16 @@ const AuthenticatedApp = () => {
         <Route element={<AppLayout />}>
           <Route path="/" element={<Dashboard />} />
           <Route path="/loa" element={<LOACalendar />} />
+          <Route path="/shifts" element={<Shifts />} />
+          <Route path="/org-chart" element={<OrgChart />} />
+          <Route path="/certifications" element={<Certifications />} />
+          <Route path="/documents" element={<Documents />} />
+          <Route path="/vehicles" element={<Vehicles />} />
+          <Route path="/uniforms" element={<Uniforms />} />
           <Route element={<AdminRoute />}>
             <Route path="/departments" element={<Departments />} />
             <Route path="/departments/:id" element={<DepartmentDetail />} />
             <Route path="/roster" element={<Roster />} />
-            <Route path="/shifts" element={<Shifts />} />
-            <Route path="/org-chart" element={<OrgChart />} />
-            <Route path="/certifications" element={<Certifications />} />
-            <Route path="/documents" element={<Documents />} />
-            <Route path="/vehicles" element={<Vehicles />} />
-            <Route path="/uniforms" element={<Uniforms />} />
             <Route path="/discord-sync" element={<DiscordSync />} />
             <Route path="/settings" element={<Settings />} />
           </Route>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
+import { useAuth } from "@/lib/AuthContext";
 import { FileText, Plus, Edit, Trash2, Pin, ExternalLink, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,6 +23,8 @@ export default function Documents() {
   const [filterDept, setFilterDept] = useState("all");
   const [form, setForm] = useState({ title: "", department_id: "", category: "SOP", content: "", file_url: "" });
   const { toast } = useToast();
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
 
   const loadData = async () => {
     try {
@@ -93,9 +96,9 @@ export default function Documents() {
           <h1 className="text-2xl font-bold text-white">Documents</h1>
           <p className="text-sm text-slate-400 mt-1">SOPs, policies, and training materials</p>
         </div>
-        <Button onClick={() => { setEditing(null); setForm({ title: "", department_id: "", category: "SOP", content: "", file_url: "" }); setShowForm(true); }} className="bg-blue-600 hover:bg-blue-700">
+        {isAdmin && <Button onClick={() => { setEditing(null); setForm({ title: "", department_id: "", category: "SOP", content: "", file_url: "" }); setShowForm(true); }} className="bg-blue-600 hover:bg-blue-700">
           <Plus className="w-4 h-4 mr-2" /> New Document
-        </Button>
+        </Button>}
       </div>
 
       <div className="flex gap-3">
@@ -128,7 +131,7 @@ export default function Documents() {
                   <p className="text-xs text-slate-500">{doc.category} · {getDeptName(doc.department_id)}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className={`flex items-center gap-1 ${isAdmin ? "opacity-0 group-hover:opacity-100 transition-opacity" : "hidden"}`}>
                 <button onClick={() => togglePin(doc)} className="p-1.5 rounded-lg hover:bg-slate-700 text-slate-400"><Pin className="w-3.5 h-3.5" /></button>
                 {doc.file_url && (
                   <a href={doc.file_url} target="_blank" rel="noopener noreferrer" className="p-1.5 rounded-lg hover:bg-slate-700 text-slate-400"><ExternalLink className="w-3.5 h-3.5" /></a>

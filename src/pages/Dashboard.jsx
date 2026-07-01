@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/lib/AuthContext";
 import { 
   Users, Clock, CalendarDays, Shield, Flame, HeartPulse, 
   Landmark, Lock, Bike, Radio, TrendingUp, AlertCircle, ArrowRight, Activity
@@ -48,6 +49,8 @@ export default function Dashboard() {
   const [shifts, setShifts] = useState([]);
   const [loaRequests, setLoaRequests] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
 
   useEffect(() => {
     const loadData = async () => {
@@ -114,7 +117,7 @@ export default function Dashboard() {
       <div>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-white">Departments</h2>
-          <Link to="/departments" className="text-sm text-blue-400 hover:text-blue-300 flex items-center gap-1">
+          <Link to={isAdmin ? "/departments" : "/org-chart"} className="text-sm text-blue-400 hover:text-blue-300 flex items-center gap-1">
             View All <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         </div>
@@ -122,9 +125,11 @@ export default function Dashboard() {
           <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-12 text-center">
             <Shield className="w-10 h-10 text-slate-600 mx-auto mb-3" />
             <p className="text-slate-400 mb-2">No departments yet</p>
+            {isAdmin && (
             <Link to="/departments" className="text-sm text-blue-400 hover:text-blue-300">
               Create your first department →
             </Link>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -135,7 +140,7 @@ export default function Dashboard() {
               return (
                 <Link
                   key={dept.id}
-                  to={`/departments/${dept.id}`}
+                  to={isAdmin ? `/departments/${dept.id}` : "/org-chart"}
                   className={`bg-gradient-to-br ${categoryColors[dept.category] || categoryColors["Other"]} border rounded-xl p-5 hover:scale-[1.02] transition-transform duration-150`}
                 >
                   <div className="flex items-start justify-between">
