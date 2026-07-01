@@ -31,6 +31,9 @@
     },
     "assigned_to_name": {
       "type": "string"
+    },
+    "serial_number": {
+      "type": "string"
     }
   },
   "required": [

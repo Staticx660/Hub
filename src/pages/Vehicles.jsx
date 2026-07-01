@@ -178,7 +178,7 @@ export default function Vehicles() {
               <Select value={form.assigned_to_id} onValueChange={v => setForm({...form, assigned_to_id: v})}>
                 <SelectTrigger className="bg-slate-800 border-slate-700 text-white mt-1"><SelectValue placeholder="Unassigned" /></SelectTrigger>
                 <SelectContent className="bg-slate-800 border-slate-700">
-                  {members.filter(m => !form.department_id || m.department_id === form.department_id).map(m => (
+                  {members.map(m => (
                     <SelectItem key={m.id} value={m.id} className="text-white">{m.name}</SelectItem>
                   ))}
                 </SelectContent>

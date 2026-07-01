@@ -199,7 +199,7 @@ export default function Documents() {
             </div>
             <div>
               <Label className="text-slate-300">Attach File</Label>
-              <Input type="file" onChange={handleFileUpload} className="bg-slate-800 border-slate-700 text-white mt-1" />
+              <Input type="file" accept=".pdf,.doc,.docx,.txt,.xlsx" onChange={handleFileUpload} className="bg-slate-800 border-slate-700 text-white mt-1" />
               {form.file_url && <p className="text-xs text-emerald-400 mt-1">File attached ✓</p>}
             </div>
             <div className="flex justify-end gap-3">

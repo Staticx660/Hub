@@ -19,7 +19,7 @@ export default function Uniforms() {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null);
   const [filterDept, setFilterDept] = useState("all");
-  const [form, setForm] = useState({ name: "", department_id: "", description: "", rank_requirement: "", status: "Available", assigned_to_id: "" });
+  const [form, setForm] = useState({ name: "", department_id: "", description: "", rank_requirement: "", status: "Available", assigned_to_id: "", serial_number: "" });
   const { toast } = useToast();
   const { user } = useAuth();
   const isAdmin = user?.role === "admin";
@@ -52,7 +52,7 @@ export default function Uniforms() {
       }
       setShowForm(false);
       setEditing(null);
-      setForm({ name: "", department_id: "", description: "", rank_requirement: "", status: "Available", assigned_to_id: "" });
+      setForm({ name: "", department_id: "", description: "", rank_requirement: "", status: "Available", assigned_to_id: "", serial_number: "" });
       loadData();
     } catch (e) {
       toast({ title: "Error", description: e.message, variant: "destructive" });
@@ -81,7 +81,7 @@ export default function Uniforms() {
           <h1 className="text-2xl font-bold text-white">Uniforms</h1>
           <p className="text-sm text-slate-400 mt-1">Manage uniform assignments</p>
         </div>
-        {isAdmin && <Button onClick={() => { setEditing(null); setForm({ name: "", department_id: "", description: "", rank_requirement: "", status: "Available", assigned_to_id: "" }); setShowForm(true); }} className="bg-blue-600 hover:bg-blue-700">
+        {isAdmin && <Button onClick={() => { setEditing(null); setForm({ name: "", department_id: "", description: "", rank_requirement: "", status: "Available", assigned_to_id: "", serial_number: "" }); setShowForm(true); }} className="bg-blue-600 hover:bg-blue-700">
           <Plus className="w-4 h-4 mr-2" /> Add Uniform
         </Button>}
       </div>
@@ -109,7 +109,7 @@ export default function Uniforms() {
                   <p className="text-xs text-slate-500">{getDeptName(u.department_id)}</p>
                 </div>
                 <div className={`flex gap-1 ${isAdmin ? "opacity-0 group-hover:opacity-100 transition-opacity" : "hidden"}`}>
-                  <button onClick={() => { setEditing(u); setForm({ name: u.name, department_id: u.department_id, description: u.description || "", rank_requirement: u.rank_requirement || "", status: u.status || "Available", assigned_to_id: u.assigned_to_id || "" }); setShowForm(true); }} className="p-1.5 rounded-lg hover:bg-slate-700 text-slate-400"><Edit className="w-3.5 h-3.5" /></button>
+                  <button onClick={() => { setEditing(u); setForm({ name: u.name, department_id: u.department_id, description: u.description || "", rank_requirement: u.rank_requirement || "", status: u.status || "Available", assigned_to_id: u.assigned_to_id || "", serial_number: u.serial_number || "" }); setShowForm(true); }} className="p-1.5 rounded-lg hover:bg-slate-700 text-slate-400"><Edit className="w-3.5 h-3.5" /></button>
                   <button onClick={() => handleDelete(u.id)} className="p-1.5 rounded-lg hover:bg-red-500/10 text-slate-400 hover:text-red-400"><Trash2 className="w-3.5 h-3.5" /></button>
                 </div>
               </div>
@@ -123,13 +123,14 @@ export default function Uniforms() {
                 {u.assigned_to_name && <span className="text-xs text-slate-400">→ {u.assigned_to_name}</span>}
               </div>
               {u.rank_requirement && <p className="text-xs text-slate-500 mt-2">Requires: {u.rank_requirement}</p>}
+              {u.serial_number && <p className="text-xs text-slate-500 mt-1">Serial: {u.serial_number}</p>}
             </div>
           ))}
         </div>
       )}
 
       <Dialog open={showForm} onOpenChange={setShowForm}>
-        <DialogContent className="bg-slate-900 border-slate-700 text-white max-w-md">
+        <DialogContent className="bg-slate-900 border-slate-700 text-white max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>{editing ? "Edit Uniform" : "Add Uniform"}</DialogTitle></DialogHeader>
           <div className="space-y-4 mt-4">
             <div>
@@ -169,11 +170,15 @@ export default function Uniforms() {
               <Select value={form.assigned_to_id} onValueChange={v => setForm({...form, assigned_to_id: v})}>
                 <SelectTrigger className="bg-slate-800 border-slate-700 text-white mt-1"><SelectValue placeholder="Unassigned" /></SelectTrigger>
                 <SelectContent className="bg-slate-800 border-slate-700">
-                  {members.filter(m => !form.department_id || m.department_id === form.department_id).map(m => (
+                  {members.map(m => (
                     <SelectItem key={m.id} value={m.id} className="text-white">{m.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+            <div>
+              <Label className="text-slate-300">Serial Number</Label>
+              <Input value={form.serial_number} onChange={e => setForm({...form, serial_number: e.target.value})} className="bg-slate-800 border-slate-700 text-white mt-1" placeholder="e.g. UN-2024-001" />
             </div>
             <div className="flex justify-end gap-3">
               <Button variant="ghost" onClick={() => setShowForm(false)} className="text-slate-400">Cancel</Button>
