@@ -13,7 +13,8 @@ import Register from '@/pages/Register';
 import ForgotPassword from '@/pages/ForgotPassword';
 import ResetPassword from '@/pages/ResetPassword';
 import AppLayout from '@/components/layout/AppLayout';
-import Hub from '@/pages/Hub';
+import CADLayout from '@/components/layout/CADLayout';
+import Landing from '@/pages/Landing';
 import Dashboard from '@/pages/Dashboard';
 import CAD from '@/pages/CAD';
 import Departments from '@/pages/Departments';
@@ -56,10 +57,12 @@ const AuthenticatedApp = () => {
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />}>
+        {/* Landing - no sidebar */}
+        <Route path="/" element={<Landing />} />
+
+        {/* Roster section */}
         <Route element={<AppLayout />}>
-          <Route path="/" element={<Hub />} />
           <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/cad" element={<CAD />} />
           <Route path="/loa" element={<LOACalendar />} />
           <Route path="/shifts" element={<Shifts />} />
           <Route path="/org-chart" element={<OrgChart />} />
@@ -74,6 +77,11 @@ const AuthenticatedApp = () => {
             <Route path="/discord-sync" element={<DiscordSync />} />
             <Route path="/settings" element={<Settings />} />
           </Route>
+        </Route>
+
+        {/* CAD section */}
+        <Route element={<CADLayout />}>
+          <Route path="/cad" element={<CAD />} />
         </Route>
       </Route>
       <Route path="*" element={<PageNotFound />} />

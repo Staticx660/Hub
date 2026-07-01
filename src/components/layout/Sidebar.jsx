@@ -18,8 +18,6 @@ const categoryIcons = {
 };
 
 const navItems = [
-{ label: "Home", path: "/", icon: Home },
-{ label: "CAD System", path: "/cad", icon: Radio },
 { label: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
 { label: "Departments", path: "/departments", icon: Shield, adminOnly: true },
 { label: "Roster", path: "/roster", icon: Users, adminOnly: true },
@@ -69,6 +67,13 @@ export default function Sidebar() {
       </div>
 
       <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
+        <Link
+          to="/"
+          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-700/40 transition-all mb-2 border-b border-slate-700/30 pb-3"
+        >
+          <Home className="w-4.5 h-4.5 flex-shrink-0" />
+          {!collapsed && <span>Back to Home</span>}
+        </Link>
         {visibleNavItems.map((item) => {
         const isActive = location.pathname === item.path;
         return (
