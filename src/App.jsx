@@ -13,7 +13,9 @@ import Register from '@/pages/Register';
 import ForgotPassword from '@/pages/ForgotPassword';
 import ResetPassword from '@/pages/ResetPassword';
 import AppLayout from '@/components/layout/AppLayout';
+import Hub from '@/pages/Hub';
 import Dashboard from '@/pages/Dashboard';
+import CAD from '@/pages/CAD';
 import Departments from '@/pages/Departments';
 import DepartmentDetail from '@/pages/DepartmentDetail';
 import Roster from '@/pages/Roster';
@@ -55,7 +57,9 @@ const AuthenticatedApp = () => {
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />}>
         <Route element={<AppLayout />}>
-          <Route path="/" element={<Dashboard />} />
+          <Route path="/" element={<Hub />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/cad" element={<CAD />} />
           <Route path="/loa" element={<LOACalendar />} />
           <Route path="/shifts" element={<Shifts />} />
           <Route path="/org-chart" element={<OrgChart />} />

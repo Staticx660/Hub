@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, Users, Clock, CalendarDays, Network, Award,
   FileText, Car, Shirt, Settings, ChevronLeft, ChevronRight,
-  Shield, Flame, HeartPulse, Landmark, Lock, Bike, LogOut, Menu, X, RefreshCw } from
+  Shield, Flame, HeartPulse, Landmark, Lock, Bike, LogOut, Menu, X, RefreshCw, Home, Radio } from
 "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
@@ -18,7 +18,9 @@ const categoryIcons = {
 };
 
 const navItems = [
-{ label: "Dashboard", path: "/", icon: LayoutDashboard },
+{ label: "Home", path: "/", icon: Home },
+{ label: "CAD System", path: "/cad", icon: Radio },
+{ label: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
 { label: "Departments", path: "/departments", icon: Shield, adminOnly: true },
 { label: "Roster", path: "/roster", icon: Users, adminOnly: true },
 { label: "Shifts", path: "/shifts", icon: Clock },
