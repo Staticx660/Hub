@@ -40,6 +40,7 @@ export default function Roster() {
     notes: "", phone_number: "", status: "Active", slot_status: "Filled",
     is_admin: false,
     additional_department_ids: [],
+    supervisor_id: "",
   });
   const { toast } = useToast();
 
@@ -63,6 +64,7 @@ export default function Roster() {
       notes: "", phone_number: "", status: "Active", slot_status: "Filled",
       is_admin: false,
       additional_department_ids: [],
+      supervisor_id: "",
     });
   };
 
@@ -130,6 +132,7 @@ export default function Roster() {
       slot_status: member.slot_status || "Filled",
       is_admin: member.is_admin || false,
       additional_department_ids: member.additional_department_ids || [],
+      supervisor_id: member.supervisor_id || "",
     });
     setShowForm(true);
   };
@@ -354,8 +357,20 @@ export default function Roster() {
                 <Label className="text-slate-300">Callsign</Label>
                 <Input value={form.callsign} onChange={e => setForm({...form, callsign: e.target.value})} className="bg-slate-800 border-slate-700 text-white mt-1" placeholder="e.g. 1-Adam-12" />
               </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label className="text-slate-300">Supervisor</Label>
+                <Select value={form.supervisor_id} onValueChange={v => setForm({...form, supervisor_id: v})}>
+                  <SelectTrigger className="bg-slate-800 border-slate-700 text-white mt-1"><SelectValue placeholder="None" /></SelectTrigger>
+                  <SelectContent className="bg-slate-800 border-slate-700">
+                    <SelectItem value={null} className="text-white">None</SelectItem>
+                    {members.filter(m => m.id !== editing?.id).map(m => (
+                      <SelectItem key={m.id} value={m.id} className="text-white">{m.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label className="text-slate-300">Status</Label>
                 <Select value={form.status} onValueChange={v => setForm({...form, status: v})}>
