@@ -184,20 +184,19 @@ export default function Uniforms() {
             </div>
             <div>
               <Label className="text-slate-300">vMenu Codes</Label>
-              <div className="space-y-2 mt-1">
-                {form.vmenu_codes.map((c, i) => (
-                  <div key={i} className="flex gap-2 items-center">
-                    <Input readOnly value={c.label} className="bg-slate-700 border-slate-700 text-slate-300 text-sm" />
-                    <Input readOnly value={c.code} className="bg-slate-700 border-slate-700 text-slate-300 text-sm" />
-                    <button type="button" onClick={() => setForm({...form, vmenu_codes: form.vmenu_codes.filter((_, idx) => idx !== i)})} className="text-red-400 hover:text-red-300 text-sm">Remove</button>
+              <div className="space-y-2 mt-2">
+                {form.vmenu_codes.length > 0 && form.vmenu_codes.map((c, i) => (
+                  <div key={i} className="flex gap-2 items-center bg-slate-700/50 p-2 rounded">
+                    <span className="flex-1 text-sm text-slate-300">{c.label}: {c.code}</span>
+                    <button type="button" onClick={() => setForm({...form, vmenu_codes: form.vmenu_codes.filter((_, idx) => idx !== i)})} className="text-xs text-red-400 hover:text-red-300">Remove</button>
                   </div>
                 ))}
               </div>
-              <div className="flex gap-2 mt-2">
-                <Input value={newCode.label} onChange={e => setNewCode({...newCode, label: e.target.value})} className="bg-slate-800 border-slate-700 text-white mt-1 text-sm" placeholder="e.g. Hand" />
-                <Input value={newCode.code} onChange={e => setNewCode({...newCode, code: e.target.value})} className="bg-slate-800 border-slate-700 text-white mt-1 text-sm" placeholder="Code" />
-                <button type="button" onClick={() => { if (newCode.label && newCode.code) { setForm({...form, vmenu_codes: [...form.vmenu_codes, newCode]}); setNewCode({label: "", code: ""}); } }} className="px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded mt-1">Add</button>
+              <div className="grid grid-cols-2 gap-2 mt-2">
+                <Input value={newCode.label} onChange={e => setNewCode({...newCode, label: e.target.value})} className="bg-slate-800 border-slate-700 text-white text-sm" placeholder="Label (e.g. Hand)" />
+                <Input value={newCode.code} onChange={e => setNewCode({...newCode, code: e.target.value})} className="bg-slate-800 border-slate-700 text-white text-sm" placeholder="Code" />
               </div>
+              <Button type="button" onClick={() => { if (newCode.label && newCode.code) { setForm({...form, vmenu_codes: [...form.vmenu_codes, newCode]}); setNewCode({label: "", code: ""}); } }} disabled={!newCode.label || !newCode.code} className="w-full mt-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50">Add Code</Button>
             </div>
             <div className="flex justify-end gap-3">
               <Button variant="ghost" onClick={() => setShowForm(false)} className="text-slate-400">Cancel</Button>
