@@ -198,9 +198,9 @@ export default function Uniforms() {
               </div>
               <Button type="button" onClick={() => { if (newCode.label && newCode.code) { setForm({...form, vmenu_codes: [...form.vmenu_codes, newCode]}); setNewCode({label: "", code: ""}); } }} disabled={!newCode.label || !newCode.code} className="w-full mt-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50">Add Code</Button>
             </div>
-            <div className="flex justify-end gap-3">
+            <div className="flex justify-end gap-3 pt-2 border-t border-slate-700">
               <Button variant="ghost" onClick={() => setShowForm(false)} className="text-slate-400">Cancel</Button>
-              <Button onClick={handleSave} disabled={!form.name} className="bg-blue-600 hover:bg-blue-700">{editing ? "Update" : "Add"}</Button>
+              <Button onClick={handleSave} disabled={!form.name || !form.department_id} className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50">{editing ? "Update" : "Add"}</Button>
             </div>
           </div>
         </DialogContent>
