@@ -32,8 +32,19 @@
     "assigned_to_name": {
       "type": "string"
     },
-    "serial_number": {
-      "type": "string"
+    "vmenu_codes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          }
+        }
+      }
     }
   },
   "required": [
