@@ -57,7 +57,7 @@ export default function OrgChart() {
       </div>
 
       {filteredDepts.map((dept) => {
-        const deptMembers = members.filter(m => m.department_id === dept.id);
+        const deptMembers = members.filter(m => m.department_id === dept.id || (m.additional_department_ids || []).includes(dept.id));
         const ranks = (dept.ranks || []).sort((a, b) => b.level - a.level);
 
         return (
