@@ -46,7 +46,7 @@ export default function CADDepartmentDetail() {
 
   return (
     <div>
-      <Link to="/cad/departments" className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-white transition-colors mb-4">
+      <Link to="/cad" className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-white transition-colors mb-4">
         <ArrowLeft className="w-4 h-4" /> Back to Departments
       </Link>
 

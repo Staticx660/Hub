@@ -7,8 +7,7 @@ import {
 import { base44 } from "@/api/base44Client";
 
 const navItems = [
-  { label: "Dispatch", path: "/cad", icon: Radio },
-  { label: "Departments", path: "/cad/departments", icon: Building2 },
+  { label: "Departments", path: "/cad", icon: Building2 },
   { label: "Reports", path: "/cad/reports", icon: FileText },
   { label: "Admin Panel", path: "/cad/admin", icon: Shield, adminOnly: true },
 ];
@@ -27,7 +26,7 @@ export default function CADSidebar() {
   };
 
   const isActive = (path) => {
-    if (path === "/cad") return location.pathname === "/cad";
+    if (path === "/cad") return location.pathname === "/cad" || location.pathname.startsWith("/cad/departments");
     return location.pathname.startsWith(path);
   };
 

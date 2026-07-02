@@ -84,8 +84,8 @@ const AuthenticatedApp = () => {
 
         {/* CAD section */}
         <Route element={<CADLayout />}>
-          <Route path="/cad" element={<CAD />} />
-          <Route path="/cad/departments" element={<CADDepartments />} />
+          <Route path="/cad" element={<CADDepartments />} />
+          <Route path="/cad/dispatch" element={<CAD />} />
           <Route path="/cad/departments/:id" element={<CADDepartmentDetail />} />
           <Route path="/cad/reports" element={<CADReports />} />
           <Route element={<AdminRoute />}>
