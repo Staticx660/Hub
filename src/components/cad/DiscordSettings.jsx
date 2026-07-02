@@ -43,16 +43,27 @@ export default function DiscordSettings() {
   const syncPersonnel = async () => {
     setSyncingPersonnel(true);
     try {
-      const [members, personnel, departments] = await Promise.all([
+      const [members, personnel, cadDepartments, rosterDepartments] = await Promise.all([
         base44.entities.RosterMember.list(),
         base44.entities.CADPersonnel.list(),
         base44.entities.CADDepartment.list(),
+        base44.entities.Department.list(),
       ]);
-      let added = 0, updated = 0;
+
+      // Build mapping: roster Department ID → CADDepartment ID (matched by discord_role_id)
+      const rosterToCadDept = {};
+      for (const rDept of rosterDepartments) {
+        if (!rDept.discord_role_id) continue;
+        const cadDept = cadDepartments.find(c => c.discord_role_id === rDept.discord_role_id);
+        if (cadDept) rosterToCadDept[rDept.id] = cadDept.id;
+      }
+
+      let added = 0, updated = 0, skipped = 0;
       for (const member of members) {
-        const dept = departments.find(d => d.id === member.department_id);
-        if (!dept) continue;
-        const existing = personnel.find(p => p.name === member.name && p.department_id === member.department_id);
+        const cadDeptId = rosterToCadDept[member.department_id];
+        if (!cadDeptId) { skipped++; continue; }
+
+        const existing = personnel.find(p => p.name === member.name && p.department_id === cadDeptId);
         if (existing) {
           const updates = {};
           if (existing.rank !== (member.rank || "")) updates.rank = member.rank || "";
@@ -61,14 +72,14 @@ export default function DiscordSettings() {
           if (Object.keys(updates).length > 0) { await base44.entities.CADPersonnel.update(existing.id, updates); updated++; }
         } else {
           await base44.entities.CADPersonnel.create({
-            name: member.name, department_id: member.department_id, rank: member.rank || "",
+            name: member.name, department_id: cadDeptId, rank: member.rank || "",
             badge_number: member.badge_number || "", callsign: member.callsign || "", status: "Off Duty",
           });
           added++;
         }
       }
-      setPersonnelReport({ added, updated, total: members.length });
-      toast({ title: "Personnel synced", description: `${added} added, ${updated} updated` });
+      setPersonnelReport({ added, updated, skipped, total: members.length });
+      toast({ title: "Personnel synced", description: `${added} added, ${updated} updated${skipped > 0 ? `, ${skipped} skipped (no CAD dept match)` : ""}` });
     } catch (e) { toast({ title: "Sync failed", description: e.message, variant: "destructive" }); }
     setSyncingPersonnel(false);
   };
@@ -126,7 +137,7 @@ export default function DiscordSettings() {
         <div className="flex items-center justify-between mb-2">
           <div>
             <h3 className="text-white font-medium flex items-center gap-2"><Users className="w-4 h-4 text-blue-400" /> Sync CAD Personnel from Roster</h3>
-            <p className="text-sm text-slate-400">Creates/updates CAD personnel records from the Roster</p>
+            <p className="text-sm text-slate-400">Creates/updates CAD personnel records from the Roster. Roster departments are matched to CAD departments by their Discord Role ID — make sure both have the same role ID set.</p>
           </div>
           <Button onClick={syncPersonnel} disabled={syncingPersonnel} className="bg-blue-600 hover:bg-blue-700 gap-2">
             {syncingPersonnel ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />} Sync
@@ -135,7 +146,7 @@ export default function DiscordSettings() {
         {personnelReport && (
           <div className="mt-3 text-sm text-slate-400 bg-slate-800/50 rounded-lg p-3">
             <CheckCircle2 className="w-4 h-4 inline mr-1 text-green-400" />
-            Added: {personnelReport.added} · Updated: {personnelReport.updated} · Total roster members: {personnelReport.total}
+            Added: {personnelReport.added} · Updated: {personnelReport.updated} · Skipped: {personnelReport.skipped || 0} · Total roster members: {personnelReport.total}
           </div>
         )}
       </div>
