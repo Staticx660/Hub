@@ -16,7 +16,7 @@ const colorOptions = [
   { name: "Purple", value: "#a855f7" }, { name: "Cyan", value: "#06b6d4" },
   { name: "Orange", value: "#f97316" },
 ];
-const emptyForm = { name: "", category: "Police", description: "", color: "#3b82f6", discord_webhook_url: "", discord_server_id: "", discord_role_id: "" };
+const emptyForm = { name: "", category: "Police", description: "", color: "#3b82f6", discord_webhook_url: "", discord_server_id: "", discord_role_id: "", discord_supervisor_role_id: "" };
 
 export default function DepartmentsManager() {
   const [departments, setDepartments] = useState([]);
@@ -49,7 +49,7 @@ export default function DepartmentsManager() {
     catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
   };
 
-  const openEdit = (d) => { setEditing(d); setForm({ name: d.name, category: d.category, description: d.description || "", color: d.color || "#3b82f6", discord_webhook_url: d.discord_webhook_url || "", discord_server_id: d.discord_server_id || "", discord_role_id: d.discord_role_id || "" }); setDialogOpen(true); };
+  const openEdit = (d) => { setEditing(d); setForm({ name: d.name, category: d.category, description: d.description || "", color: d.color || "#3b82f6", discord_webhook_url: d.discord_webhook_url || "", discord_server_id: d.discord_server_id || "", discord_role_id: d.discord_role_id || "", discord_supervisor_role_id: d.discord_supervisor_role_id || "" }); setDialogOpen(true); };
   const openCreate = () => { setEditing(null); setForm(emptyForm); setDialogOpen(true); };
 
   if (loading) return <div className="flex justify-center py-8"><div className="w-6 h-6 border-2 border-slate-700 border-t-cyan-500 rounded-full animate-spin" /></div>;
@@ -75,6 +75,16 @@ export default function DepartmentsManager() {
             </div>
             <span className="inline-block text-xs px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 mb-2">{d.category}</span>
             {d.description && <p className="text-sm text-slate-400">{d.description}</p>}
+            <div className="flex items-center gap-1.5 flex-wrap mt-2">
+              {d.discord_role_id ? (
+                <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">Discord Locked</span>
+              ) : (
+                <span className="text-xs px-2 py-0.5 rounded-full bg-slate-700/50 text-slate-400">Open Access</span>
+              )}
+              {d.discord_supervisor_role_id && (
+                <span className="text-xs px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20">Supervisor Role</span>
+              )}
+            </div>
           </div>
         ))}
       </div>
@@ -103,7 +113,8 @@ export default function DepartmentsManager() {
               <div className="space-y-3">
                 <div><Label className="text-slate-300">Webhook URL</Label><Input value={form.discord_webhook_url} onChange={e => setForm({ ...form, discord_webhook_url: e.target.value })} className="bg-slate-800 border-slate-700 text-white" placeholder="https://discord.com/api/webhooks/..." /></div>
                 <div><Label className="text-slate-300">Server ID</Label><Input value={form.discord_server_id} onChange={e => setForm({ ...form, discord_server_id: e.target.value })} className="bg-slate-800 border-slate-700 text-white" placeholder="Guild ID" /></div>
-                <div><Label className="text-slate-300">Role ID</Label><Input value={form.discord_role_id} onChange={e => setForm({ ...form, discord_role_id: e.target.value })} className="bg-slate-800 border-slate-700 text-white" placeholder="Role ID for pings" /></div>
+                <div><Label className="text-slate-300">Role ID</Label><Input value={form.discord_role_id} onChange={e => setForm({ ...form, discord_role_id: e.target.value })} className="bg-slate-800 border-slate-700 text-white" placeholder="Role ID for member access" /></div>
+                <div><Label className="text-slate-300">Supervisor Role ID</Label><Input value={form.discord_supervisor_role_id} onChange={e => setForm({ ...form, discord_supervisor_role_id: e.target.value })} className="bg-slate-800 border-slate-700 text-white" placeholder="Role ID for supervisor access" /></div>
               </div>
             </div>
           </div>

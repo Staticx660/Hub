@@ -10,7 +10,7 @@ const statusOptions = [
   { value: "Unavailable", color: "text-gray-400", bg: "bg-gray-500/15", dot: "bg-gray-400" },
 ];
 
-export default function Taskbar({ activeView, setActiveView, session, onStatusChange, onPanic, onClockOut }) {
+export default function Taskbar({ activeView, setActiveView, session, onStatusChange, onPanic, onClockOut, onOpenKeybinds }) {
   const [logoMenu, setLogoMenu] = useState(false);
   const [statusMenu, setStatusMenu] = useState(false);
   const logoRef = useRef(null);
@@ -43,7 +43,7 @@ export default function Taskbar({ activeView, setActiveView, session, onStatusCh
       case "fullscreen": document.documentElement.requestFullscreen?.(); break;
       case "home": navigate("/"); break;
       case "account": navigate("/settings"); break;
-      case "keybinds": break;
+      case "keybinds": onOpenKeybinds?.(); break;
       case "logout": base44.auth.logout("/login"); break;
     }
   };

@@ -9,7 +9,16 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { useToast } from "@/components/ui/use-toast";
 import { FileText, FolderOpen, Pencil, AlertTriangle, Eye, Plus, Shield, ClipboardList, Siren, Clock } from "lucide-react";
 
-const reportTypes = ["Incident", "Traffic Stop", "Field Contact", "Arrest", "Medical", "Fire", "Vehicle Accident", "Use of Force", "Evidence", "Other"];
+const ALL_REPORT_TYPES = ["Incident", "Traffic Stop", "Field Contact", "Arrest", "Medical", "Fire", "Vehicle Accident", "Use of Force", "Evidence", "Other"];
+const REPORT_TYPES_BY_CATEGORY = {
+  Police: ["Incident", "Traffic Stop", "Field Contact", "Arrest", "Vehicle Accident", "Use of Force", "Evidence", "Other"],
+  Fire: ["Fire", "Vehicle Accident", "Other"],
+  EMS: ["Medical", "Vehicle Accident", "Other"],
+  Dispatch: ["Incident", "Traffic Stop", "Other"],
+  Civilian: ["Other"],
+  "Private Security": ["Incident", "Field Contact", "Other"],
+  Other: ALL_REPORT_TYPES,
+};
 
 export default function RecordsPanel({ department, session }) {
   const [tab, setTab] = useState("myfiles");
@@ -43,6 +52,7 @@ export default function RecordsPanel({ department, session }) {
   const myReports = reports.filter((r) => r.filed_by_id === session.user_id);
   const myDrafts = myReports.filter((r) => r.status === "Draft");
   const isSupervisor = session.rank?.toLowerCase().match(/sergeant|lieutenant|captain|chief|supervisor|commander|sheriff/);
+  const reportTypes = REPORT_TYPES_BY_CATEGORY[department.category] || ALL_REPORT_TYPES;
 
   const tabs = [
     { id: "myfiles", label: "My Files", icon: FolderOpen, count: myReports.length },
@@ -83,7 +93,7 @@ export default function RecordsPanel({ department, session }) {
         <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 px-2">Records</h3>
         <div className="space-y-1">
           {visibleTabs.map((t) => (
-            <button key={t.id} onClick={() => { setTab(t.id); setSelected(null); if (t.id === "new") setDialogOpen(true); }} className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${tab === t.id ? "bg-blue-500/15 text-blue-400" : "text-slate-400 hover:bg-slate-800"}`}>
+            <button key={t.id} onClick={() => { setTab(t.id); setSelected(null); if (t.id === "new") { const types = REPORT_TYPES_BY_CATEGORY[department.category] || ALL_REPORT_TYPES; setReportForm({ title: "", report_type: types[0], description: "", location: "" }); setDialogOpen(true); } }} className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${tab === t.id ? "bg-blue-500/15 text-blue-400" : "text-slate-400 hover:bg-slate-800"}`}>
               <span className="flex items-center gap-2"><t.icon className="w-4 h-4" /> {t.label}</span>
               {t.count !== undefined && <span className="text-xs text-slate-500">{t.count}</span>}
             </button>

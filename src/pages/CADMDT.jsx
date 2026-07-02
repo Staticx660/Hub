@@ -4,7 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
-import { Clock } from "lucide-react";
+import { Clock, Lock } from "lucide-react";
 import Taskbar from "@/components/cad/mdt/Taskbar";
 import LookupPanel from "@/components/cad/mdt/LookupPanel";
 import RecordsPanel from "@/components/cad/mdt/RecordsPanel";
@@ -12,6 +12,8 @@ import DispatchView from "@/components/cad/mdt/DispatchView";
 import MyCallView from "@/components/cad/mdt/MyCallView";
 import GroupsView from "@/components/cad/mdt/GroupsView";
 import ClockInDialog from "@/components/cad/mdt/ClockInDialog";
+import KeybindsDialog from "@/components/cad/mdt/KeybindsDialog";
+import { useKeybinds, loadKeybinds } from "@/hooks/useKeybinds";
 import { startPanicSound, stopPanicSound } from "@/components/cad/mdt/panicSound";
 
 const OCRP_LOGO = "https://media.base44.com/images/public/6a441f279b9d3cd678958799/5a43a1b46_OCRP20.png";
@@ -26,12 +28,22 @@ export default function CADMDT() {
   const [activeView, setActiveView] = useState("dispatch");
   const [selectedCallId, setSelectedCallId] = useState(null);
   const [clockInOpen, setClockInOpen] = useState(false);
+  const [accessDenied, setAccessDenied] = useState(false);
+  const [keybinds, setKeybinds] = useState(loadKeybinds());
+  const [keybindsOpen, setKeybindsOpen] = useState(false);
 
   useEffect(() => {
     const init = async () => {
       try {
         const dept = await base44.entities.CADDepartment.get(deptId);
         setDepartment(dept);
+        const accessRes = await base44.functions.invoke('getUserCADDepartments', {});
+        const deptAccess = accessRes.data.departments.find(d => d.id === deptId);
+        if (deptAccess && !deptAccess.hasAccess) {
+          setAccessDenied(true);
+          setLoading(false);
+          return;
+        }
         const sessions = await base44.entities.CADSession.filter({ user_id: user.id, department_id: deptId, is_active: true });
         if (sessions.length > 0) setSession(sessions[0]);
       } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
@@ -109,7 +121,28 @@ export default function CADMDT() {
     } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
   };
 
+  useKeybinds(keybinds, {
+    view_dispatch: () => setActiveView("dispatch"),
+    view_lookups: () => setActiveView("lookups"),
+    view_records: () => setActiveView("records"),
+    view_mycall: () => setActiveView("mycall"),
+    view_groups: () => setActiveView("groups"),
+    status_available: () => session && handleStatusChange("Available"),
+    status_busy: () => session && handleStatusChange("Busy"),
+    status_oncall: () => session && handleStatusChange("On Call"),
+    status_unavailable: () => session && handleStatusChange("Unavailable"),
+    panic: () => session && handlePanic(),
+  });
+
   if (loading) return <div className="flex justify-center items-center h-screen bg-slate-950"><div className="w-8 h-8 border-4 border-slate-700 border-t-blue-500 rounded-full animate-spin" /></div>;
+  if (accessDenied) return (
+    <div className="flex flex-col items-center justify-center h-screen bg-slate-950 gap-4">
+      <Lock className="w-16 h-16 text-slate-600" />
+      <h1 className="text-2xl font-bold text-white">Access Denied</h1>
+      <p className="text-slate-400">You don't have the Discord role required for this department.</p>
+      <Button onClick={() => window.history.back()} variant="outline" className="border-slate-700 text-slate-300">Go Back</Button>
+    </div>
+  );
   if (!department) return <div className="flex justify-center items-center h-screen bg-slate-950 text-slate-400">Department not found</div>;
 
   if (!session) {
@@ -137,7 +170,8 @@ export default function CADMDT() {
         {activeView === "mycall" && <MyCallView department={department} session={session} setSession={setSession} selectedCallId={selectedCallId} setSelectedCallId={setSelectedCallId} setActiveView={setActiveView} />}
         {activeView === "groups" && <GroupsView department={department} session={session} />}
       </div>
-      <Taskbar activeView={activeView} setActiveView={setActiveView} session={session} onStatusChange={handleStatusChange} onPanic={handlePanic} onClockOut={handleClockOut} />
+      <Taskbar activeView={activeView} setActiveView={setActiveView} session={session} onStatusChange={handleStatusChange} onPanic={handlePanic} onClockOut={handleClockOut} onOpenKeybinds={() => setKeybindsOpen(true)} />
+      <KeybindsDialog open={keybindsOpen} onOpenChange={setKeybindsOpen} keybinds={keybinds} setKeybinds={setKeybinds} />
     </div>
   );
 }
