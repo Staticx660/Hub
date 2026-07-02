@@ -1,0 +1,56 @@
+{
+  "name": "CivilianVehicle",
+  "type": "object",
+  "properties": {
+    "plate": {
+      "type": "string"
+    },
+    "model": {
+      "type": "string"
+    },
+    "color": {
+      "type": "string"
+    },
+    "owner_name": {
+      "type": "string"
+    },
+    "owner_id": {
+      "type": "string"
+    },
+    "registration_status": {
+      "type": "string",
+      "enum": [
+        "Valid",
+        "Expired",
+        "Suspended",
+        "None"
+      ],
+      "default": "Valid"
+    },
+    "insurance_status": {
+      "type": "string",
+      "enum": [
+        "Valid",
+        "Expired",
+        "None"
+      ],
+      "default": "Valid"
+    },
+    "is_stolen": {
+      "type": "boolean",
+      "default": false
+    },
+    "notes": {
+      "type": "string"
+    },
+    "department_id": {
+      "type": "string"
+    },
+    "created_by_name": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "plate"
+  ]
+}

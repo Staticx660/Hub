@@ -46,6 +46,30 @@
     },
     "notes": {
       "type": "string"
+    },
+    "run_number": {
+      "type": "string"
+    },
+    "cad_notes": {
+      "type": "string"
+    },
+    "assignment_log": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "unit_name": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      }
     }
   },
   "required": [

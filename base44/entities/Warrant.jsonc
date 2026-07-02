@@ -1,0 +1,54 @@
+{
+  "name": "Warrant",
+  "type": "object",
+  "properties": {
+    "person_name": {
+      "type": "string"
+    },
+    "person_id": {
+      "type": "string"
+    },
+    "reason": {
+      "type": "string"
+    },
+    "charges": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "issued_date": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Active",
+        "Served",
+        "Expired",
+        "Cleared"
+      ],
+      "default": "Active"
+    },
+    "department_id": {
+      "type": "string"
+    },
+    "issued_by_name": {
+      "type": "string"
+    },
+    "issued_by_id": {
+      "type": "string"
+    },
+    "bail_amount": {
+      "type": "number"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "person_name",
+    "reason"
+  ]
+}

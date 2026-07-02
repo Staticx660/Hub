@@ -1,0 +1,92 @@
+{
+  "name": "Civilian",
+  "type": "object",
+  "properties": {
+    "first_name": {
+      "type": "string"
+    },
+    "last_name": {
+      "type": "string"
+    },
+    "dob": {
+      "type": "string",
+      "format": "date"
+    },
+    "gender": {
+      "type": "string",
+      "enum": [
+        "Male",
+        "Female",
+        "Other"
+      ]
+    },
+    "address": {
+      "type": "string"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "photo_url": {
+      "type": "string"
+    },
+    "drivers_license_number": {
+      "type": "string"
+    },
+    "drivers_license_status": {
+      "type": "string",
+      "enum": [
+        "Valid",
+        "Suspended",
+        "Revoked",
+        "None"
+      ],
+      "default": "Valid"
+    },
+    "pilot_license_status": {
+      "type": "string",
+      "enum": [
+        "Valid",
+        "Suspended",
+        "Revoked",
+        "None"
+      ],
+      "default": "None"
+    },
+    "weapon_license_status": {
+      "type": "string",
+      "enum": [
+        "Valid",
+        "Suspended",
+        "Revoked",
+        "None"
+      ],
+      "default": "None"
+    },
+    "hunting_license_status": {
+      "type": "string",
+      "enum": [
+        "Valid",
+        "Suspended",
+        "Revoked",
+        "None"
+      ],
+      "default": "None"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "department_id": {
+      "type": "string"
+    },
+    "created_by_name": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "first_name",
+    "last_name"
+  ]
+}

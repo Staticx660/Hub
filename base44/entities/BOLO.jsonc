@@ -1,0 +1,60 @@
+{
+  "name": "BOLO",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "bolo_type": {
+      "type": "string",
+      "enum": [
+        "Person",
+        "Vehicle",
+        "Firearm",
+        "Other"
+      ]
+    },
+    "person_name": {
+      "type": "string"
+    },
+    "vehicle_plate": {
+      "type": "string"
+    },
+    "vehicle_description": {
+      "type": "string"
+    },
+    "last_seen_location": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Active",
+        "Resolved"
+      ],
+      "default": "Active"
+    },
+    "department_id": {
+      "type": "string"
+    },
+    "created_by_name": {
+      "type": "string"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "High",
+        "Medium",
+        "Low"
+      ],
+      "default": "Medium"
+    }
+  },
+  "required": [
+    "title",
+    "description"
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "name": "Firearm",
+  "type": "object",
+  "properties": {
+    "serial_number": {
+      "type": "string"
+    },
+    "model": {
+      "type": "string"
+    },
+    "caliber": {
+      "type": "string"
+    },
+    "manufacturer": {
+      "type": "string"
+    },
+    "owner_name": {
+      "type": "string"
+    },
+    "owner_id": {
+      "type": "string"
+    },
+    "is_registered": {
+      "type": "boolean",
+      "default": true
+    },
+    "is_stolen": {
+      "type": "boolean",
+      "default": false
+    },
+    "notes": {
+      "type": "string"
+    },
+    "department_id": {
+      "type": "string"
+    },
+    "created_by_name": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "serial_number"
+  ]
+}

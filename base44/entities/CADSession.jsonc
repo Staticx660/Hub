@@ -1,0 +1,65 @@
+{
+  "name": "CADSession",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "user_name": {
+      "type": "string"
+    },
+    "department_id": {
+      "type": "string"
+    },
+    "department_name": {
+      "type": "string"
+    },
+    "roster_member_id": {
+      "type": "string"
+    },
+    "callsign": {
+      "type": "string"
+    },
+    "rank": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Available",
+        "Busy",
+        "On Call",
+        "Unavailable",
+        "Panic"
+      ],
+      "default": "Available"
+    },
+    "active_call_id": {
+      "type": "string"
+    },
+    "login_time": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "logout_time": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "panic_active": {
+      "type": "boolean",
+      "default": false
+    },
+    "shift_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "user_id",
+    "user_name",
+    "department_id"
+  ]
+}

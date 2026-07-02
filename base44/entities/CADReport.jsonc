@@ -15,6 +15,8 @@
         "Medical",
         "Fire",
         "Vehicle Accident",
+        "Use of Force",
+        "Evidence",
         "Other"
       ]
     },
@@ -45,6 +47,9 @@
         "Approved"
       ],
       "default": "Filed"
+    },
+    "run_number": {
+      "type": "string"
     }
   },
   "required": [

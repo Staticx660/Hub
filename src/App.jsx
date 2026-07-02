@@ -19,6 +19,7 @@ import Dashboard from '@/pages/Dashboard';
 import CAD from '@/pages/CAD';
 import CADDepartments from '@/pages/CADDepartments';
 import CADDepartmentDetail from '@/pages/CADDepartmentDetail';
+import CADMDT from '@/pages/CADMDT';
 import CADReports from '@/pages/CADReports';
 import CADAdmin from '@/pages/CADAdmin';
 import Departments from '@/pages/Departments';
@@ -87,6 +88,7 @@ const AuthenticatedApp = () => {
           <Route path="/cad" element={<CADDepartments />} />
           <Route path="/cad/dispatch" element={<CAD />} />
           <Route path="/cad/departments/:id" element={<CADDepartmentDetail />} />
+          <Route path="/cad/mdt/:deptId" element={<CADMDT />} />
           <Route path="/cad/reports" element={<CADReports />} />
           <Route element={<AdminRoute />}>
             <Route path="/cad/admin" element={<CADAdmin />} />
