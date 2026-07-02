@@ -75,13 +75,17 @@ const AuthenticatedApp = () => {
             <Route path="/departments/:id" element={<DepartmentDetail />} />
             <Route path="/roster" element={<Roster />} />
             <Route path="/discord-sync" element={<DiscordSync />} />
-            <Route path="/settings" element={<Settings />} />
           </Route>
         </Route>
 
         {/* CAD section */}
         <Route element={<CADLayout />}>
           <Route path="/cad" element={<CAD />} />
+        </Route>
+
+        {/* Standalone admin pages */}
+        <Route element={<AdminRoute />}>
+          <Route path="/settings" element={<Settings />} />
         </Route>
       </Route>
       <Route path="*" element={<PageNotFound />} />

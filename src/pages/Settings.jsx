@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { Settings as SettingsIcon, Users, Shield, Plus, Trash2, UserPlus } from "lucide-react";
+import { Settings as SettingsIcon, Users, Shield, Plus, Trash2, UserPlus, ArrowLeft } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -48,11 +49,17 @@ export default function Settings() {
   }
 
   return (
-    <div className="space-y-8 max-w-2xl">
-      <div>
-        <h1 className="text-2xl font-bold text-white">Settings</h1>
-        <p className="text-sm text-slate-400 mt-1">Manage your account and invite team members</p>
-      </div>
+    <div className="min-h-screen bg-slate-950">
+      <div className="max-w-2xl mx-auto p-6 lg:p-8">
+        <Link to="/" className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-white transition-colors mb-6">
+          <ArrowLeft className="w-4 h-4" />
+          Back to Home
+        </Link>
+        <div className="space-y-8">
+          <div>
+            <h1 className="text-2xl font-bold text-white">Settings</h1>
+            <p className="text-sm text-slate-400 mt-1">Manage your account and invite team members</p>
+          </div>
 
       {/* Current User */}
       <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-6">
@@ -117,6 +124,8 @@ export default function Settings() {
         <p className="text-sm text-slate-400">
           Steps: Open Discord → Server Settings → Integrations → Webhooks → New Webhook → Copy URL → Paste in department settings.
         </p>
+      </div>
+        </div>
       </div>
     </div>
   );
