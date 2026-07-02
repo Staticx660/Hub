@@ -43,43 +43,14 @@ export default function DiscordSettings() {
   const syncPersonnel = async () => {
     setSyncingPersonnel(true);
     try {
-      const [members, personnel, cadDepartments, rosterDepartments] = await Promise.all([
-        base44.entities.RosterMember.list(),
-        base44.entities.CADPersonnel.list(),
-        base44.entities.CADDepartment.list(),
-        base44.entities.Department.list(),
-      ]);
-
-      // Build mapping: roster Department ID → CADDepartment ID (matched by discord_role_id)
-      const rosterToCadDept = {};
-      for (const rDept of rosterDepartments) {
-        if (!rDept.discord_role_id) continue;
-        const cadDept = cadDepartments.find(c => c.discord_role_id === rDept.discord_role_id);
-        if (cadDept) rosterToCadDept[rDept.id] = cadDept.id;
+      const res = await base44.functions.invoke('syncCADPersonnel', {});
+      if (res.data.error) {
+        toast({ title: "Sync failed", description: res.data.error, variant: "destructive" });
+      } else {
+        const report = res.data.report;
+        setPersonnelReport(report);
+        toast({ title: "Personnel synced", description: `${report.added} added, ${report.updated} updated${report.skipped > 0 ? `, ${report.skipped} skipped` : ""}` });
       }
-
-      let added = 0, updated = 0, skipped = 0;
-      for (const member of members) {
-        const cadDeptId = rosterToCadDept[member.department_id];
-        if (!cadDeptId) { skipped++; continue; }
-
-        const existing = personnel.find(p => p.name === member.name && p.department_id === cadDeptId);
-        if (existing) {
-          const updates = {};
-          if (existing.rank !== (member.rank || "")) updates.rank = member.rank || "";
-          if (existing.callsign !== (member.callsign || "")) updates.callsign = member.callsign || "";
-          if (existing.badge_number !== (member.badge_number || "")) updates.badge_number = member.badge_number || "";
-          if (Object.keys(updates).length > 0) { await base44.entities.CADPersonnel.update(existing.id, updates); updated++; }
-        } else {
-          await base44.entities.CADPersonnel.create({
-            name: member.name, department_id: cadDeptId, rank: member.rank || "",
-            badge_number: member.badge_number || "", callsign: member.callsign || "", status: "Off Duty",
-          });
-          added++;
-        }
-      }
-      setPersonnelReport({ added, updated, skipped, total: members.length });
-      toast({ title: "Personnel synced", description: `${added} added, ${updated} updated${skipped > 0 ? `, ${skipped} skipped (no CAD dept match)` : ""}` });
     } catch (e) { toast({ title: "Sync failed", description: e.message, variant: "destructive" }); }
     setSyncingPersonnel(false);
   };

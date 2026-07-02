@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Plus, Pencil, Trash2, Users } from "lucide-react";
+import { Plus, Pencil, Trash2, Users, RefreshCw, Loader2, CheckCircle2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
 const statusColors = { "Available": "bg-green-500/15 text-green-400", "On Duty": "bg-blue-500/15 text-blue-400", "Off Duty": "bg-slate-700 text-slate-400" };
@@ -19,6 +19,8 @@ export default function PersonnelManager() {
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(emptyForm);
   const [filterDept, setFilterDept] = useState("all");
+  const [syncing, setSyncing] = useState(false);
+  const [syncReport, setSyncReport] = useState(null);
   const { toast } = useToast();
 
   const load = async () => {
@@ -52,6 +54,23 @@ export default function PersonnelManager() {
   const openEdit = (p) => { setEditing(p); setForm({ ...emptyForm, ...p }); setDialogOpen(true); };
   const openCreate = () => { setEditing(null); setForm({ ...emptyForm, department_id: departments[0]?.id || "" }); setDialogOpen(true); };
 
+  const handleSync = async () => {
+    setSyncing(true);
+    setSyncReport(null);
+    try {
+      const res = await base44.functions.invoke('syncCADPersonnel', {});
+      if (res.data.error) {
+        toast({ title: "Sync failed", description: res.data.error, variant: "destructive" });
+      } else {
+        const report = res.data.report;
+        setSyncReport(report);
+        toast({ title: "Personnel synced", description: `${report.added} added, ${report.updated} updated${report.skipped > 0 ? `, ${report.skipped} skipped` : ""}` });
+        load();
+      }
+    } catch (e) { toast({ title: "Sync failed", description: e.message, variant: "destructive" }); }
+    setSyncing(false);
+  };
+
   if (loading) return <div className="flex justify-center py-8"><div className="w-6 h-6 border-2 border-slate-700 border-t-cyan-500 rounded-full animate-spin" /></div>;
 
   return (
@@ -67,8 +86,27 @@ export default function PersonnelManager() {
             </SelectContent>
           </Select>
         </div>
-        <Button onClick={openCreate} disabled={departments.length === 0} className="bg-cyan-600 hover:bg-cyan-700"><Plus className="w-4 h-4 mr-2" /> Add Personnel</Button>
+        <div className="flex gap-2">
+          <Button onClick={handleSync} disabled={syncing || departments.length === 0} variant="outline" className="border-slate-700 text-slate-300 hover:bg-slate-800">
+            {syncing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-2" />} Sync from Discord
+          </Button>
+          <Button onClick={openCreate} disabled={departments.length === 0} className="bg-cyan-600 hover:bg-cyan-700"><Plus className="w-4 h-4 mr-2" /> Add Personnel</Button>
+        </div>
       </div>
+      {syncReport && (
+        <div className="mb-4 text-sm text-slate-400 bg-slate-800/50 rounded-lg p-3">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-green-400 flex-shrink-0" />
+            <span>Synced {syncReport.totalDiscordMembers} Discord members: <span className="text-green-400">{syncReport.added} added</span> · <span className="text-blue-400">{syncReport.updated} updated</span> · <span className="text-slate-500">{syncReport.skipped} skipped</span></span>
+            {syncReport.errors?.length > 0 && <span className="text-red-400">· {syncReport.errors.length} errors</span>}
+          </div>
+          {syncReport.added === 0 && syncReport.skippedNoMatch > 0 && (
+            <p className="text-xs text-amber-400 mt-2 ml-6">
+              {syncReport.skippedNoMatch} members had no matching CAD department. Make sure your CAD departments have the correct Discord Role ID set (Departments tab → edit department → Discord Role ID). The Role ID must match a role members actually have in Discord.
+            </p>
+          )}
+        </div>
+      )}
       {departments.length === 0 ? (
         <div className="text-center py-12 text-slate-500"><p>Create a department first before adding personnel.</p></div>
       ) : (
