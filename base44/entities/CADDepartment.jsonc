@@ -27,6 +27,15 @@
     "is_active": {
       "type": "boolean",
       "default": true
+    },
+    "discord_webhook_url": {
+      "type": "string"
+    },
+    "discord_server_id": {
+      "type": "string"
+    },
+    "discord_role_id": {
+      "type": "string"
     }
   },
   "required": [

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
-import { Building2, ChevronRight, Users, Siren, Radio, ArrowRight } from "lucide-react";
+import { Building2, ChevronRight, Users, Siren, Radio } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
 export default function CADDepartments() {
@@ -36,23 +36,7 @@ export default function CADDepartments() {
   return (
     <div>
       <h1 className="text-2xl font-bold text-white mb-1">CAD System</h1>
-      <p className="text-sm text-slate-400 mb-6">Select a department or enter the dispatch board</p>
-
-      {/* Dispatch Board Entry */}
-      <Link to="/cad/dispatch" className="group block bg-gradient-to-r from-cyan-500/10 to-blue-500/5 border border-cyan-500/30 rounded-2xl p-6 mb-8 hover:border-cyan-500/50 transition-all">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-xl bg-cyan-500/15 flex items-center justify-center">
-              <Radio className="w-7 h-7 text-cyan-400" />
-            </div>
-            <div>
-              <h2 className="text-xl font-semibold text-white">Dispatch Board</h2>
-              <p className="text-sm text-slate-400">{activeCallCount} active calls · {units.filter(u => u.status === "Available").length} units available</p>
-            </div>
-          </div>
-          <ArrowRight className="w-6 h-6 text-slate-600 group-hover:text-cyan-400 transition-colors" />
-        </div>
-      </Link>
+      <p className="text-sm text-slate-400 mb-6">Select a department to view calls, units, and personnel</p>
 
       {/* Departments */}
       <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">Departments</h2>
@@ -65,15 +49,15 @@ export default function CADDepartments() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {departments.map((d) => (
-            <Link key={d.id} to={`/cad/departments/${d.id}`} className="group bg-slate-900/80 border border-slate-800 rounded-xl p-5 hover:border-slate-600 hover:bg-slate-900 transition-all">
+            <Link key={d.id} to={d.category === "Dispatch" ? "/cad/dispatch" : `/cad/departments/${d.id}`} className="group bg-slate-900/80 border border-slate-800 rounded-xl p-5 hover:border-slate-600 hover:bg-slate-900 transition-all">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: (d.color || "#3b82f6") + "20" }}>
-                    <Building2 className="w-5 h-5" style={{ color: d.color || "#3b82f6" }} />
+                    {d.category === "Dispatch" ? <Radio className="w-5 h-5" style={{ color: d.color || "#3b82f6" }} /> : <Building2 className="w-5 h-5" style={{ color: d.color || "#3b82f6" }} />}
                   </div>
                   <div>
                     <h3 className="font-semibold text-white">{d.name}</h3>
-                    <span className="text-xs text-slate-500">{d.category}</span>
+                    <span className="text-xs text-slate-500">{d.category === "Dispatch" ? "Dispatch Board" : d.category}</span>
                   </div>
                 </div>
                 <ChevronRight className="w-5 h-5 text-slate-600 group-hover:text-slate-300 transition-colors" />

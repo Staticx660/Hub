@@ -26,7 +26,7 @@ export default function CADSidebar() {
   };
 
   const isActive = (path) => {
-    if (path === "/cad") return location.pathname === "/cad" || location.pathname.startsWith("/cad/departments");
+    if (path === "/cad") return location.pathname === "/cad" || location.pathname.startsWith("/cad/departments") || location.pathname === "/cad/dispatch";
     return location.pathname.startsWith(path);
   };
 
