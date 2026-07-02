@@ -1,0 +1,25 @@
+{
+  "name": "CADUnitGroup",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "department_id": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "unit_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "name",
+    "department_id"
+  ]
+}

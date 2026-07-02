@@ -1,0 +1,63 @@
+{
+  "name": "CADUnit",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "callsign": {
+      "type": "string"
+    },
+    "department_id": {
+      "type": "string"
+    },
+    "unit_type": {
+      "type": "string",
+      "enum": [
+        "Patrol Car",
+        "Fire Engine",
+        "Ladder Truck",
+        "Ambulance",
+        "Rescue",
+        "SWAT",
+        "K-9",
+        "Motorcycle",
+        "Helicopter",
+        "Boat",
+        "Command Vehicle",
+        "Other"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Available",
+        "On Call",
+        "Transporting",
+        "Out of Service",
+        "Off Duty"
+      ],
+      "default": "Available"
+    },
+    "is_preset": {
+      "type": "boolean",
+      "default": false
+    },
+    "assigned_call_id": {
+      "type": "string"
+    },
+    "personnel_names": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "name",
+    "department_id"
+  ]
+}

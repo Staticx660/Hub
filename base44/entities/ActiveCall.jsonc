@@ -1,0 +1,55 @@
+{
+  "name": "ActiveCall",
+  "type": "object",
+  "properties": {
+    "call_type": {
+      "type": "string"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "1 - High",
+        "2 - Medium",
+        "3 - Low"
+      ],
+      "default": "3 - Low"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Pending",
+        "Active",
+        "Closed"
+      ],
+      "default": "Pending"
+    },
+    "location": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "caller_name": {
+      "type": "string"
+    },
+    "caller_phone": {
+      "type": "string"
+    },
+    "department_id": {
+      "type": "string"
+    },
+    "assigned_unit_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "call_type",
+    "location"
+  ]
+}

@@ -17,6 +17,10 @@ import CADLayout from '@/components/layout/CADLayout';
 import Landing from '@/pages/Landing';
 import Dashboard from '@/pages/Dashboard';
 import CAD from '@/pages/CAD';
+import CADDepartments from '@/pages/CADDepartments';
+import CADDepartmentDetail from '@/pages/CADDepartmentDetail';
+import CADReports from '@/pages/CADReports';
+import CADAdmin from '@/pages/CADAdmin';
 import Departments from '@/pages/Departments';
 import DepartmentDetail from '@/pages/DepartmentDetail';
 import Roster from '@/pages/Roster';
@@ -81,6 +85,12 @@ const AuthenticatedApp = () => {
         {/* CAD section */}
         <Route element={<CADLayout />}>
           <Route path="/cad" element={<CAD />} />
+          <Route path="/cad/departments" element={<CADDepartments />} />
+          <Route path="/cad/departments/:id" element={<CADDepartmentDetail />} />
+          <Route path="/cad/reports" element={<CADReports />} />
+          <Route element={<AdminRoute />}>
+            <Route path="/cad/admin" element={<CADAdmin />} />
+          </Route>
         </Route>
 
         {/* Standalone admin pages */}

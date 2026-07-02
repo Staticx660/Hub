@@ -1,0 +1,55 @@
+{
+  "name": "CADReport",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string"
+    },
+    "report_type": {
+      "type": "string",
+      "enum": [
+        "Incident",
+        "Traffic Stop",
+        "Field Contact",
+        "Arrest",
+        "Medical",
+        "Fire",
+        "Vehicle Accident",
+        "Other"
+      ]
+    },
+    "description": {
+      "type": "string"
+    },
+    "location": {
+      "type": "string"
+    },
+    "department_id": {
+      "type": "string"
+    },
+    "related_call_id": {
+      "type": "string"
+    },
+    "filed_by_name": {
+      "type": "string"
+    },
+    "filed_by_id": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Draft",
+        "Filed",
+        "Reviewed",
+        "Approved"
+      ],
+      "default": "Filed"
+    }
+  },
+  "required": [
+    "title",
+    "report_type",
+    "description"
+  ]
+}

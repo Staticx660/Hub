@@ -1,21 +1,34 @@
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { useAuth } from "@/lib/AuthContext";
 import {
-  Radio, ChevronLeft, ChevronRight, LogOut, Menu, X, Home
+  Radio, ChevronLeft, ChevronRight, LogOut, Menu, X, Home, Building2, FileText, Shield
 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 
 const navItems = [
-  { label: "CAD Dispatch", path: "/cad", icon: Radio },
+  { label: "Dispatch", path: "/cad", icon: Radio },
+  { label: "Departments", path: "/cad/departments", icon: Building2 },
+  { label: "Reports", path: "/cad/reports", icon: FileText },
+  { label: "Admin Panel", path: "/cad/admin", icon: Shield, adminOnly: true },
 ];
 
 export default function CADSidebar() {
   const location = useLocation();
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
+  const visibleNavItems = navItems.filter(item => !item.adminOnly || isAdmin);
+
   const handleLogout = () => {
     base44.auth.logout("/login");
+  };
+
+  const isActive = (path) => {
+    if (path === "/cad") return location.pathname === "/cad";
+    return location.pathname.startsWith(path);
   };
 
   const sidebarContent = (
@@ -42,25 +55,25 @@ export default function CADSidebar() {
       <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
         <Link
           to="/"
-          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-700/40 transition-all"
+          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-700/40 transition-all mb-2 border-b border-slate-700/30 pb-3"
         >
-          <Home className="w-4.5 h-4.5 flex-shrink-0" />
+          <Home className="w-4 h-4 flex-shrink-0" />
           {!collapsed && <span>Back to Home</span>}
         </Link>
-        {navItems.map((item) => {
-          const isActive = location.pathname === item.path;
+        {visibleNavItems.map((item) => {
+          const active = isActive(item.path);
           return (
             <Link
               key={item.path}
               to={item.path}
               onClick={() => setMobileOpen(false)}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 ${
-                isActive
+                active
                   ? "bg-cyan-500/15 text-cyan-400 border border-cyan-500/20"
                   : "text-slate-400 hover:text-white hover:bg-slate-700/40"
               }`}
             >
-              <item.icon className="w-4.5 h-4.5 flex-shrink-0" />
+              <item.icon className="w-4 h-4 flex-shrink-0" />
               {!collapsed && <span>{item.label}</span>}
             </Link>
           );
@@ -72,7 +85,7 @@ export default function CADSidebar() {
           onClick={handleLogout}
           className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-all w-full"
         >
-          <LogOut className="w-4.5 h-4.5" />
+          <LogOut className="w-4 h-4" />
           {!collapsed && <span>Logout</span>}
         </button>
       </div>

@@ -1,0 +1,37 @@
+{
+  "name": "CADPersonnel",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "department_id": {
+      "type": "string"
+    },
+    "rank": {
+      "type": "string"
+    },
+    "badge_number": {
+      "type": "string"
+    },
+    "callsign": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Available",
+        "On Duty",
+        "Off Duty"
+      ],
+      "default": "Off Duty"
+    },
+    "assigned_unit_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "name",
+    "department_id"
+  ]
+}
