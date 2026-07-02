@@ -7,6 +7,18 @@
         "admin",
         "user"
       ]
+    },
+    "discord_id": {
+      "type": "string",
+      "description": "Linked Discord user ID for role-based CAD access"
+    },
+    "avatar_url": {
+      "type": "string",
+      "description": "Profile picture URL"
+    },
+    "display_name": {
+      "type": "string",
+      "description": "User-preferred display name"
     }
   },
   "required": [

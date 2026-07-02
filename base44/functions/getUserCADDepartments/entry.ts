@@ -11,20 +11,11 @@ Deno.serve(async (req) => {
     const botToken = Deno.env.get("DISCORD_BOT_TOKEN");
     const guildId = Deno.env.get("DISCORD_GUILD_ID");
 
-    // Find the user's Discord ID from RosterMember (matched by name)
-    let discordId = null;
-    let rosterMember = null;
-    try {
-      const rosterMembers = await base44.asServiceRole.entities.RosterMember.filter({});
-      rosterMember = rosterMembers.find(m =>
-        m.name?.toLowerCase().trim() === user.full_name?.toLowerCase().trim()
-      );
-      if (rosterMember) discordId = rosterMember.discord_id;
-    } catch {}
-
+    // Use the user's linked Discord ID (saved in profile via Settings)
+    const discordId = user.discord_id;
     const isAdmin = user.role === 'admin';
 
-    // No Discord ID or no bot token — user can only access departments without role restrictions
+    // No Discord ID linked or no bot — user can only access departments without role restrictions
     if (!discordId || !botToken || !guildId) {
       return Response.json({
         departments: departments.map(d => ({
@@ -36,7 +27,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Query Discord API for guild member roles
+    // Query Discord API for guild member roles using the linked Discord ID
     let userRoles = [];
     let inGuild = false;
     try {
@@ -52,11 +43,21 @@ Deno.serve(async (req) => {
 
     const result = departments.map(dept => {
       if (!dept.discord_role_id) {
-        return { id: dept.id, name: dept.name, category: dept.category, description: dept.description, color: dept.color, discord_role_id: dept.discord_role_id, discord_supervisor_role_id: dept.discord_supervisor_role_id, hasAccess: true, isSupervisor: false };
+        return {
+          id: dept.id, name: dept.name, category: dept.category, description: dept.description,
+          color: dept.color, discord_role_id: dept.discord_role_id,
+          discord_supervisor_role_id: dept.discord_supervisor_role_id,
+          hasAccess: true, isSupervisor: false
+        };
       }
       const hasAccess = userRoles.includes(dept.discord_role_id);
       const isSupervisor = dept.discord_supervisor_role_id && userRoles.includes(dept.discord_supervisor_role_id);
-      return { id: dept.id, name: dept.name, category: dept.category, description: dept.description, color: dept.color, discord_role_id: dept.discord_role_id, discord_supervisor_role_id: dept.discord_supervisor_role_id, hasAccess, isSupervisor };
+      return {
+        id: dept.id, name: dept.name, category: dept.category, description: dept.description,
+        color: dept.color, discord_role_id: dept.discord_role_id,
+        discord_supervisor_role_id: dept.discord_supervisor_role_id,
+        hasAccess, isSupervisor
+      };
     });
 
     return Response.json({

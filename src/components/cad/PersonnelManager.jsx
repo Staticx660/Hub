@@ -100,9 +100,9 @@ export default function PersonnelManager() {
             <span>Synced {syncReport.totalDiscordMembers} Discord members: <span className="text-green-400">{syncReport.added} added</span> · <span className="text-blue-400">{syncReport.updated} updated</span> · <span className="text-slate-500">{syncReport.skipped} skipped</span></span>
             {syncReport.errors?.length > 0 && <span className="text-red-400">· {syncReport.errors.length} errors</span>}
           </div>
-          {syncReport.added === 0 && syncReport.skippedNoMatch > 0 && (
+          {syncReport.addedToDefault > 0 && (
             <p className="text-xs text-amber-400 mt-2 ml-6">
-              {syncReport.skippedNoMatch} members had no matching CAD department. Make sure your CAD departments have the correct Discord Role ID set (Departments tab → edit department → Discord Role ID). The Role ID must match a role members actually have in Discord.
+              {syncReport.addedToDefault} members were added to the default department (no matching Discord role). Assign Discord Role IDs to your CAD departments to automatically sort members into the right department.
             </p>
           )}
         </div>

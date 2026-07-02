@@ -44,6 +44,7 @@ export default function CADCivilian() {
   const [reports, setReports] = useState([]);
 
   const load = async () => {
+    if (!user) return;
     try {
       const dept = await base44.entities.CADDepartment.get(deptId);
       setDepartment(dept);
@@ -60,7 +61,7 @@ export default function CADCivilian() {
     setLoading(false);
   };
 
-  useEffect(() => { load(); }, [deptId]);
+  useEffect(() => { if (user) load(); }, [deptId, user]);
 
   const loadRecords = async () => {
     if (!selectedChar) return;

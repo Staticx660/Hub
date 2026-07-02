@@ -97,10 +97,8 @@ const AuthenticatedApp = () => {
           </Route>
         </Route>
 
-        {/* Standalone admin pages */}
-        <Route element={<AdminRoute />}>
-          <Route path="/settings" element={<Settings />} />
-        </Route>
+        {/* Settings - accessible to all authenticated users */}
+        <Route path="/settings" element={<Settings />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>

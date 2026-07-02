@@ -106,18 +106,16 @@ export default function Landing() {
         </div>
 
         <div className="p-6 space-y-2">
-          {isAdmin && (
-            <Link
-              to="/settings"
-              className="flex items-center justify-between px-4 py-3 rounded-xl bg-slate-800/60 text-slate-300 hover:bg-slate-800 hover:text-white transition-colors text-sm font-medium border border-slate-700/50"
-            >
-              <span className="flex items-center gap-3">
-                <SettingsIcon className="w-4 h-4" />
-                Admin Settings
-              </span>
-              <ChevronRight className="w-4 h-4 text-slate-500" />
-            </Link>
-          )}
+          <Link
+            to="/settings"
+            className="flex items-center justify-between px-4 py-3 rounded-xl bg-slate-800/60 text-slate-300 hover:bg-slate-800 hover:text-white transition-colors text-sm font-medium border border-slate-700/50"
+          >
+            <span className="flex items-center gap-3">
+              <SettingsIcon className="w-4 h-4" />
+              Settings
+            </span>
+            <ChevronRight className="w-4 h-4 text-slate-500" />
+          </Link>
           <button
             onClick={handleLogout}
             className="flex items-center gap-3 px-4 py-3 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors text-sm font-medium w-full border border-red-500/20"

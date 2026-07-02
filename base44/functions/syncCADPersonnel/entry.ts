@@ -31,13 +31,10 @@ Deno.serve(async (req) => {
       }
     }
 
-    if (Object.keys(roleMap).length === 0) {
-      return Response.json({
-        error: 'No CAD departments have a Discord Role ID configured. Set the Discord Role ID on your CAD departments first (Admin Panel → Departments).'
-      }, { status: 400 });
-    }
+    // Default department for members without a matching role (civilian category or first available)
+    const defaultDept = cadDepartments.find(d => d.category === "Civilian") || cadDepartments[0] || null;
 
-    // Get roster members for rank/badge/callsign lookup (by discord_id)
+    // Get roster members for rank/badge/callsign/name lookup (by discord_id)
     const rosterMembers = await base44.asServiceRole.entities.RosterMember.filter({});
     const rosterByDiscordId = {};
     for (const m of rosterMembers) {
@@ -84,7 +81,7 @@ Deno.serve(async (req) => {
       added: 0,
       updated: 0,
       skipped: 0,
-      skippedNoMatch: 0,
+      addedToDefault: 0,
       errors: []
     };
 
@@ -92,8 +89,15 @@ Deno.serve(async (req) => {
       if (!member.user || member.user.bot) { report.skipped++; continue; }
 
       const memberRoles = member.roles || [];
+      const discordId = member.user.id;
 
-      // Find CAD department(s) this member belongs to
+      // Look up roster member for name/rank/badge/callsign
+      const rosterMember = rosterByDiscordId[discordId];
+
+      // Use roster member name if available (includes formatted names like "EMS-3201 | X. Static")
+      const displayName = rosterMember?.name || member.nick || member.user.global_name || member.user.username;
+
+      // Find CAD department(s) this member belongs to via Discord roles
       const matchedDepts = [];
       const seenDeptIds = new Set();
       for (const roleId of memberRoles) {
@@ -103,14 +107,18 @@ Deno.serve(async (req) => {
         }
       }
 
-      if (matchedDepts.length === 0) { report.skipped++; report.skippedNoMatch++; continue; }
-
-      const discordId = member.user.id;
-      const displayName = member.nick || member.user.global_name || member.user.username;
-      const primaryDept = matchedDepts[0];
-
-      // Look up roster member for rank/badge/callsign
-      const rosterMember = rosterByDiscordId[discordId];
+      // Assign department: matched role → that dept; no match → default dept
+      let primaryDept;
+      let assignedToDefault = false;
+      if (matchedDepts.length > 0) {
+        primaryDept = matchedDepts[0];
+      } else if (defaultDept) {
+        primaryDept = defaultDept;
+        assignedToDefault = true;
+      } else {
+        report.skipped++;
+        continue;
+      }
 
       const key = existingKey(displayName, primaryDept.id);
       const existing = existingMap[key];
@@ -146,6 +154,7 @@ Deno.serve(async (req) => {
             status: "Off Duty",
           });
           report.added++;
+          if (assignedToDefault) report.addedToDefault++;
         } catch (e) {
           report.errors.push(`Failed to create ${displayName}: ${e.message}`);
         }
