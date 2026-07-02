@@ -5,6 +5,9 @@
     "first_name": {
       "type": "string"
     },
+    "middle_name": {
+      "type": "string"
+    },
     "last_name": {
       "type": "string"
     },
@@ -20,17 +23,68 @@
         "Other"
       ]
     },
+    "hair_color": {
+      "type": "string"
+    },
+    "eye_color": {
+      "type": "string"
+    },
+    "height": {
+      "type": "string"
+    },
+    "weight": {
+      "type": "string"
+    },
+    "skin_color": {
+      "type": "string"
+    },
+    "occupation": {
+      "type": "string"
+    },
     "address": {
+      "type": "string"
+    },
+    "zip_code": {
       "type": "string"
     },
     "phone": {
       "type": "string"
     },
-    "description": {
+    "emergency_contact_name": {
+      "type": "string"
+    },
+    "emergency_contact_phone": {
+      "type": "string"
+    },
+    "emergency_contact_relationship": {
       "type": "string"
     },
     "photo_url": {
       "type": "string"
+    },
+    "allergies": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "medications": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "medical_history": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "food_allergies": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
     },
     "drivers_license_number": {
       "type": "string"
@@ -43,7 +97,7 @@
         "Revoked",
         "None"
       ],
-      "default": "Valid"
+      "default": "None"
     },
     "pilot_license_status": {
       "type": "string",
@@ -81,12 +135,17 @@
     "department_id": {
       "type": "string"
     },
+    "owner_user_id": {
+      "type": "string"
+    },
     "created_by_name": {
       "type": "string"
     }
   },
   "required": [
     "first_name",
-    "last_name"
+    "last_name",
+    "dob",
+    "gender"
   ]
 }

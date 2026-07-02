@@ -67,6 +67,9 @@
           "timestamp": {
             "type": "string",
             "format": "date-time"
+          },
+          "message": {
+            "type": "string"
           }
         }
       }

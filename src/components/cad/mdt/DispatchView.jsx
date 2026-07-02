@@ -132,7 +132,7 @@ export default function DispatchView({ department, session, setSession, setActiv
                     <div><h3 className="font-semibold text-white text-sm">{call.call_type}</h3>{call.run_number && <span className="text-xs text-blue-400 font-mono">{call.run_number}</span>}</div>
                   </div>
                   <div className="flex items-center gap-1">
-                    {isSupervisor && call.status !== "Closed" && <button onClick={(e) => { e.stopPropagation(); clearCall(call.id); }} className="flex items-center gap-1 px-2 py-1 rounded-lg bg-green-500/10 text-green-400 hover:bg-green-500/20 text-xs font-medium"><CheckCircle2 className="w-3 h-3" /> Clear</button>}
+                    {call.status !== "Closed" && <button onClick={(e) => { e.stopPropagation(); clearCall(call.id); }} className="flex items-center gap-1 px-2 py-1 rounded-lg bg-green-500/10 text-green-400 hover:bg-green-500/20 text-xs font-medium"><CheckCircle2 className="w-3 h-3" /> Clear</button>}
                     {call.id !== session.active_call_id && !myCall && <Button onClick={(e) => { e.stopPropagation(); attachToCall(call.id); }} size="sm" variant="ghost" className="h-7 text-blue-400 gap-1.5"><Link2 className="w-3 h-3" /> Attach</Button>}
                     <ChevronRight className="w-4 h-4 text-slate-600" />
                   </div>

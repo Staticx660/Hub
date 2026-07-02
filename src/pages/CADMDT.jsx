@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
@@ -84,16 +84,36 @@ export default function CADMDT() {
     } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
   };
 
+  const sessionRef = useRef(null);
+  useEffect(() => { sessionRef.current = session; }, [session]);
+
+  const performClockOut = async (s) => {
+    if (!s) return;
+    try {
+      const now = new Date().toISOString();
+      await base44.entities.CADSession.update(s.id, { is_active: false, logout_time: now, status: "Unavailable" });
+      if (s.shift_id) {
+        const duration = (new Date(now) - new Date(s.login_time)) / (1000 * 60 * 60);
+        await base44.entities.Shift.update(s.shift_id, { end_time: now, duration_hours: duration, status: "Completed" });
+      }
+      stopPanicSound();
+    } catch (e) { /* silent — cleanup */ }
+  };
+
+  // Auto clock-out on unmount / page leave
+  useEffect(() => {
+    const handleBeforeUnload = () => performClockOut(sessionRef.current);
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      performClockOut(sessionRef.current);
+    };
+  }, []);
+
   const handleClockOut = async () => {
     if (!confirm("Clock out and end your shift?")) return;
     try {
-      const now = new Date().toISOString();
-      await base44.entities.CADSession.update(session.id, { is_active: false, logout_time: now, status: "Unavailable" });
-      if (session.shift_id) {
-        const duration = (new Date(now) - new Date(session.login_time)) / (1000 * 60 * 60);
-        await base44.entities.Shift.update(session.shift_id, { end_time: now, duration_hours: duration, status: "Completed" });
-      }
-      stopPanicSound();
+      await performClockOut(session);
       setSession(null);
       setSelectedCallId(null);
       toast({ title: "Clocked Out" });
@@ -102,8 +122,17 @@ export default function CADMDT() {
 
   const handleStatusChange = async (newStatus) => {
     try {
-      await base44.entities.CADSession.update(session.id, { status: newStatus, panic_active: newStatus === "Panic" ? session.panic_active : false });
-      setSession({ ...session, status: newStatus });
+      const updates = { status: newStatus, panic_active: newStatus === "Panic" ? session.panic_active : false };
+      // Going Available clears from active call
+      if (newStatus === "Available" && session.active_call_id) {
+        const call = await base44.entities.ActiveCall.get(session.active_call_id);
+        const newIds = (call.assigned_unit_ids || []).filter(id => id !== session.id);
+        const log = [...(call.assignment_log || []), { unit_name: session.callsign || session.user_name, action: "detached", timestamp: new Date().toISOString() }];
+        await base44.entities.ActiveCall.update(call.id, { assigned_unit_ids: newIds, assignment_log: log });
+        updates.active_call_id = "";
+      }
+      await base44.entities.CADSession.update(session.id, updates);
+      setSession({ ...session, ...updates });
     } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
   };
 

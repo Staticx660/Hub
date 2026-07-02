@@ -3,13 +3,14 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
-import { MapPin, Phone, Siren, Unlink, Link2, Users, Clock, Save, Radio, CheckCircle2, ArrowLeft } from "lucide-react";
+import { MapPin, Phone, Siren, Unlink, Link2, Users, Clock, Save, Radio, CheckCircle2, ArrowLeft, Send } from "lucide-react";
 import GTA5Map from "@/components/cad/mdt/GTA5Map";
 
 export default function MyCallView({ department, session, setSession, selectedCallId, setSelectedCallId, setActiveView }) {
   const [call, setCall] = useState(null);
   const [sessions, setSessions] = useState([]);
   const [notes, setNotes] = useState("");
+  const [logInput, setLogInput] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
@@ -78,6 +79,16 @@ export default function MyCallView({ department, session, setSession, selectedCa
     } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
   };
 
+  const addLogEntry = async () => {
+    if (!logInput.trim()) return;
+    try {
+      const log = [...(call.assignment_log || []), { unit_name: session.callsign || session.user_name, action: "note", timestamp: new Date().toISOString(), message: logInput.trim() }];
+      await base44.entities.ActiveCall.update(call.id, { assignment_log: log });
+      setCall({ ...call, assignment_log: log });
+      setLogInput("");
+    } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
+  };
+
   if (loading) return <div className="flex justify-center py-16"><div className="w-8 h-8 border-2 border-slate-700 border-t-blue-500 rounded-full animate-spin" /></div>;
 
   if (!call) {
@@ -111,7 +122,7 @@ export default function MyCallView({ department, session, setSession, selectedCa
               </div>
             </div>
             <div className="flex gap-2">
-              {isSupervisor && call.status !== "Closed" && <Button onClick={clearCall} variant="outline" className="border-green-500/30 text-green-400 gap-2"><CheckCircle2 className="w-4 h-4" /> Clear Call</Button>}
+              {call.status !== "Closed" && <Button onClick={clearCall} variant="outline" className="border-green-500/30 text-green-400 gap-2"><CheckCircle2 className="w-4 h-4" /> Clear Call</Button>}
               {isAttached ? <Button onClick={detach} variant="outline" className="border-red-500/30 text-red-400 gap-2"><Unlink className="w-4 h-4" /> Detach</Button> : <Button onClick={attach} className="bg-blue-600 hover:bg-blue-700 gap-2"><Link2 className="w-4 h-4" /> Attach</Button>}
             </div>
           </div>
@@ -151,21 +162,28 @@ export default function MyCallView({ department, session, setSession, selectedCa
           </div>
         </div>
 
-        {log.length > 0 && (
           <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-4">
             <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-2"><Clock className="w-3.5 h-3.5" /> Call Log</h3>
-            <div className="space-y-1.5">
-              {log.map((entry, i) => (
-                <div key={i} className="flex items-center gap-2 text-xs">
-                  <span className={`w-2 h-2 rounded-full ${entry.action === "attached" ? "bg-green-400" : entry.action === "detached" ? "bg-yellow-400" : "bg-blue-400"}`} />
-                  <span className="text-slate-300">{entry.unit_name}</span>
-                  <span className="text-slate-500">{entry.action}</span>
-                  <span className="text-slate-600 ml-auto">{new Date(entry.timestamp).toLocaleTimeString()}</span>
+            <div className="space-y-1.5 max-h-48 overflow-y-auto mb-3">
+              {log.length === 0 ? <p className="text-xs text-slate-600 text-center py-2">No log entries yet</p> : log.map((entry, i) => (
+                <div key={i} className="flex items-start gap-2 text-xs">
+                  <span className={`w-2 h-2 rounded-full mt-1 flex-shrink-0 ${entry.action === "attached" ? "bg-green-400" : entry.action === "detached" ? "bg-yellow-400" : entry.action === "cleared" ? "bg-green-400" : "bg-blue-400"}`} />
+                  <div className="flex-1">
+                    <span className="text-slate-300">{entry.unit_name}</span>{" "}
+                    <span className="text-slate-500">{entry.action === "note" ? "" : entry.action}</span>
+                    {entry.message && <span className="text-slate-200"> {entry.message}</span>}
+                  </div>
+                  <span className="text-slate-600 flex-shrink-0">{new Date(entry.timestamp).toLocaleTimeString()}</span>
                 </div>
               ))}
             </div>
+            {call.status !== "Closed" && (
+              <div className="flex gap-2">
+                <input value={logInput} onChange={e => setLogInput(e.target.value)} onKeyDown={e => { if (e.key === "Enter") addLogEntry(); }} className="flex-1 bg-slate-800 border border-slate-700 rounded-md px-3 py-1.5 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500" placeholder="Type a log update..." />
+                <Button onClick={addLogEntry} size="sm" className="bg-blue-600 hover:bg-blue-700 gap-1.5"><Send className="w-3.5 h-3.5" /></Button>
+              </div>
+            )}
           </div>
-        )}
       </div>
     </div>
   );

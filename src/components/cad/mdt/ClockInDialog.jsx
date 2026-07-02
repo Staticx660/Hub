@@ -19,8 +19,28 @@ export default function ClockInDialog({ open, onOpenChange, department, user, on
     if (open) {
       setForm({ name: "", callsign: "", rank: "" });
       setDiscordQuery("");
+      // Auto-pull from roster by matching user's name
+      autoLookupRoster();
     }
   }, [open]);
+
+  const autoLookupRoster = async () => {
+    if (!user?.full_name) return;
+    try {
+      const members = await base44.entities.RosterMember.list();
+      const match = members.find(
+        (m) => m.name?.toLowerCase().trim() === user.full_name?.toLowerCase().trim()
+      );
+      if (match) {
+        setForm({
+          name: match.name || "",
+          callsign: match.callsign || "",
+          rank: match.rank || "",
+        });
+        setDiscordQuery(match.discord_username || match.discord_id || "");
+      }
+    } catch (e) { /* silent fail — user can manually enter */ }
+  };
 
   const lookupDiscord = async () => {
     if (!discordQuery.trim()) return;
@@ -30,7 +50,8 @@ export default function ClockInDialog({ open, onOpenChange, department, user, on
       const match = members.find(
         (m) =>
           m.discord_id === discordQuery ||
-          m.discord_username?.toLowerCase() === discordQuery.toLowerCase()
+          m.discord_username?.toLowerCase() === discordQuery.toLowerCase() ||
+          m.name?.toLowerCase().trim() === discordQuery.toLowerCase().trim()
       );
       if (match) {
         setForm({
@@ -40,7 +61,7 @@ export default function ClockInDialog({ open, onOpenChange, department, user, on
         });
         toast({ title: "Roster match found", description: `Linked to ${match.name}` });
       } else {
-        toast({ title: "No match found", description: "No roster member with that Discord info", variant: "destructive" });
+        toast({ title: "No match found", description: "No roster member with that info", variant: "destructive" });
       }
     } catch (e) {
       toast({ title: "Error", description: e.message, variant: "destructive" });

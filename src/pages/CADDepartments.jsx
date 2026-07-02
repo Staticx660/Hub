@@ -87,7 +87,7 @@ export default function CADDepartments() {
             return locked ? (
               <div key={d.id} className="bg-slate-900/40 border border-slate-800/50 rounded-xl p-5 opacity-60">{cardContent}</div>
             ) : (
-              <Link key={d.id} to={d.category === "Dispatch" ? "/cad/dispatch" : `/cad/mdt/${d.id}`} className="group bg-slate-900/80 border border-slate-800 rounded-xl p-5 hover:border-slate-600 hover:bg-slate-900 transition-all">{cardContent}</Link>
+              <Link key={d.id} to={d.category === "Dispatch" ? "/cad/dispatch" : d.category === "Civilian" ? `/cad/civilian/${d.id}` : `/cad/mdt/${d.id}`} className="group bg-slate-900/80 border border-slate-800 rounded-xl p-5 hover:border-slate-600 hover:bg-slate-900 transition-all">{cardContent}</Link>
             );
           })}
         </div>

@@ -17,6 +17,9 @@
     "owner_id": {
       "type": "string"
     },
+    "owner_user_id": {
+      "type": "string"
+    },
     "registration_status": {
       "type": "string",
       "enum": [
