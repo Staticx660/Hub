@@ -2,13 +2,12 @@ import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/lib/AuthContext";
 import {
-  Radio, ChevronLeft, ChevronRight, LogOut, Menu, X, Home, Building2, FileText, Shield
+  Radio, ChevronLeft, ChevronRight, LogOut, Menu, X, Home, Building2, Shield
 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 
 const navItems = [
   { label: "Departments", path: "/cad", icon: Building2 },
-  { label: "Reports", path: "/cad/reports", icon: FileText },
   { label: "Admin Panel", path: "/cad/admin", icon: Shield, adminOnly: true },
 ];
 

@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
-import { FileText, FolderOpen, Pencil, AlertTriangle, Eye, Plus, Shield, ClipboardList } from "lucide-react";
+import { FileText, FolderOpen, Pencil, AlertTriangle, Eye, Plus, Shield, ClipboardList, Siren, Clock } from "lucide-react";
 
 const reportTypes = ["Incident", "Traffic Stop", "Field Contact", "Arrest", "Medical", "Fire", "Vehicle Accident", "Use of Force", "Evidence", "Other"];
 
@@ -17,6 +17,7 @@ export default function RecordsPanel({ department, session }) {
   const [warrants, setWarrants] = useState([]);
   const [bolos, setBolos] = useState([]);
   const [templates, setTemplates] = useState([]);
+  const [closedCalls, setClosedCalls] = useState([]);
   const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -25,13 +26,14 @@ export default function RecordsPanel({ department, session }) {
 
   const load = async () => {
     try {
-      const [r, w, b, t] = await Promise.all([
+      const [r, w, b, t, cc] = await Promise.all([
         base44.entities.CADReport.filter({ department_id: department.id }),
         base44.entities.Warrant.filter({ department_id: department.id }),
         base44.entities.BOLO.filter({ department_id: department.id }),
         base44.entities.ReportTemplate.list(),
+        base44.entities.ActiveCall.filter({ department_id: department.id, status: "Closed" }),
       ]);
-      setReports(r); setWarrants(w); setBolos(b); setTemplates(t);
+      setReports(r); setWarrants(w); setBolos(b); setTemplates(t); setClosedCalls(cc);
     } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
     setLoading(false);
   };
@@ -40,11 +42,12 @@ export default function RecordsPanel({ department, session }) {
 
   const myReports = reports.filter((r) => r.filed_by_id === session.user_id);
   const myDrafts = myReports.filter((r) => r.status === "Draft");
-  const isSupervisor = session.rank?.toLowerCase().includes("sergeant") || session.rank?.toLowerCase().includes("lieutenant") || session.rank?.toLowerCase().includes("captain") || session.rank?.toLowerCase().includes("chief") || session.rank?.toLowerCase().includes("supervisor");
+  const isSupervisor = session.rank?.toLowerCase().match(/sergeant|lieutenant|captain|chief|supervisor|commander|sheriff/);
 
   const tabs = [
     { id: "myfiles", label: "My Files", icon: FolderOpen, count: myReports.length },
     { id: "drafts", label: "My Drafts", icon: Pencil, count: myDrafts.length },
+    { id: "closedcalls", label: "Closed Calls", icon: Siren, count: closedCalls.length },
     { id: "warrants", label: "Warrants", icon: AlertTriangle, count: warrants.filter((w) => w.status === "Active").length },
     { id: "bolos", label: "BOLOs", icon: Eye, count: bolos.filter((b) => b.status === "Active").length },
     { id: "supervisor", label: "Supervisor", icon: Shield, count: reports.length, supervisorOnly: true },
@@ -70,7 +73,9 @@ export default function RecordsPanel({ department, session }) {
 
   if (loading) return <div className="flex justify-center py-16"><div className="w-8 h-8 border-2 border-slate-700 border-t-blue-500 rounded-full animate-spin" /></div>;
 
-  const currentList = tab === "myfiles" ? myReports : tab === "drafts" ? myDrafts : tab === "warrants" ? warrants : tab === "bolos" ? bolos : tab === "supervisor" ? reports : [];
+  const currentList = tab === "myfiles" ? myReports : tab === "drafts" ? myDrafts : tab === "closedcalls" ? closedCalls : tab === "warrants" ? warrants : tab === "bolos" ? bolos : tab === "supervisor" ? reports : [];
+
+  const isClosedCall = selected?.call_type !== undefined;
 
   return (
     <div className="flex h-full">
@@ -97,13 +102,13 @@ export default function RecordsPanel({ department, session }) {
           <div className="space-y-2">
             {currentList.length === 0 ? <div className="flex flex-col items-center justify-center h-full text-slate-600"><FileText className="w-12 h-12 mb-3 opacity-30" /><p>No records found</p></div> : (
               currentList.map((item) => {
-                const title = item.title || item.reason || `${item.person_name || "Unknown"} — Warrant`;
-                const sub = item.report_type || item.bolo_type || (item.charges?.join(", ")) || "";
+                const title = item.title || item.call_type || item.reason || `${item.person_name || "Unknown"} — Warrant`;
+                const sub = item.report_type || item.bolo_type || (item.charges?.join(", ")) || item.run_number || "";
                 const date = item.created_date ? new Date(item.created_date).toLocaleDateString() : "";
                 return (
                   <button key={item.id} onClick={() => setSelected(item)} className="w-full flex items-center justify-between bg-slate-900/60 border border-slate-800 rounded-lg p-3 hover:border-slate-600 transition-colors text-left">
                     <div className="flex items-center gap-3">
-                      {item.status && <span className={`text-xs px-2 py-0.5 rounded-full ${item.status === "Draft" ? "text-yellow-400 bg-yellow-500/10" : item.status === "Active" ? "text-red-400 bg-red-500/10" : "text-green-400 bg-green-500/10"}`}>{item.status}</span>}
+                      {item.status && <span className={`text-xs px-2 py-0.5 rounded-full ${item.status === "Draft" ? "text-yellow-400 bg-yellow-500/10" : item.status === "Active" ? "text-red-400 bg-red-500/10" : item.status === "Closed" ? "text-gray-400 bg-gray-500/10" : "text-green-400 bg-green-500/10"}`}>{item.status}</span>}
                       <div><p className="text-white font-medium text-sm">{title}</p>{sub && <p className="text-xs text-slate-500">{sub}</p>}</div>
                     </div>
                     <div className="text-right"><p className="text-xs text-slate-500">{item.filed_by_name || item.issued_by_name || ""}</p><p className="text-xs text-slate-600">{date}</p></div>
@@ -115,17 +120,42 @@ export default function RecordsPanel({ department, session }) {
         ) : (
           <div>
             <button onClick={() => setSelected(null)} className="text-sm text-slate-400 hover:text-white mb-4">← Back to list</button>
-            <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-5">
-              <div className="flex items-start justify-between mb-4">
-                <div><h2 className="text-xl font-bold text-white">{selected.title || selected.reason || "Warrant"}</h2>{selected.run_number && <p className="text-sm text-blue-400 font-mono">{selected.run_number}</p>}</div>
-                {selected.status && <span className={`text-xs px-2.5 py-1 rounded-full ${selected.status === "Draft" ? "text-yellow-400 bg-yellow-500/10" : selected.status === "Active" ? "text-red-400 bg-red-500/10" : "text-green-400 bg-green-500/10"}`}>{selected.status}</span>}
+            {isClosedCall ? (
+              <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-5">
+                <div className="flex items-start justify-between mb-4">
+                  <div><h2 className="text-xl font-bold text-white">{selected.call_type}</h2>{selected.run_number && <p className="text-sm text-blue-400 font-mono">{selected.run_number}</p>}</div>
+                  <span className="text-xs px-2.5 py-1 rounded-full text-gray-400 bg-gray-500/10">Closed</span>
+                </div>
+                <div className="grid grid-cols-2 gap-4 text-sm mb-3">
+                  <div><span className="text-slate-500">Location: </span><span className="text-slate-300">{selected.location}</span></div>
+                  <div><span className="text-slate-500">Priority: </span><span className="text-slate-300">{selected.priority}</span></div>
+                  {selected.caller_name && <div><span className="text-slate-500">Caller: </span><span className="text-slate-300">{selected.caller_name}</span></div>}
+                  <div><span className="text-slate-500">Units: </span><span className="text-slate-300">{selected.assigned_unit_ids?.length || 0}</span></div>
+                </div>
+                {selected.description && <p className="text-sm text-slate-400 bg-slate-800/40 rounded-lg p-3 mb-3">{selected.description}</p>}
+                {selected.cad_notes && <div className="mb-3"><p className="text-xs text-slate-500 mb-1">CAD Notes:</p><p className="text-sm text-slate-300 bg-slate-800/40 rounded-lg p-3">{selected.cad_notes}</p></div>}
+                {selected.assignment_log?.length > 0 && (
+                  <div>
+                    <p className="text-xs text-slate-500 mb-2 flex items-center gap-1.5"><Clock className="w-3 h-3" /> Call Log:</p>
+                    <div className="space-y-1">{selected.assignment_log.map((entry, i) => (
+                      <div key={i} className="flex items-center gap-2 text-xs"><span className={`w-2 h-2 rounded-full ${entry.action === "attached" ? "bg-green-400" : entry.action === "detached" ? "bg-yellow-400" : "bg-blue-400"}`} /><span className="text-slate-300">{entry.unit_name}</span><span className="text-slate-500">{entry.action}</span><span className="text-slate-600 ml-auto">{new Date(entry.timestamp).toLocaleString()}</span></div>
+                    ))}</div>
+                  </div>
+                )}
               </div>
-              {selected.report_type && <p className="text-sm text-slate-400 mb-2">Type: {selected.report_type}</p>}
-              {selected.location && <p className="text-sm text-slate-400 mb-2">Location: {selected.location}</p>}
-              <p className="text-sm text-slate-300 whitespace-pre-wrap mt-3">{selected.description || selected.notes || ""}</p>
-              {(selected.filed_by_name || selected.issued_by_name) && <p className="text-xs text-slate-500 mt-4">Filed by: {selected.filed_by_name || selected.issued_by_name}</p>}
-              {selected.title && <button onClick={() => deleteReport(selected.id)} className="mt-4 text-sm text-red-400 hover:text-red-300">Delete Report</button>}
-            </div>
+            ) : (
+              <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-5">
+                <div className="flex items-start justify-between mb-4">
+                  <div><h2 className="text-xl font-bold text-white">{selected.title || selected.reason || "Warrant"}</h2>{selected.run_number && <p className="text-sm text-blue-400 font-mono">{selected.run_number}</p>}</div>
+                  {selected.status && <span className={`text-xs px-2.5 py-1 rounded-full ${selected.status === "Draft" ? "text-yellow-400 bg-yellow-500/10" : selected.status === "Active" ? "text-red-400 bg-red-500/10" : "text-green-400 bg-green-500/10"}`}>{selected.status}</span>}
+                </div>
+                {selected.report_type && <p className="text-sm text-slate-400 mb-2">Type: {selected.report_type}</p>}
+                {selected.location && <p className="text-sm text-slate-400 mb-2">Location: {selected.location}</p>}
+                <p className="text-sm text-slate-300 whitespace-pre-wrap mt-3">{selected.description || selected.notes || ""}</p>
+                {(selected.filed_by_name || selected.issued_by_name) && <p className="text-xs text-slate-500 mt-4">Filed by: {selected.filed_by_name || selected.issued_by_name}</p>}
+                {selected.title && <button onClick={() => deleteReport(selected.id)} className="mt-4 text-sm text-red-400 hover:text-red-300">Delete Report</button>}
+              </div>
+            )}
           </div>
         )}
       </div>

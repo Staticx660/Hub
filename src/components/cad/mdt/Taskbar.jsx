@@ -52,9 +52,7 @@ export default function Taskbar({ activeView, setActiveView, session, onStatusCh
     <div className={`h-14 bg-slate-900/95 backdrop-blur border-t flex items-center px-2 gap-1 ${isPanic ? "border-red-500 animate-pulse" : "border-slate-700/50"}`}>
       <div ref={logoRef} className="relative">
         <button onClick={() => setLogoMenu(!logoMenu)} className="flex items-center gap-2 px-2.5 h-10 rounded-lg hover:bg-slate-800 transition-colors">
-          <div className="w-7 h-7 bg-gradient-to-br from-blue-500 to-cyan-500 rounded flex items-center justify-center shadow-lg shadow-blue-500/20">
-            <Shield className="w-4 h-4 text-white" />
-          </div>
+          <img src="https://media.base44.com/images/public/6a441f279b9d3cd678958799/5a43a1b46_OCRP20.png" alt="OCRP" className="w-8 h-8 rounded object-cover" />
           <span className="font-bold text-white text-sm hidden sm:block">OCRP</span>
         </button>
         {logoMenu && (

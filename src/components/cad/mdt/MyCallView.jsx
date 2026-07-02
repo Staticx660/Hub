@@ -3,9 +3,10 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
-import { MapPin, Phone, Siren, Unlink, Users, Clock, Save, Radio } from "lucide-react";
+import { MapPin, Phone, Siren, Unlink, Link2, Users, Clock, Save, Radio, CheckCircle2, ArrowLeft } from "lucide-react";
+import GTA5Map from "@/components/cad/mdt/GTA5Map";
 
-export default function MyCallView({ department, session, setSession }) {
+export default function MyCallView({ department, session, setSession, selectedCallId, setSelectedCallId, setActiveView }) {
   const [call, setCall] = useState(null);
   const [sessions, setSessions] = useState([]);
   const [notes, setNotes] = useState("");
@@ -13,11 +14,13 @@ export default function MyCallView({ department, session, setSession }) {
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
 
+  const callId = selectedCallId || session.active_call_id;
+
   const load = async () => {
-    if (!session.active_call_id) { setLoading(false); return; }
+    if (!callId) { setLoading(false); return; }
     try {
       const [c, s] = await Promise.all([
-        base44.entities.ActiveCall.get(session.active_call_id),
+        base44.entities.ActiveCall.get(callId),
         base44.entities.CADSession.filter({ department_id: department.id, is_active: true }),
       ]);
       setCall(c); setSessions(s); setNotes(c.cad_notes || "");
@@ -25,7 +28,10 @@ export default function MyCallView({ department, session, setSession }) {
     setLoading(false);
   };
 
-  useEffect(() => { load(); }, [session.active_call_id]);
+  useEffect(() => { setLoading(true); setCall(null); load(); }, [callId]);
+
+  const isAttached = call?.assigned_unit_ids?.includes(session.id);
+  const isSupervisor = session.rank?.toLowerCase().match(/sergeant|lieutenant|captain|chief|supervisor|commander|sheriff/);
 
   const saveNotes = async () => {
     setSaving(true);
@@ -37,6 +43,18 @@ export default function MyCallView({ department, session, setSession }) {
     setSaving(false);
   };
 
+  const attach = async () => {
+    try {
+      const newIds = [...new Set([...(call.assigned_unit_ids || []), session.id])];
+      const log = [...(call.assignment_log || []), { unit_name: session.callsign || session.user_name, action: "attached", timestamp: new Date().toISOString() }];
+      await base44.entities.ActiveCall.update(call.id, { assigned_unit_ids: newIds, assignment_log: log });
+      await base44.entities.CADSession.update(session.id, { active_call_id: call.id, status: "On Call" });
+      setSession({ ...session, active_call_id: call.id, status: "On Call" });
+      setSelectedCallId(null);
+      toast({ title: "Attached to call" });
+    } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
+  };
+
   const detach = async () => {
     try {
       const newIds = (call.assigned_unit_ids || []).filter((id) => id !== session.id);
@@ -44,8 +62,19 @@ export default function MyCallView({ department, session, setSession }) {
       await base44.entities.ActiveCall.update(call.id, { assigned_unit_ids: newIds, assignment_log: log });
       await base44.entities.CADSession.update(session.id, { active_call_id: "", status: "Available" });
       setSession({ ...session, active_call_id: "", status: "Available" });
-      setCall(null);
+      setSelectedCallId(null);
       toast({ title: "Detached from call" });
+    } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
+  };
+
+  const clearCall = async () => {
+    if (!confirm("Mark this call as cleared/closed?")) return;
+    try {
+      const log = [...(call.assignment_log || []), { unit_name: session.callsign || session.user_name, action: "cleared", timestamp: new Date().toISOString() }];
+      await base44.entities.ActiveCall.update(call.id, { status: "Closed", assignment_log: log });
+      toast({ title: "Call cleared" });
+      setSelectedCallId(null);
+      setActiveView("dispatch");
     } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
   };
 
@@ -67,7 +96,11 @@ export default function MyCallView({ department, session, setSession }) {
   return (
     <div className="h-full overflow-y-auto p-4">
       <div className="max-w-4xl mx-auto space-y-4">
-        {/* Call Header */}
+        {selectedCallId && selectedCallId !== session.active_call_id && (
+          <button onClick={() => { setSelectedCallId(null); setActiveView("dispatch"); }} className="flex items-center gap-1 text-sm text-slate-400 hover:text-white mb-2">
+            <ArrowLeft className="w-4 h-4" /> Back to Dispatch
+          </button>
+        )}
         <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-5">
           <div className="flex items-start justify-between mb-3">
             <div className="flex items-center gap-3">
@@ -77,7 +110,10 @@ export default function MyCallView({ department, session, setSession }) {
                 {call.run_number && <span className="text-sm text-blue-400 font-mono">{call.run_number}</span>}
               </div>
             </div>
-            <Button onClick={detach} variant="outline" className="border-red-500/30 text-red-400 gap-2"><Unlink className="w-4 h-4" /> Detach</Button>
+            <div className="flex gap-2">
+              {isSupervisor && call.status !== "Closed" && <Button onClick={clearCall} variant="outline" className="border-green-500/30 text-green-400 gap-2"><CheckCircle2 className="w-4 h-4" /> Clear Call</Button>}
+              {isAttached ? <Button onClick={detach} variant="outline" className="border-red-500/30 text-red-400 gap-2"><Unlink className="w-4 h-4" /> Detach</Button> : <Button onClick={attach} className="bg-blue-600 hover:bg-blue-700 gap-2"><Link2 className="w-4 h-4" /> Attach</Button>}
+            </div>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
             <div><span className="text-slate-500 block text-xs">Location</span><span className="text-slate-200 flex items-center gap-1"><MapPin className="w-3 h-3" /> {call.location}</span></div>
@@ -85,32 +121,23 @@ export default function MyCallView({ department, session, setSession }) {
             <div><span className="text-slate-500 block text-xs">Caller</span><span className="text-slate-200 flex items-center gap-1"><Phone className="w-3 h-3" /> {call.caller_name || "Unknown"}</span></div>
             <div><span className="text-slate-500 block text-xs">Status</span><span className="text-slate-200">{call.status}</span></div>
           </div>
+          {call.caller_phone && <p className="text-sm text-slate-400 mt-2">Caller Phone: {call.caller_phone}</p>}
           {call.description && <p className="text-sm text-slate-400 mt-3 bg-slate-800/40 rounded-lg p-3">{call.description}</p>}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Mini Map */}
           <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-4">
-            <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Location Map</h3>
-            <div className="relative rounded-lg overflow-hidden border border-slate-700 bg-slate-950" style={{ height: "220px" }}>
-              <div className="absolute inset-0" style={{ backgroundImage: "linear-gradient(rgba(59,130,246,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(59,130,246,0.08) 1px, transparent 1px)", backgroundSize: "24px 24px" }} />
-              <div className="absolute top-2 left-2 text-xs text-slate-600 font-mono">LOS SANTOS GRID</div>
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center">
-                <MapPin className="w-8 h-8 text-red-500 fill-red-500/20 drop-shadow-lg" />
-                <span className="text-xs text-slate-400 mt-1 bg-slate-900/80 px-2 py-0.5 rounded">{call.location}</span>
-              </div>
-            </div>
+            <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">GTA V Location Map</h3>
+            <GTA5Map location={call.location} height={280} />
           </div>
-
-          {/* CAD Notes */}
           <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-4">
             <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">CAD Notes</h3>
             <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} className="bg-slate-800 border-slate-700 text-white" rows={6} placeholder="Enter call notes, updates, observations..." />
-            <Button onClick={saveNotes} disabled={saving} size="sm" className="mt-2 bg-blue-600 hover:bg-blue-700 gap-1.5"><Save className="w-3.5 h-3.5" /> {saving ? "Saving..." : "Save Notes"}</Button>
+            <Button onClick={saveNotes} disabled={saving || !isAttached} size="sm" className="mt-2 bg-blue-600 hover:bg-blue-700 gap-1.5"><Save className="w-3.5 h-3.5" /> {saving ? "Saving..." : "Save Notes"}</Button>
+            {!isAttached && <p className="text-xs text-slate-500 mt-2">Attach to this call to edit notes</p>}
           </div>
         </div>
 
-        {/* Attached Units */}
         <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-4">
           <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-2"><Users className="w-3.5 h-3.5" /> Attached Units ({attachedUnits.length})</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
@@ -124,14 +151,13 @@ export default function MyCallView({ department, session, setSession }) {
           </div>
         </div>
 
-        {/* Assignment Log */}
         {log.length > 0 && (
           <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-4">
-            <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-2"><Clock className="w-3.5 h-3.5" /> Assignment Log</h3>
+            <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-2"><Clock className="w-3.5 h-3.5" /> Call Log</h3>
             <div className="space-y-1.5">
               {log.map((entry, i) => (
                 <div key={i} className="flex items-center gap-2 text-xs">
-                  <span className={`w-2 h-2 rounded-full ${entry.action === "assigned" ? "bg-green-400" : "bg-red-400"}`} />
+                  <span className={`w-2 h-2 rounded-full ${entry.action === "attached" ? "bg-green-400" : entry.action === "detached" ? "bg-yellow-400" : "bg-blue-400"}`} />
                   <span className="text-slate-300">{entry.unit_name}</span>
                   <span className="text-slate-500">{entry.action}</span>
                   <span className="text-slate-600 ml-auto">{new Date(entry.timestamp).toLocaleTimeString()}</span>
