@@ -11,6 +11,7 @@ import { FileText, FolderOpen, Pencil, AlertTriangle, Eye, Plus, Shield, Clipboa
 import BoloForm from "@/components/cad/mdt/BoloForm";
 import WarrantForm from "@/components/cad/mdt/WarrantForm";
 import CivilianSearch from "@/components/cad/mdt/CivilianSearch";
+import VehicleSearch from "@/components/cad/mdt/VehicleSearch";
 import { logSystemEvent } from "@/lib/logSystemEvent";
 
 const ALL_REPORT_TYPES = ["Incident", "Traffic Stop", "Field Contact", "Arrest", "Medical", "Fire", "Vehicle Accident", "Use of Force", "Evidence", "Other"];
@@ -40,6 +41,7 @@ export default function RecordsPanel({ department, session }) {
   const [boloOpen, setBoloOpen] = useState(false);
   const [warrantOpen, setWarrantOpen] = useState(false);
   const [selectedCivilian, setSelectedCivilian] = useState(null);
+  const [selectedVehicle, setSelectedVehicle] = useState(null);
   const { toast } = useToast();
 
   const load = async () => {
@@ -98,6 +100,21 @@ export default function RecordsPanel({ department, session }) {
     }
   };
 
+  const handleVehicleSelected = (vehicle) => {
+    if (vehicle) {
+      setSelectedVehicle(vehicle);
+      setReportForm(prev => ({ ...prev, linked_vehicle_plate: vehicle.plate }));
+      setFieldData(prev => ({ ...prev,
+        "Vehicle Plate": vehicle.plate || "",
+        "Vehicle Model": vehicle.model || "",
+        "Vehicle Color": vehicle.color || "",
+      }));
+    } else {
+      setSelectedVehicle(null);
+      setReportForm(prev => ({ ...prev, linked_vehicle_plate: "" }));
+    }
+  };
+
   const handleSaveReport = async (asDraft) => {
     try {
       const runNum = `RUN-${Date.now().toString().slice(-6)}`;
@@ -110,7 +127,7 @@ export default function RecordsPanel({ department, session }) {
       toast({ title: asDraft ? "Draft saved" : "Report filed" });
       setDialogOpen(false);
       setReportForm({ title: "", report_type: "Incident", description: "", location: "", linked_civilian_id: "", linked_civilian_name: "", linked_vehicle_plate: "" });
-      setSelectedCivilian(null); setSelectedTemplate(null); setFieldData({});
+      setSelectedCivilian(null); setSelectedVehicle(null); setSelectedTemplate(null); setFieldData({});
       load();
     } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
   };
@@ -135,7 +152,7 @@ export default function RecordsPanel({ department, session }) {
           {visibleTabs.map((t) => (
             <button key={t.id} onClick={() => {
               setTab(t.id); setSelected(null);
-              if (t.id === "new") { const types = REPORT_TYPES_BY_CATEGORY[department.category] || ALL_REPORT_TYPES; setReportForm({ title: "", report_type: types[0], description: "", location: "", linked_civilian_id: "", linked_civilian_name: "", linked_vehicle_plate: "" }); setSelectedCivilian(null); setSelectedTemplate(null); setFieldData({}); setDialogOpen(true); }
+              if (t.id === "new") { const types = REPORT_TYPES_BY_CATEGORY[department.category] || ALL_REPORT_TYPES; setReportForm({ title: "", report_type: types[0], description: "", location: "", linked_civilian_id: "", linked_civilian_name: "", linked_vehicle_plate: "" }); setSelectedCivilian(null); setSelectedVehicle(null); setSelectedTemplate(null); setFieldData({}); setDialogOpen(true); }
             }} className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${tab === t.id ? "bg-blue-500/15 text-blue-400" : "text-slate-400 hover:bg-slate-800"}`}>
               <span className="flex items-center gap-2"><t.icon className="w-4 h-4" /> {t.label}</span>
               {t.count !== undefined && <span className="text-xs text-slate-500">{t.count}</span>}
@@ -211,7 +228,7 @@ export default function RecordsPanel({ department, session }) {
                 {selected.report_type && <p className="text-sm text-slate-400 mb-2">Type: {selected.report_type}</p>}
                 {selected.location && <p className="text-sm text-slate-400 mb-2">Location: {selected.location}</p>}
                 {selected.linked_civilian_name && <p className="text-sm text-slate-400 mb-2">Linked Civilian: {selected.linked_civilian_name}</p>}
-                {selected.linked_vehicle_plate && <p className="text-sm text-slate-400 mb-2">Linked Vehicle: <span className="font-mono">{selected.linked_vehicle_plate}</span></p>}
+                {selected.linked_vehicle_plate && <p className="text-sm text-slate-400 mb-2">Linked Vehicle: <span className="font-mono">{selected.linked_vehicle_plate}</span>{selected.field_data?.["Vehicle Model"] && <span className="ml-2">· {selected.field_data["Vehicle Model"]}</span>}{selected.field_data?.["Vehicle Color"] && <span className="ml-1">· {selected.field_data["Vehicle Color"]}</span>}</p>}
                 <p className="text-sm text-slate-300 whitespace-pre-wrap mt-3">{selected.description || selected.notes || ""}</p>
                 {selected.field_data && Object.keys(selected.field_data).length > 0 && (
                   <div className="mt-3 pt-3 border-t border-slate-800">
@@ -236,7 +253,7 @@ export default function RecordsPanel({ department, session }) {
           <DialogHeader><DialogTitle className="text-white">New Report</DialogTitle></DialogHeader>
           <div className="space-y-3">
             <CivilianSearch selected={selectedCivilian} onSelected={handleCivilianSelected} />
-            <div><Label className="text-slate-300">Linked Vehicle Plate</Label><Input value={reportForm.linked_vehicle_plate || ""} onChange={(e) => setReportForm({ ...reportForm, linked_vehicle_plate: e.target.value.toUpperCase() })} className="bg-slate-800 border-slate-700 text-white font-mono" placeholder="Optional..." /></div>
+            <VehicleSearch selected={selectedVehicle} onSelected={handleVehicleSelected} />
             <div><Label className="text-slate-300">Title</Label><Input value={reportForm.title} onChange={(e) => setReportForm({ ...reportForm, title: e.target.value })} className="bg-slate-800 border-slate-700 text-white" /></div>
             <div><Label className="text-slate-300">Report Type</Label><Select value={reportForm.report_type} onValueChange={(v) => setReportForm({ ...reportForm, report_type: v })}><SelectTrigger className="bg-slate-800 border-slate-700 text-white"><SelectValue /></SelectTrigger><SelectContent className="bg-slate-800 border-slate-700">{reportTypes.map((t) => <SelectItem key={t} value={t} className="text-white">{t}</SelectItem>)}</SelectContent></Select></div>
             <div><Label className="text-slate-300">Location</Label><Input value={reportForm.location} onChange={(e) => setReportForm({ ...reportForm, location: e.target.value })} className="bg-slate-800 border-slate-700 text-white" /></div>

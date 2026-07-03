@@ -72,6 +72,15 @@ export default function CADMDT() {
   const handleClockIn = async (formData) => {
     try {
       const now = new Date().toISOString();
+      // Deactivate any existing active sessions for this user+department to prevent duplicates
+      const existing = await base44.entities.CADSession.filter({ user_id: user.id, department_id: deptId, is_active: true });
+      for (const s of existing) {
+        await base44.entities.CADSession.update(s.id, { is_active: false, logout_time: now, status: "Unavailable" });
+        if (s.shift_id) {
+          const duration = (new Date(now) - new Date(s.login_time)) / (1000 * 60 * 60);
+          await base44.entities.Shift.update(s.shift_id, { end_time: now, duration_hours: duration, status: "Completed" });
+        }
+      }
       const members = await base44.entities.RosterMember.filter({ name: formData.name });
       const member = members[0];
       const shift = await base44.entities.Shift.create({ member_id: member?.id || "", department_id: deptId, member_name: formData.name, start_time: now, status: "In Progress" });

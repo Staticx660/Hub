@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
-import { Building2, ChevronRight, Users, Siren, Radio, Lock, AlertCircle } from "lucide-react";
+import { Building2, ChevronRight, Users, Siren, Radio, Lock, AlertCircle, Activity, PhoneCall } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
 export default function CADDepartments() {
@@ -40,6 +40,34 @@ export default function CADDepartments() {
     <div>
       <h1 className="text-2xl font-bold text-white mb-1">CAD System</h1>
       <p className="text-sm text-slate-400 mb-6">Select a department to view calls, units, and personnel</p>
+
+      {/* Dispatch Tools */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+        <Link to="/dispatch-dashboard" className="group bg-slate-900/80 border border-slate-800 rounded-xl p-5 hover:border-cyan-500/50 hover:bg-slate-900 transition-all">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-cyan-500/20">
+              <Activity className="w-5 h-5 text-cyan-400" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-white">Dispatch Dashboard</h3>
+              <span className="text-xs text-slate-500">Monitor all active calls and units</span>
+            </div>
+            <ChevronRight className="w-5 h-5 text-slate-600 group-hover:text-slate-300 ml-auto transition-colors" />
+          </div>
+        </Link>
+        <Link to="/dispatch-center" className="group bg-slate-900/80 border border-slate-800 rounded-xl p-5 hover:border-cyan-500/50 hover:bg-slate-900 transition-all">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-cyan-500/20">
+              <PhoneCall className="w-5 h-5 text-cyan-400" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-white">Dispatch Center</h3>
+              <span className="text-xs text-slate-500">Coordinate calls and 911 reports</span>
+            </div>
+            <ChevronRight className="w-5 h-5 text-slate-600 group-hover:text-slate-300 ml-auto transition-colors" />
+          </div>
+        </Link>
+      </div>
 
       {/* Departments */}
       <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">Departments</h2>

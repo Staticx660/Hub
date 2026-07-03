@@ -105,12 +105,12 @@ const AuthenticatedApp = () => {
           <Route path="/my-records" element={<MyRecords />} />
           <Route path="/keybinds" element={<KeybindConfig />} />
           <Route path="/department-archive" element={<DepartmentArchive />} />
+          <Route path="/dispatch-dashboard" element={<DispatchDashboard />} />
+          <Route path="/dispatch-center" element={<DispatchCenter />} />
           <Route element={<AdminRoute />}>
             <Route path="/cad/admin" element={<CADAdmin />} />
             <Route path="/cad-settings" element={<CADSettings />} />
             <Route path="/cad-personnel" element={<CADPersonnel />} />
-            <Route path="/dispatch-dashboard" element={<DispatchDashboard />} />
-            <Route path="/dispatch-center" element={<DispatchCenter />} />
             <Route path="/system-logs" element={<SystemLogs />} />
           </Route>
         </Route>

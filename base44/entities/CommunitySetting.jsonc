@@ -1,0 +1,29 @@
+{
+  "name": "CommunitySetting",
+  "type": "object",
+  "properties": {
+    "community_name": {
+      "type": "string"
+    },
+    "logo_url": {
+      "type": "string"
+    },
+    "accent_color": {
+      "type": "string",
+      "default": "#3b82f6"
+    },
+    "discord_invite_url": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "is_setup": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "community_name"
+  ]
+}

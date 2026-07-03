@@ -6,15 +6,12 @@ import UnitsManager from "@/components/cad/UnitsManager";
 import PersonnelManager from "@/components/cad/PersonnelManager";
 import UnitGroupsManager from "@/components/cad/UnitGroupsManager";
 import DiscordSettings from "@/components/cad/DiscordSettings";
-import ReportBuilder from "@/components/cad/ReportBuilder";
-import { Activity, Radio, ScrollText, Archive, FileText } from "lucide-react";
+import Customizer from "@/components/cad/Customizer";
+import { ScrollText, Archive } from "lucide-react";
 
 const adminTools = [
-  { label: "Dispatch Dashboard", path: "/dispatch-dashboard", icon: Activity, desc: "Monitor all active calls and units" },
-  { label: "Dispatch Center", path: "/dispatch-center", icon: Radio, desc: "Coordinate calls and 911 reports" },
   { label: "System Logs", path: "/system-logs", icon: ScrollText, desc: "Audit trail of system actions" },
   { label: "Department Archive", path: "/department-archive", icon: Archive, desc: "Browse closed calls and past records" },
-  { label: "My Records", path: "/my-records", icon: FileText, desc: "View reports you have filed" },
 ];
 
 export default function CADAdmin() {
@@ -37,17 +34,17 @@ export default function CADAdmin() {
         <TabsList className="bg-slate-900 border border-slate-800">
           <TabsTrigger value="departments" className="data-[state=active]:bg-slate-800 text-slate-400 data-[state=active]:text-white">Departments</TabsTrigger>
           <TabsTrigger value="units" className="data-[state=active]:bg-slate-800 text-slate-400 data-[state=active]:text-white">Units</TabsTrigger>
-          <TabsTrigger value="personnel" className="data-[state=active]:bg-slate-800 text-slate-400 data-[state=active]:text-white">Personnel</TabsTrigger>
+          <TabsTrigger value="members" className="data-[state=active]:bg-slate-800 text-slate-400 data-[state=active]:text-white">Members</TabsTrigger>
           <TabsTrigger value="groups" className="data-[state=active]:bg-slate-800 text-slate-400 data-[state=active]:text-white">Preset Groups</TabsTrigger>
           <TabsTrigger value="discord" className="data-[state=active]:bg-slate-800 text-slate-400 data-[state=active]:text-white">Discord</TabsTrigger>
-          <TabsTrigger value="reports" className="data-[state=active]:bg-slate-800 text-slate-400 data-[state=active]:text-white">Report Builder</TabsTrigger>
+          <TabsTrigger value="customizer" className="data-[state=active]:bg-slate-800 text-slate-400 data-[state=active]:text-white">Customizer</TabsTrigger>
         </TabsList>
         <TabsContent value="departments" className="mt-6"><DepartmentsManager /></TabsContent>
         <TabsContent value="units" className="mt-6"><UnitsManager /></TabsContent>
-        <TabsContent value="personnel" className="mt-6"><PersonnelManager /></TabsContent>
+        <TabsContent value="members" className="mt-6"><PersonnelManager /></TabsContent>
         <TabsContent value="groups" className="mt-6"><UnitGroupsManager /></TabsContent>
         <TabsContent value="discord" className="mt-6"><DiscordSettings /></TabsContent>
-        <TabsContent value="reports" className="mt-6"><ReportBuilder /></TabsContent>
+        <TabsContent value="customizer" className="mt-6"><Customizer /></TabsContent>
       </Tabs>
     </div>
   );

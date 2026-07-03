@@ -49,14 +49,16 @@ export default function LookupPanel({ department, session }) {
     localStorage.setItem("cad_search_history", JSON.stringify(updated));
   };
 
-  const runSearch = async (type, query) => {
+  const runSearch = async (type, query, exactVal) => {
+    const useExact = exactVal !== undefined ? exactVal : exact;
     setSearching(true);
     setSearched(true);
+    setSelected(null);
     try {
       const res = await base44.functions.invoke('searchCADRecords', {
         searchType: type,
         firstName: query.firstName, lastName: query.lastName, dob: query.dob,
-        plate: query.plate, serial: query.serial, exact,
+        plate: query.plate, serial: query.serial, exact: useExact,
       });
       const found = res.data.results || [];
       if (found.length > 0) {
@@ -69,12 +71,12 @@ export default function LookupPanel({ department, session }) {
     setSearching(false);
   };
 
-  const handleSearch = () => runSearch(searchType, form);
+  const handleSearch = () => runSearch(searchType, form, exact);
 
   const handleHistoryClick = (entry) => {
     setSearchType(entry.type);
     setForm(entry.query);
-    runSearch(entry.type, entry.query);
+    runSearch(entry.type, entry.query, false);
   };
 
   const selectPerson = async (person) => {
