@@ -8,6 +8,9 @@
     "pcr_number": {
       "type": "string"
     },
+    "patient_civilian_id": {
+      "type": "string"
+    },
     "patient_name": {
       "type": "string"
     },
@@ -28,10 +31,16 @@
       ],
       "default": "Unknown"
     },
+    "patient_race": {
+      "type": "string"
+    },
     "patient_address": {
       "type": "string"
     },
     "patient_phone": {
+      "type": "string"
+    },
+    "blood_type": {
       "type": "string"
     },
     "incident_location": {
@@ -40,10 +49,58 @@
     "incident_type": {
       "type": "string"
     },
-    "chief_complaint": {
+    "allergies": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "food_allergies": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "medications": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "medical_history": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "symptoms": {
       "type": "string"
     },
-    "mechanism_of_injury": {
+    "last_oral_intake": {
+      "type": "string"
+    },
+    "events_leading": {
+      "type": "string"
+    },
+    "pain_onset": {
+      "type": "string"
+    },
+    "pain_provocation": {
+      "type": "string"
+    },
+    "pain_quality": {
+      "type": "string"
+    },
+    "pain_radiation": {
+      "type": "string"
+    },
+    "pain_severity": {
+      "type": "string"
+    },
+    "pain_time": {
+      "type": "string"
+    },
+    "general_impression": {
       "type": "string"
     },
     "loc": {
@@ -80,6 +137,75 @@
     "skin_condition": {
       "type": "string"
     },
+    "airway_patency": {
+      "type": "string",
+      "enum": [
+        "Open",
+        "Partially Obstructed",
+        "Obstructed"
+      ],
+      "default": "Open"
+    },
+    "airway_intervention": {
+      "type": "string"
+    },
+    "breathing_effort": {
+      "type": "string",
+      "enum": [
+        "Normal",
+        "Labored",
+        "Shallow",
+        "Absent",
+        "Agonal"
+      ],
+      "default": "Normal"
+    },
+    "breath_sounds_left": {
+      "type": "string"
+    },
+    "breath_sounds_right": {
+      "type": "string"
+    },
+    "circulation_pulse_location": {
+      "type": "string"
+    },
+    "circulation_pulse_quality": {
+      "type": "string"
+    },
+    "capillary_refill": {
+      "type": "string"
+    },
+    "bleeding_control": {
+      "type": "string"
+    },
+    "traumatic": {
+      "type": "boolean",
+      "default": false
+    },
+    "trauma_findings": {
+      "type": "string"
+    },
+    "head_assessment": {
+      "type": "string"
+    },
+    "neck_assessment": {
+      "type": "string"
+    },
+    "chest_assessment": {
+      "type": "string"
+    },
+    "abdomen_assessment": {
+      "type": "string"
+    },
+    "pelvis_assessment": {
+      "type": "string"
+    },
+    "back_assessment": {
+      "type": "string"
+    },
+    "extremities_assessment": {
+      "type": "string"
+    },
     "vitals": {
       "type": "array",
       "items": {
@@ -111,6 +237,35 @@
           },
           "pain_score": {
             "type": "string"
+          },
+          "capillary_refill": {
+            "type": "string"
+          },
+          "lung_sounds": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "iv_access": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "timestamp": {
+            "type": "string"
+          },
+          "site": {
+            "type": "string"
+          },
+          "gauge": {
+            "type": "string"
+          },
+          "fluid": {
+            "type": "string"
+          },
+          "flow_rate": {
+            "type": "string"
           }
         }
       }
@@ -132,7 +287,7 @@
         }
       }
     },
-    "medications": {
+    "medications_administered": {
       "type": "array",
       "items": {
         "type": "object",
@@ -147,6 +302,9 @@
             "type": "string"
           },
           "route": {
+            "type": "string"
+          },
+          "response": {
             "type": "string"
           }
         }
