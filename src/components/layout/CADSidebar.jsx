@@ -3,20 +3,12 @@ import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/lib/AuthContext";
 import {
   Radio, ChevronLeft, ChevronRight, LogOut, Menu, X, Home, Building2, Shield,
-  Activity, Users, Keyboard, Archive, Settings, FileText, ScrollText
+  Settings
 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 
 const navItems = [
   { label: "Departments", path: "/cad", icon: Building2 },
-  { label: "Civilian Dashboard", path: "/civilian-dashboard", icon: Users },
-  { label: "My Records", path: "/my-records", icon: FileText },
-  { label: "Dispatch Dashboard", path: "/dispatch-dashboard", icon: Activity, adminOnly: true },
-  { label: "Dispatch Center", path: "/dispatch-center", icon: Radio, adminOnly: true },
-  { label: "Department Archive", path: "/department-archive", icon: Archive },
-  { label: "Keybinds", path: "/keybinds", icon: Keyboard },
-  { label: "System Logs", path: "/system-logs", icon: ScrollText, adminOnly: true },
-  { label: "Personnel", path: "/cad-personnel", icon: Users, adminOnly: true },
   { label: "CAD Settings", path: "/cad-settings", icon: Settings, adminOnly: true },
   { label: "Admin Panel", path: "/cad/admin", icon: Shield, adminOnly: true },
 ];

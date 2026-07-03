@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
-import { Shield, Search, FileText, Radio, Layers, Maximize, Home, UserCog, Keyboard, LogOut, ChevronUp, AlertTriangle } from "lucide-react";
+import { Shield, Search, FileText, Radio, Layers, Maximize, Home, UserCog, Keyboard, LogOut, ChevronUp, AlertTriangle, Users, Archive } from "lucide-react";
 
 const statusOptions = [
   { value: "Available", color: "text-green-400", bg: "bg-green-500/15", dot: "bg-green-400" },
@@ -61,6 +61,9 @@ export default function Taskbar({ activeView, setActiveView, session, onStatusCh
             <button onClick={() => handleLogoAction("home")} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:bg-slate-700"><Home className="w-4 h-4" /> Community Home</button>
             <button onClick={() => handleLogoAction("account")} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:bg-slate-700"><UserCog className="w-4 h-4" /> My Account</button>
             <button onClick={() => handleLogoAction("keybinds")} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:bg-slate-700"><Keyboard className="w-4 h-4" /> Keybinds</button>
+            <button onClick={() => navigate("/my-records")} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:bg-slate-700"><FileText className="w-4 h-4" /> My Records</button>
+            <button onClick={() => navigate("/civilian-dashboard")} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:bg-slate-700"><Users className="w-4 h-4" /> Civilian Dashboard</button>
+            <button onClick={() => navigate("/department-archive")} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:bg-slate-700"><Archive className="w-4 h-4" /> Department Archive</button>
             <div className="border-t border-slate-700 my-1" />
             <button onClick={() => handleLogoAction("logout")} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-400 hover:bg-slate-700"><LogOut className="w-4 h-4" /> Logout</button>
           </div>
