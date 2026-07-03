@@ -35,11 +35,18 @@
               "text",
               "textarea",
               "date",
-              "number"
+              "number",
+              "select"
             ]
           },
           "required": {
             "type": "boolean"
+          },
+          "options": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         }
       }

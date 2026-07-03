@@ -43,28 +43,30 @@ export default function CADCivilian() {
   const [bolos, setBolos] = useState([]);
   const [reports, setReports] = useState([]);
 
-  const load = async () => {
-    if (!user) return;
-    try {
-      const dept = await base44.entities.CADDepartment.get(deptId);
-      setDepartment(dept);
-      const chars = await base44.entities.Civilian.filter({ owner_user_id: user.id });
-      setCharacters(chars);
-      if (selectedChar) {
-        const updated = chars.find(c => c.id === selectedChar.id);
-        if (updated) setSelectedChar(updated);
-        else setSelectedChar(chars[0] || null);
-      } else {
+  useEffect(() => {
+    if (!user?.id || !deptId) { setLoading(false); return; }
+    let active = true;
+    const load = async () => {
+      try {
+        const dept = await base44.entities.CADDepartment.get(deptId);
+        if (!active) return;
+        setDepartment(dept);
+        const chars = await base44.entities.Civilian.filter({ owner_user_id: user.id });
+        if (!active) return;
+        setCharacters(chars);
         setSelectedChar(chars[0] || null);
+      } catch (e) {
+        if (active) toast({ title: "Error", description: e.message, variant: "destructive" });
+      } finally {
+        if (active) setLoading(false);
       }
-    } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
-    setLoading(false);
-  };
-
-  useEffect(() => { if (user) load(); }, [deptId, user]);
+    };
+    load();
+    return () => { active = false; };
+  }, [deptId, user?.id]);
 
   const loadRecords = async () => {
-    if (!selectedChar) return;
+    if (!selectedChar || !department) return;
     const name = `${selectedChar.first_name} ${selectedChar.last_name}`;
     try {
       const [w, b, r] = await Promise.all([
@@ -77,6 +79,16 @@ export default function CADCivilian() {
   };
 
   useEffect(() => { if (panel === "records" && selectedChar) loadRecords(); }, [panel, selectedChar]);
+
+  const reloadCharacters = async () => {
+    if (!user?.id) return;
+    try {
+      const chars = await base44.entities.Civilian.filter({ owner_user_id: user.id });
+      setCharacters(chars);
+      const updated = selectedChar ? chars.find(c => c.id === selectedChar.id) : null;
+      setSelectedChar(updated || chars[0] || null);
+    } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
+  };
 
   const handle911 = async () => {
     if (!call911Form.location) return;
@@ -98,13 +110,18 @@ export default function CADCivilian() {
   };
 
   if (loading) return <div className="flex justify-center items-center h-screen bg-slate-950"><div className="w-8 h-8 border-4 border-slate-700 border-t-blue-500 rounded-full animate-spin" /></div>;
-  if (!department) return <div className="flex justify-center items-center h-screen bg-slate-950 text-slate-400">Department not found</div>;
+  if (!department) return (
+    <div className="flex flex-col items-center justify-center h-screen bg-slate-950 gap-4">
+      <AlertTriangle className="w-16 h-16 text-slate-600" />
+      <h1 className="text-2xl font-bold text-white">Department not found</h1>
+      <Button onClick={() => navigate("/cad")} variant="outline" className="border-slate-700 text-slate-300">Back to Departments</Button>
+    </div>
+  );
 
   const fullName = selectedChar ? `${selectedChar.first_name} ${selectedChar.middle_name ? selectedChar.middle_name + " " : ""}${selectedChar.last_name}` : "";
 
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col">
-      {/* Header */}
       <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-800 bg-slate-900/50">
         <button onClick={() => navigate("/cad")} className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400"><ChevronLeft className="w-5 h-5" /></button>
         <img src={OCRP_LOGO} alt="OCRP" className="w-8 h-8 rounded" />
@@ -118,7 +135,6 @@ export default function CADCivilian() {
       </div>
 
       <div className="flex-1 p-4 max-w-5xl mx-auto w-full">
-        {/* Character Selector */}
         <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-4 mb-4">
           <div className="flex items-center gap-3 mb-3">
             <Label className="text-slate-300 text-sm font-semibold whitespace-nowrap">Selected Character</Label>
@@ -138,7 +154,6 @@ export default function CADCivilian() {
           </div>
         </div>
 
-        {/* Content */}
         {!selectedChar ? (
           <div className="flex flex-col items-center justify-center py-20 text-slate-600">
             <UserPlus className="w-16 h-16 mb-3 opacity-30" />
@@ -192,7 +207,6 @@ export default function CADCivilian() {
         ) : panel === "dmv" ? (
           <CivilianDMV character={selectedChar} department={department} user={user} />
         ) : (
-          /* Character Info */
           <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-5">
             <div className="flex items-start gap-4 mb-4">
               <div className="w-24 h-24 rounded-xl bg-slate-800 border border-slate-700 overflow-hidden flex items-center justify-center">
@@ -235,9 +249,8 @@ export default function CADCivilian() {
         )}
       </div>
 
-      <CharacterForm open={charFormOpen} onOpenChange={setCharFormOpen} editing={editingChar} department={department} user={user} onSaved={load} />
+      <CharacterForm open={charFormOpen} onOpenChange={setCharFormOpen} editing={editingChar} department={department} user={user} onSaved={reloadCharacters} />
 
-      {/* 911 Dialog */}
       <Dialog open={call911Open} onOpenChange={setCall911Open}>
         <DialogContent className="bg-slate-900 border-slate-700">
           <DialogHeader><DialogTitle className="text-white flex items-center gap-2"><Phone className="w-5 h-5 text-red-400" /> Place 911 Call</DialogTitle></DialogHeader>

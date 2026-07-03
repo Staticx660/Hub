@@ -31,6 +31,8 @@ export default function RecordsPanel({ department, session }) {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [reportForm, setReportForm] = useState({ title: "", report_type: "Incident", description: "", location: "" });
+  const [selectedTemplate, setSelectedTemplate] = useState(null);
+  const [fieldData, setFieldData] = useState({});
   const { toast } = useToast();
 
   const load = async () => {
@@ -53,6 +55,7 @@ export default function RecordsPanel({ department, session }) {
   const myDrafts = myReports.filter((r) => r.status === "Draft");
   const isSupervisor = session.rank?.toLowerCase().match(/sergeant|lieutenant|captain|chief|supervisor|commander|sheriff/);
   const reportTypes = REPORT_TYPES_BY_CATEGORY[department.category] || ALL_REPORT_TYPES;
+  const availableTemplates = templates.filter(t => !t.department_id || t.department_id === department.id);
 
   const tabs = [
     { id: "myfiles", label: "My Files", icon: FolderOpen, count: myReports.length },
@@ -69,9 +72,9 @@ export default function RecordsPanel({ department, session }) {
   const handleSaveReport = async (asDraft) => {
     try {
       const runNum = `RUN-${Date.now().toString().slice(-6)}`;
-      await base44.entities.CADReport.create({ ...reportForm, department_id: department.id, filed_by_name: session.callsign || session.user_name, filed_by_id: session.user_id, status: asDraft ? "Draft" : "Filed", run_number: runNum });
+      await base44.entities.CADReport.create({ ...reportForm, department_id: department.id, filed_by_name: session.callsign || session.user_name, filed_by_id: session.user_id, status: asDraft ? "Draft" : "Filed", run_number: runNum, template_id: selectedTemplate?.id || "", field_data: Object.keys(fieldData).length > 0 ? fieldData : undefined });
       toast({ title: asDraft ? "Draft saved" : "Report filed" });
-      setDialogOpen(false); setReportForm({ title: "", report_type: "Incident", description: "", location: "" }); load();
+      setDialogOpen(false); setReportForm({ title: "", report_type: "Incident", description: "", location: "" }); setSelectedTemplate(null); setFieldData({}); load();
     } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
   };
 
@@ -93,7 +96,7 @@ export default function RecordsPanel({ department, session }) {
         <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 px-2">Records</h3>
         <div className="space-y-1">
           {visibleTabs.map((t) => (
-            <button key={t.id} onClick={() => { setTab(t.id); setSelected(null); if (t.id === "new") { const types = REPORT_TYPES_BY_CATEGORY[department.category] || ALL_REPORT_TYPES; setReportForm({ title: "", report_type: types[0], description: "", location: "" }); setDialogOpen(true); } }} className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${tab === t.id ? "bg-blue-500/15 text-blue-400" : "text-slate-400 hover:bg-slate-800"}`}>
+            <button key={t.id} onClick={() => { setTab(t.id); setSelected(null);             if (t.id === "new") { const types = REPORT_TYPES_BY_CATEGORY[department.category] || ALL_REPORT_TYPES; setReportForm({ title: "", report_type: types[0], description: "", location: "" }); setSelectedTemplate(null); setFieldData({}); setDialogOpen(true); } }} className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${tab === t.id ? "bg-blue-500/15 text-blue-400" : "text-slate-400 hover:bg-slate-800"}`}>
               <span className="flex items-center gap-2"><t.icon className="w-4 h-4" /> {t.label}</span>
               {t.count !== undefined && <span className="text-xs text-slate-500">{t.count}</span>}
             </button>
@@ -162,6 +165,16 @@ export default function RecordsPanel({ department, session }) {
                 {selected.report_type && <p className="text-sm text-slate-400 mb-2">Type: {selected.report_type}</p>}
                 {selected.location && <p className="text-sm text-slate-400 mb-2">Location: {selected.location}</p>}
                 <p className="text-sm text-slate-300 whitespace-pre-wrap mt-3">{selected.description || selected.notes || ""}</p>
+                {selected.field_data && Object.keys(selected.field_data).length > 0 && (
+                  <div className="mt-3 pt-3 border-t border-slate-800">
+                    <p className="text-xs text-slate-500 mb-2">Template Fields:</p>
+                    <div className="space-y-1.5">
+                      {Object.entries(selected.field_data).map(([key, val]) => (
+                        <div key={key} className="text-sm"><span className="text-slate-500">{key}: </span><span className="text-slate-300">{String(val)}</span></div>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 {(selected.filed_by_name || selected.issued_by_name) && <p className="text-xs text-slate-500 mt-4">Filed by: {selected.filed_by_name || selected.issued_by_name}</p>}
                 {selected.title && <button onClick={() => deleteReport(selected.id)} className="mt-4 text-sm text-red-400 hover:text-red-300">Delete Report</button>}
               </div>
@@ -178,7 +191,35 @@ export default function RecordsPanel({ department, session }) {
             <div><Label className="text-slate-300">Report Type</Label><Select value={reportForm.report_type} onValueChange={(v) => setReportForm({ ...reportForm, report_type: v })}><SelectTrigger className="bg-slate-800 border-slate-700 text-white"><SelectValue /></SelectTrigger><SelectContent className="bg-slate-800 border-slate-700">{reportTypes.map((t) => <SelectItem key={t} value={t} className="text-white">{t}</SelectItem>)}</SelectContent></Select></div>
             <div><Label className="text-slate-300">Location</Label><Input value={reportForm.location} onChange={(e) => setReportForm({ ...reportForm, location: e.target.value })} className="bg-slate-800 border-slate-700 text-white" /></div>
             <div><Label className="text-slate-300">Description</Label><Textarea value={reportForm.description} onChange={(e) => setReportForm({ ...reportForm, description: e.target.value })} className="bg-slate-800 border-slate-700 text-white" rows={4} /></div>
-            {templates.length > 0 && <div><Label className="text-slate-300">Template</Label><Select onValueChange={(v) => { const t = templates.find((t) => t.id === v); if (t) setReportForm({ ...reportForm, report_type: t.category, title: t.name }); }}><SelectTrigger className="bg-slate-800 border-slate-700 text-white"><SelectValue placeholder="Use template..." /></SelectTrigger><SelectContent className="bg-slate-800 border-slate-700">{templates.map((t) => <SelectItem key={t.id} value={t.id} className="text-white">{t.name}</SelectItem>)}</SelectContent></Select></div>}
+            {availableTemplates.length > 0 && (
+              <div>
+                <Label className="text-slate-300">Template</Label>
+                <Select onValueChange={(v) => { const t = availableTemplates.find((t) => t.id === v); if (t) { setSelectedTemplate(t); setReportForm({ ...reportForm, report_type: t.category, title: t.name }); setFieldData({}); } }}>
+                  <SelectTrigger className="bg-slate-800 border-slate-700 text-white"><SelectValue placeholder="Use template..." /></SelectTrigger>
+                  <SelectContent className="bg-slate-800 border-slate-700">{availableTemplates.map((t) => <SelectItem key={t.id} value={t.id} className="text-white">{t.name}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+            )}
+            {selectedTemplate?.fields?.length > 0 && (
+              <div className="space-y-3 border-t border-slate-700 pt-3">
+                <p className="text-sm font-semibold text-slate-300">Template Fields</p>
+                {selectedTemplate.fields.map((field, i) => (
+                  <div key={i}>
+                    <Label className="text-slate-300">{field.label}{field.required && <span className="text-red-400 ml-0.5">*</span>}</Label>
+                    {field.field_type === "textarea" ? (
+                      <Textarea value={fieldData[field.label] || ""} onChange={e => setFieldData({ ...fieldData, [field.label]: e.target.value })} className="bg-slate-800 border-slate-700 text-white" rows={3} />
+                    ) : field.field_type === "select" ? (
+                      <Select value={fieldData[field.label] || ""} onValueChange={v => setFieldData({ ...fieldData, [field.label]: v })}>
+                        <SelectTrigger className="bg-slate-800 border-slate-700 text-white"><SelectValue placeholder="Select..." /></SelectTrigger>
+                        <SelectContent className="bg-slate-800 border-slate-700">{(field.options || []).map(o => <SelectItem key={o} value={o} className="text-white">{o}</SelectItem>)}</SelectContent>
+                      </Select>
+                    ) : (
+                      <Input type={field.field_type === "number" ? "number" : field.field_type === "date" ? "date" : "text"} value={fieldData[field.label] || ""} onChange={e => setFieldData({ ...fieldData, [field.label]: e.target.value })} className="bg-slate-800 border-slate-700 text-white" />
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)} className="border-slate-700 text-slate-300">Cancel</Button>

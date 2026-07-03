@@ -5,6 +5,7 @@ import UnitsManager from "@/components/cad/UnitsManager";
 import PersonnelManager from "@/components/cad/PersonnelManager";
 import UnitGroupsManager from "@/components/cad/UnitGroupsManager";
 import DiscordSettings from "@/components/cad/DiscordSettings";
+import ReportBuilder from "@/components/cad/ReportBuilder";
 
 export default function CADAdmin() {
   return (
@@ -18,12 +19,14 @@ export default function CADAdmin() {
           <TabsTrigger value="personnel" className="data-[state=active]:bg-slate-800 text-slate-400 data-[state=active]:text-white">Personnel</TabsTrigger>
           <TabsTrigger value="groups" className="data-[state=active]:bg-slate-800 text-slate-400 data-[state=active]:text-white">Preset Groups</TabsTrigger>
           <TabsTrigger value="discord" className="data-[state=active]:bg-slate-800 text-slate-400 data-[state=active]:text-white">Discord</TabsTrigger>
+          <TabsTrigger value="reports" className="data-[state=active]:bg-slate-800 text-slate-400 data-[state=active]:text-white">Report Builder</TabsTrigger>
         </TabsList>
         <TabsContent value="departments" className="mt-6"><DepartmentsManager /></TabsContent>
         <TabsContent value="units" className="mt-6"><UnitsManager /></TabsContent>
         <TabsContent value="personnel" className="mt-6"><PersonnelManager /></TabsContent>
         <TabsContent value="groups" className="mt-6"><UnitGroupsManager /></TabsContent>
         <TabsContent value="discord" className="mt-6"><DiscordSettings /></TabsContent>
+        <TabsContent value="reports" className="mt-6"><ReportBuilder /></TabsContent>
       </Tabs>
     </div>
   );

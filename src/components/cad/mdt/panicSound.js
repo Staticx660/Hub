@@ -1,32 +1,84 @@
 let audioContext = null;
-let intervalId = null;
+let panicIntervalId = null;
 
+function getAudioContext() {
+  if (!audioContext) {
+    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (audioContext.state === 'suspended') audioContext.resume();
+  return audioContext;
+}
+
+// Quick status change beep
+export function playStatusBeep() {
+  try {
+    const ctx = getAudioContext();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.frequency.value = 880;
+    osc.type = 'sine';
+    gain.gain.setValueAtTime(0.12, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.12);
+  } catch (e) { /* silent */ }
+}
+
+// Emergency siren wail — slow rise/fall, professional tone
 export function startPanicSound() {
   stopPanicSound();
   try {
-    audioContext = audioContext || new (window.AudioContext || window.webkitAudioContext)();
-    if (audioContext.state === 'suspended') audioContext.resume();
-    const playTone = (freq) => {
-      const osc = audioContext.createOscillator();
-      const gain = audioContext.createGain();
+    const ctx = getAudioContext();
+
+    const playWail = () => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
       osc.connect(gain);
-      gain.connect(audioContext.destination);
-      osc.frequency.value = freq;
-      osc.type = 'sawtooth';
-      gain.gain.setValueAtTime(0.2, audioContext.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.35);
+      gain.connect(ctx.destination);
+      osc.type = 'sine';
+      // Slow rise and fall like a real emergency siren
+      osc.frequency.setValueAtTime(700, ctx.currentTime);
+      osc.frequency.linearRampToValueAtTime(1000, ctx.currentTime + 0.7);
+      osc.frequency.linearRampToValueAtTime(700, ctx.currentTime + 1.4);
+      gain.gain.setValueAtTime(0, ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.25, ctx.currentTime + 0.1);
+      gain.gain.setValueAtTime(0.25, ctx.currentTime + 1.2);
+      gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 1.4);
       osc.start();
-      osc.stop(audioContext.currentTime + 0.35);
+      osc.stop(ctx.currentTime + 1.4);
     };
-    let high = true;
-    playTone(1000);
-    intervalId = setInterval(() => {
-      playTone(high ? 1000 : 600);
-      high = !high;
-    }, 400);
-  } catch (e) { console.error('Audio error:', e); }
+
+    playWail();
+    panicIntervalId = setInterval(playWail, 1400);
+  } catch (e) { /* silent */ }
 }
 
 export function stopPanicSound() {
-  if (intervalId) { clearInterval(intervalId); intervalId = null; }
+  if (panicIntervalId) { clearInterval(panicIntervalId); panicIntervalId = null; }
+}
+
+// Voice announcement via browser TTS
+export function speakPanicAlert(unitName) {
+  try {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(
+        `Attention all units. Panic button activated by ${unitName}. All available units respond immediately.`
+      );
+      utterance.rate = 0.95;
+      utterance.pitch = 0.7;
+      utterance.volume = 1;
+      window.speechSynthesis.speak(utterance);
+    }
+  } catch (e) { /* silent */ }
+}
+
+export function stopPanicVoice() {
+  try {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
+  } catch (e) { /* silent */ }
 }

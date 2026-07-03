@@ -25,6 +25,19 @@ export default function ClockInDialog({ open, onOpenChange, department, user, on
   }, [open]);
 
   const autoLookupRoster = async () => {
+    // First: use the linked Discord ID to find the roster member
+    if (user?.discord_id) {
+      try {
+        const members = await base44.entities.RosterMember.filter({ discord_id: user.discord_id });
+        if (members.length > 0) {
+          const match = members[0];
+          setForm({ name: match.name || "", callsign: match.callsign || "", rank: match.rank || "" });
+          setDiscordQuery(match.discord_username || match.discord_id || "");
+          return;
+        }
+      } catch (e) { /* fall through to name match */ }
+    }
+    // Fallback: match by full name
     if (!user?.full_name) return;
     try {
       const members = await base44.entities.RosterMember.list();
@@ -32,11 +45,7 @@ export default function ClockInDialog({ open, onOpenChange, department, user, on
         (m) => m.name?.toLowerCase().trim() === user.full_name?.toLowerCase().trim()
       );
       if (match) {
-        setForm({
-          name: match.name || "",
-          callsign: match.callsign || "",
-          rank: match.rank || "",
-        });
+        setForm({ name: match.name || "", callsign: match.callsign || "", rank: match.rank || "" });
         setDiscordQuery(match.discord_username || match.discord_id || "");
       }
     } catch (e) { /* silent fail — user can manually enter */ }

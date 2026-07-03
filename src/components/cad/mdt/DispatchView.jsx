@@ -155,8 +155,11 @@ export default function DispatchView({ department, session, setSession, setActiv
           {sessions.map((s) => (
             <div key={s.id} className={`flex items-center justify-between rounded-lg p-2.5 ${s.id === session.id ? "bg-blue-500/10 border border-blue-500/20" : "bg-slate-800/50"}`}>
               <div className="min-w-0">
-                <p className="text-sm text-white font-medium truncate">{s.callsign || s.user_name}</p>
-                {s.rank && <p className="text-xs text-slate-500">{s.rank}</p>}
+                <div className="flex items-center gap-1.5">
+                  {s.callsign && <span className="text-xs font-mono font-bold text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded">{s.callsign}</span>}
+                  <p className="text-sm text-white font-medium truncate">{s.user_name}</p>
+                </div>
+                {s.rank && <p className="text-xs text-slate-500 truncate">{s.rank}</p>}
               </div>
               <div className="flex items-center gap-1.5">
                 {s.panic_active && <AlertTriangle className="w-3.5 h-3.5 text-red-500 animate-pulse" />}
