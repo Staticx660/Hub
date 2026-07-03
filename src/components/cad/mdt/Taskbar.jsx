@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
-import { Shield, Search, FileText, Radio, Layers, Maximize, Home, UserCog, Keyboard, LogOut, ChevronUp, AlertTriangle, Users, Archive } from "lucide-react";
+import { Shield, Search, FileText, Radio, Layers, Maximize, Home, UserCog, Keyboard, LogOut, ChevronUp, AlertTriangle, Users, Archive, Camera, ChevronDown } from "lucide-react";
 
 const statusOptions = [
   { value: "Available", color: "text-green-400", bg: "bg-green-500/15", dot: "bg-green-400" },
@@ -26,16 +26,9 @@ export default function Taskbar({ activeView, setActiveView, session, onStatusCh
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  const views = [
-    { id: "dispatch", label: "Dispatch", icon: Radio },
-    { id: "lookups", label: "Lookups", icon: Search },
-    { id: "records", label: "Records", icon: FileText },
-    { id: "mycall", label: "My Call", icon: Shield },
-    { id: "groups", label: "Groups", icon: Layers },
-  ];
-
   const currentStatus = statusOptions.find((s) => s.value === session?.status) || statusOptions[0];
   const isPanic = session?.panic_active;
+  const activeGlow = "border border-green-400/50 shadow-[0_0_8px_rgba(74,222,128,0.25)]";
 
   const handleLogoAction = (action) => {
     setLogoMenu(false);
@@ -48,15 +41,28 @@ export default function Taskbar({ activeView, setActiveView, session, onStatusCh
     }
   };
 
+  const navButtons = [
+    { id: "lookups", label: "Lookup", icon: Search, hasDropdown: true },
+    { id: "records", label: "Records", icon: FileText, hasDropdown: true },
+    { id: "mycall", label: "My Call", icon: Shield, hasDropdown: false },
+    { id: "groups", label: "Groups", icon: Layers, hasDropdown: false },
+  ];
+
+  const lookupTypes = [
+    { label: "Person", icon: Users },
+    { label: "Vehicle", icon: Radio },
+    { label: "Firearm", icon: Shield },
+  ];
+
   return (
-    <div className={`h-14 bg-slate-900/95 backdrop-blur border-t flex items-center px-2 gap-1 ${isPanic ? "border-red-500 animate-pulse" : "border-slate-700/50"}`}>
+    <div className={`h-12 bg-[#131519] border-t border-[#2c2f36] flex items-center px-2 gap-1 ${isPanic ? "border-red-500 animate-pulse" : ""}`}>
+      {/* Logo */}
       <div ref={logoRef} className="relative">
-        <button onClick={() => setLogoMenu(!logoMenu)} className="flex items-center gap-2 px-2.5 h-10 rounded-lg hover:bg-slate-800 transition-colors">
-          <img src="https://media.base44.com/images/public/6a441f279b9d3cd678958799/5a43a1b46_OCRP20.png" alt="OCRP" className="w-8 h-8 rounded object-cover" />
-          <span className="font-bold text-white text-sm hidden sm:block">OCRP</span>
+        <button onClick={() => setLogoMenu(!logoMenu)} className="flex items-center gap-2 px-2 h-9 rounded-lg hover:bg-slate-800 transition-colors">
+          <img src="https://media.base44.com/images/public/6a441f279b9d3cd678958799/5a43a1b46_OCRP20.png" alt="OCRP" className="w-7 h-7 rounded object-cover" />
         </button>
         {logoMenu && (
-          <div className="absolute bottom-12 left-0 w-48 bg-slate-800 border border-slate-700 rounded-lg shadow-xl py-1 z-50">
+          <div className="absolute bottom-11 left-0 w-48 bg-slate-800 border border-slate-700 rounded-lg shadow-xl py-1 z-50">
             <button onClick={() => handleLogoAction("fullscreen")} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:bg-slate-700"><Maximize className="w-4 h-4" /> Full Screen</button>
             <button onClick={() => handleLogoAction("home")} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:bg-slate-700"><Home className="w-4 h-4" /> Community Home</button>
             <button onClick={() => handleLogoAction("account")} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:bg-slate-700"><UserCog className="w-4 h-4" /> My Account</button>
@@ -70,30 +76,55 @@ export default function Taskbar({ activeView, setActiveView, session, onStatusCh
         )}
       </div>
 
-      <div className="w-px h-8 bg-slate-700 mx-1" />
+      {/* Quick Search Icon */}
+      <button onClick={() => setActiveView("lookups")} className={`flex items-center justify-center w-9 h-9 rounded-lg transition-colors ${activeView === "lookups" ? "bg-slate-800 text-white" : "text-slate-400 hover:bg-slate-800 hover:text-white"}`}>
+        <Search className="w-4 h-4" />
+      </button>
 
-      <div className="flex items-center gap-1 flex-1 overflow-x-auto">
-        {views.map((v) => (
-          <button key={v.id} onClick={() => setActiveView(v.id)} className={`flex items-center gap-2 px-3 h-10 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${activeView === v.id ? "bg-blue-500/20 text-blue-400 shadow-inner shadow-blue-500/10" : "text-slate-400 hover:bg-slate-800 hover:text-white"}`}>
-            <v.icon className="w-4 h-4" />
-            <span className="hidden sm:block">{v.label}</span>
-          </button>
+      {/* Nav Buttons */}
+      <div className="flex items-center gap-1">
+        {navButtons.map((v) => (
+          <div key={v.id} className="relative">
+            <button onClick={() => setActiveView(v.id)} className={`flex items-center gap-1.5 px-3 h-9 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${activeView === v.id ? `bg-slate-800 text-white ${activeGlow}` : "text-slate-400 hover:bg-slate-800 hover:text-white"}`}>
+              <v.icon className="w-4 h-4" />
+              <span className="hidden sm:block">{v.label}</span>
+              {v.hasDropdown && <ChevronDown className="w-3 h-3 opacity-50" />}
+            </button>
+            {v.id === "lookups" && v.hasDropdown && activeView === "lookups" && (
+              <div className="absolute bottom-11 left-0 w-40 bg-slate-800 border border-slate-700 rounded-lg shadow-xl py-1 z-50">
+                {lookupTypes.map(lt => (
+                  <button key={lt.label} onClick={() => setActiveView("lookups")} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:bg-slate-700"><lt.icon className="w-3.5 h-3.5" /> {lt.label}</button>
+                ))}
+              </div>
+            )}
+          </div>
         ))}
+
+        {/* Self Dispatch */}
+        <button onClick={() => setActiveView("dispatch")} className={`flex items-center gap-1.5 px-3 h-9 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${activeView === "dispatch" ? `bg-slate-800 text-white ${activeGlow}` : "text-slate-400 hover:bg-slate-800 hover:text-white"}`}>
+          <Radio className="w-4 h-4" />
+          <span className="hidden sm:block">Self Dispatch</span>
+        </button>
       </div>
 
-      <div className="hidden md:flex items-center gap-2 px-3 text-sm border-l border-slate-700">
-        {session?.rank && <span className="text-slate-500">{session.rank}</span>}
-        <span className="font-mono font-semibold text-white">{session?.callsign || session?.user_name}</span>
+      <div className="w-px h-7 bg-[#2c2f36] mx-1" />
+
+      {/* Unit Info */}
+      <div className="hidden md:flex items-center gap-2 px-2">
+        <Camera className="w-4 h-4 text-slate-500" />
+        <span className="font-mono font-semibold text-white text-sm">{session?.callsign || session?.user_name}</span>
+        <span className={`w-2 h-2 rounded-full ${currentStatus.dot}`} />
       </div>
 
+      {/* Status Badge */}
       <div ref={statusRef} className="relative">
-        <button onClick={() => setStatusMenu(!statusMenu)} className={`flex items-center gap-2 px-3 h-10 rounded-lg text-sm font-medium transition-colors ${currentStatus.bg} ${currentStatus.color}`}>
+        <button onClick={() => setStatusMenu(!statusMenu)} className={`flex items-center gap-1.5 px-3 h-9 rounded-lg text-xs font-bold transition-colors ${currentStatus.bg} ${currentStatus.color}`}>
           <span className={`w-2 h-2 rounded-full ${currentStatus.dot}`} />
-          <span className="hidden sm:block">{session?.status || "Available"}</span>
+          <span className="hidden sm:block">{(session?.status || "AVAILABLE").toUpperCase()}</span>
           <ChevronUp className="w-3 h-3" />
         </button>
         {statusMenu && (
-          <div className="absolute bottom-12 right-0 w-44 bg-slate-800 border border-slate-700 rounded-lg shadow-xl py-1 z-50">
+          <div className="absolute bottom-11 right-0 w-44 bg-slate-800 border border-slate-700 rounded-lg shadow-xl py-1 z-50">
             {statusOptions.map((s) => (
               <button key={s.value} onClick={() => { onStatusChange(s.value); setStatusMenu(false); }} className={`w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-slate-700 ${s.color}`}>
                 <span className={`w-2 h-2 rounded-full ${s.dot}`} />
@@ -109,12 +140,13 @@ export default function Taskbar({ activeView, setActiveView, session, onStatusCh
         )}
       </div>
 
-      <button onClick={onPanic} className={`flex items-center gap-1.5 px-3 h-10 rounded-lg text-sm font-bold transition-colors ${isPanic ? "bg-red-500 text-white animate-pulse" : "bg-red-500/10 text-red-400 hover:bg-red-500/20"}`}>
+      {/* Panic Quick Button */}
+      <button onClick={onPanic} className={`flex items-center justify-center w-9 h-9 rounded-lg text-sm font-bold transition-colors ${isPanic ? "bg-red-500 text-white animate-pulse" : "bg-red-500/10 text-red-400 hover:bg-red-500/20"}`}>
         <AlertTriangle className="w-4 h-4" />
-        <span className="hidden sm:block">{isPanic ? "CANCEL" : "PANIC"}</span>
       </button>
 
-      <button onClick={onClockOut} className="flex items-center gap-1.5 px-3 h-10 rounded-lg text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition-colors">
+      {/* Clock Out */}
+      <button onClick={onClockOut} className="flex items-center gap-1.5 px-3 h-9 rounded-lg text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition-colors">
         <LogOut className="w-4 h-4" />
         <span className="hidden sm:block">Clock Out</span>
       </button>

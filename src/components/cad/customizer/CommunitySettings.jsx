@@ -17,8 +17,18 @@ export default function CommunitySettings() {
     const load = async () => {
       try {
         const list = await base44.entities.CommunitySetting.list();
-        if (list.length > 0) { setSetting(list[0]); setForm(list[0]); }
-      } catch (e) { /* */ }
+        if (list.length > 0) {
+          const s = list[0];
+          setSetting(s);
+          setForm({
+            community_name: s.community_name || "",
+            logo_url: s.logo_url || "",
+            accent_color: s.accent_color || "#3b82f6",
+            discord_invite_url: s.discord_invite_url || "",
+            description: s.description || "",
+          });
+        }
+      } catch (e) { toast({ title: "Load error", description: e.message, variant: "destructive" }); }
       setLoading(false);
     };
     load();
@@ -26,9 +36,16 @@ export default function CommunitySettings() {
 
   const handleSave = async () => {
     if (!form.community_name?.trim()) { toast({ title: "Community name is required", variant: "destructive" }); return; }
+    const data = {
+      community_name: form.community_name,
+      logo_url: form.logo_url,
+      accent_color: form.accent_color,
+      discord_invite_url: form.discord_invite_url,
+      description: form.description,
+    };
     try {
-      if (setting) { await base44.entities.CommunitySetting.update(setting.id, form); }
-      else { const created = await base44.entities.CommunitySetting.create({ ...form, is_setup: true }); setSetting(created); }
+      if (setting) { await base44.entities.CommunitySetting.update(setting.id, data); }
+      else { const created = await base44.entities.CommunitySetting.create({ ...data, is_setup: true }); setSetting(created); }
       toast({ title: "Community settings saved" });
     } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
   };

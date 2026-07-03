@@ -74,6 +74,7 @@ export default function LookupPanel({ department, session }) {
   const handleSearch = () => runSearch(searchType, form, exact);
 
   const handleHistoryClick = (entry) => {
+    if (!entry?.query) { toast({ title: "Invalid history entry" }); return; }
     setSearchType(entry.type);
     setForm(entry.query);
     runSearch(entry.type, entry.query, false);
@@ -85,11 +86,11 @@ export default function LookupPanel({ department, session }) {
       const res = await base44.functions.invoke('searchCADRecords', {
         searchType: "person", personId: person.id, personName: `${person.first_name} ${person.last_name}`,
       });
-      setWarrants(res.data.warrants || []);
-      setVehicles(res.data.vehicles || []);
-      setFirearms(res.data.firearms || []);
-      setPersonReports(res.data.reports || []);
-      setPersonBolos(res.data.bolos || []);
+      setWarrants(res.data?.warrants || []);
+      setVehicles(res.data?.vehicles || []);
+      setFirearms(res.data?.firearms || []);
+      setPersonReports(res.data?.reports || []);
+      setPersonBolos(res.data?.bolos || []);
     } catch (e) {
       setWarrants([]); setVehicles([]); setFirearms([]); setPersonReports([]); setPersonBolos([]);
     }
@@ -102,7 +103,7 @@ export default function LookupPanel({ department, session }) {
       const res = await base44.functions.invoke('searchCADRecords', {
         searchType: "vehicle", vehicleId: vehicle.id, vehiclePlate: vehicle.plate,
       });
-      setVehiclePriors({ reports: res.data.reports || [], bolos: res.data.bolos || [] });
+      setVehiclePriors({ reports: res.data?.reports || [], bolos: res.data?.bolos || [] });
     } catch (e) { /* */ }
   };
 

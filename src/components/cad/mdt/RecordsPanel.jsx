@@ -1,18 +1,10 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
-import { FileText, FolderOpen, Pencil, AlertTriangle, Eye, Plus, Shield, ClipboardList, Siren, Clock, Gavel } from "lucide-react";
+import { FileText, FolderOpen, Pencil, Eye, Plus, Shield, Clock, Gavel, ChevronDown, ChevronRight, List, LayoutGrid, X } from "lucide-react";
 import BoloForm from "@/components/cad/mdt/BoloForm";
 import WarrantForm from "@/components/cad/mdt/WarrantForm";
-import CivilianSearch from "@/components/cad/mdt/CivilianSearch";
-import VehicleSearch from "@/components/cad/mdt/VehicleSearch";
-import { logSystemEvent } from "@/lib/logSystemEvent";
+import ReportFormView from "@/components/cad/mdt/ReportFormView";
 
 const ALL_REPORT_TYPES = ["Incident", "Traffic Stop", "Field Contact", "Arrest", "Medical", "Fire", "Vehicle Accident", "Use of Force", "Evidence", "Other"];
 const REPORT_TYPES_BY_CATEGORY = {
@@ -25,6 +17,13 @@ const REPORT_TYPES_BY_CATEGORY = {
   Other: ALL_REPORT_TYPES,
 };
 
+const FILTER_CHECKBOXES = [
+  { key: "warrant", label: "Warrant" },
+  { key: "bolo", label: "BOLO" },
+  { key: "license", label: "License" },
+  { key: "vehicle", label: "Vehicle Registration" },
+];
+
 export default function RecordsPanel({ department, session }) {
   const [tab, setTab] = useState("myfiles");
   const [reports, setReports] = useState([]);
@@ -34,14 +33,15 @@ export default function RecordsPanel({ department, session }) {
   const [closedCalls, setClosedCalls] = useState([]);
   const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [reportForm, setReportForm] = useState({ title: "", report_type: "Incident", description: "", location: "", linked_civilian_id: "", linked_civilian_name: "", linked_vehicle_plate: "" });
-  const [selectedTemplate, setSelectedTemplate] = useState(null);
-  const [fieldData, setFieldData] = useState({});
   const [boloOpen, setBoloOpen] = useState(false);
   const [warrantOpen, setWarrantOpen] = useState(false);
-  const [selectedCivilian, setSelectedCivilian] = useState(null);
-  const [selectedVehicle, setSelectedVehicle] = useState(null);
+  const [showForm, setShowForm] = useState(false);
+  const [formType, setFormType] = useState("Incident");
+  const [newFileExpanded, setNewFileExpanded] = useState(false);
+  const [historyExpanded, setHistoryExpanded] = useState(true);
+  const [viewMode, setViewMode] = useState("list");
+  const [searchFilter, setSearchFilter] = useState("");
+  const [filters, setFilters] = useState({});
   const { toast } = useToast();
 
   const load = async () => {
@@ -64,72 +64,32 @@ export default function RecordsPanel({ department, session }) {
   const myDrafts = myReports.filter((r) => r.status === "Draft");
   const isSupervisor = session.rank?.toLowerCase().match(/sergeant|lieutenant|captain|chief|supervisor|commander|sheriff/);
   const reportTypes = REPORT_TYPES_BY_CATEGORY[department.category] || ALL_REPORT_TYPES;
-  const deptCategoryTypes = REPORT_TYPES_BY_CATEGORY[department.category] || ALL_REPORT_TYPES;
-  const availableTemplates = templates.filter(t => {
-    if (t.department_id && t.department_id !== department.id) return false;
-    if (!deptCategoryTypes.includes(t.category)) return false;
-    return true;
-  });
 
-  const tabs = [
+  const fileItems = [
     { id: "myfiles", label: "My Files", icon: FolderOpen, count: myReports.length },
     { id: "drafts", label: "My Drafts", icon: Pencil, count: myDrafts.length },
-    { id: "closedcalls", label: "Closed Calls", icon: Siren, count: closedCalls.length },
-    { id: "warrants", label: "Warrants", icon: Gavel, count: warrants.filter((w) => w.status === "Active").length },
-    { id: "bolos", label: "BOLOs", icon: Eye, count: bolos.filter((b) => b.status === "Active").length },
-    { id: "supervisor", label: "Supervisor", icon: Shield, count: reports.length, supervisorOnly: true },
-    { id: "new", label: "New File", icon: Plus },
-  ];
+    { id: "warrants", label: "Warrants", icon: Gavel, count: warrants.filter(w => w.status === "Active").length },
+    { id: "bolos", label: "BOLOs", icon: Eye, count: bolos.filter(b => b.status === "Active").length },
+    { id: "supervisor", label: "Supervisor Panel", icon: Shield, count: reports.length, supervisorOnly: true },
+  ].filter(t => !t.supervisorOnly || isSupervisor);
 
-  const visibleTabs = tabs.filter((t) => !t.supervisorOnly || isSupervisor);
+  const searchItems = reportTypes;
 
-  const handleCivilianSelected = (civilian) => {
-    if (civilian) {
-      setSelectedCivilian(civilian);
-      setReportForm(prev => ({ ...prev, linked_civilian_id: civilian.id, linked_civilian_name: `${civilian.first_name} ${civilian.last_name}` }));
-      setFieldData(prev => ({ ...prev,
-        "Civilian Name": `${civilian.first_name} ${civilian.last_name}`,
-        "DOB": civilian.dob || "",
-        "Phone": civilian.phone || "",
-        "Gender": civilian.gender || "",
-        "Address": [civilian.address, civilian.zip_code].filter(Boolean).join(", "),
-      }));
-    } else {
-      setSelectedCivilian(null);
-      setReportForm(prev => ({ ...prev, linked_civilian_id: "", linked_civilian_name: "" }));
-    }
-  };
+  const currentList = tab === "myfiles" ? myReports : tab === "drafts" ? myDrafts : tab === "closedcalls" ? closedCalls : tab === "warrants" ? warrants : tab === "bolos" ? bolos : tab === "supervisor" ? reports : [];
 
-  const handleVehicleSelected = (vehicle) => {
-    if (vehicle) {
-      setSelectedVehicle(vehicle);
-      setReportForm(prev => ({ ...prev, linked_vehicle_plate: vehicle.plate }));
-      setFieldData(prev => ({ ...prev,
-        "Vehicle Plate": vehicle.plate || "",
-        "Vehicle Model": vehicle.model || "",
-        "Vehicle Color": vehicle.color || "",
-      }));
-    } else {
-      setSelectedVehicle(null);
-      setReportForm(prev => ({ ...prev, linked_vehicle_plate: "" }));
-    }
-  };
+  const filteredList = searchFilter
+    ? currentList.filter(item => {
+        const title = item.title || item.call_type || item.reason || item.person_name || "";
+        const type = item.report_type || item.bolo_type || "";
+        return title.toLowerCase().includes(searchFilter.toLowerCase()) || type.toLowerCase().includes(searchFilter.toLowerCase());
+      })
+    : currentList;
 
-  const handleSaveReport = async (asDraft) => {
-    try {
-      const runNum = `RUN-${Date.now().toString().slice(-6)}`;
-      await base44.entities.CADReport.create({
-        ...reportForm, department_id: department.id, filed_by_name: session.callsign || session.user_name, filed_by_id: session.user_id,
-        status: asDraft ? "Draft" : "Filed", run_number: runNum, template_id: selectedTemplate?.id || "",
-        field_data: Object.keys(fieldData).length > 0 ? fieldData : undefined,
-      });
-      logSystemEvent("Report Filed", "CAD", `Report "${reportForm.title}" filed by ${session.callsign || session.user_name}`, { entity_type: "CADReport" });
-      toast({ title: asDraft ? "Draft saved" : "Report filed" });
-      setDialogOpen(false);
-      setReportForm({ title: "", report_type: "Incident", description: "", location: "", linked_civilian_id: "", linked_civilian_name: "", linked_vehicle_plate: "" });
-      setSelectedCivilian(null); setSelectedVehicle(null); setSelectedTemplate(null); setFieldData({});
-      load();
-    } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
+  const openNewFile = (type) => {
+    setFormType(type);
+    setShowForm(true);
+    setSelected(null);
+    setNewFileExpanded(false);
   };
 
   const deleteReport = async (id) => {
@@ -140,64 +100,153 @@ export default function RecordsPanel({ department, session }) {
 
   if (loading) return <div className="flex justify-center py-16"><div className="w-8 h-8 border-2 border-slate-700 border-t-blue-500 rounded-full animate-spin" /></div>;
 
-  const currentList = tab === "myfiles" ? myReports : tab === "drafts" ? myDrafts : tab === "closedcalls" ? closedCalls : tab === "warrants" ? warrants : tab === "bolos" ? bolos : tab === "supervisor" ? reports : [];
+  if (showForm) {
+    return <ReportFormView department={department} session={session} initialType={formType} templates={templates} onClose={() => setShowForm(false)} onSaved={() => { setShowForm(false); load(); }} />;
+  }
 
   const isClosedCall = selected?.call_type !== undefined;
 
   return (
-    <div className="flex h-full">
-      <div className="w-60 border-r border-slate-800 bg-slate-900/50 p-3 overflow-y-auto flex-shrink-0">
-        <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 px-2">Records</h3>
-        <div className="space-y-1">
-          {visibleTabs.map((t) => (
-            <button key={t.id} onClick={() => {
-              setTab(t.id); setSelected(null);
-              if (t.id === "new") { const types = REPORT_TYPES_BY_CATEGORY[department.category] || ALL_REPORT_TYPES; setReportForm({ title: "", report_type: types[0], description: "", location: "", linked_civilian_id: "", linked_civilian_name: "", linked_vehicle_plate: "" }); setSelectedCivilian(null); setSelectedVehicle(null); setSelectedTemplate(null); setFieldData({}); setDialogOpen(true); }
-            }} className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${tab === t.id ? "bg-blue-500/15 text-blue-400" : "text-slate-400 hover:bg-slate-800"}`}>
-              <span className="flex items-center gap-2"><t.icon className="w-4 h-4" /> {t.label}</span>
-              {t.count !== undefined && <span className="text-xs text-slate-500">{t.count}</span>}
-            </button>
-          ))}
+    <div className="flex h-full bg-[#1a1d21]">
+      {/* Sidebar */}
+      <div className="w-56 bg-[#131519] border-r border-[#2c2f36] flex flex-col overflow-y-auto flex-shrink-0">
+        {/* Files */}
+        <div className="p-2">
+          <h3 className="text-[10px] font-bold uppercase tracking-wider text-slate-500 px-2 py-1.5">Files</h3>
+          <div className="space-y-0.5">
+            {fileItems.map((t) => (
+              <button key={t.id} onClick={() => { setTab(t.id); setSelected(null); }} className={`w-full flex items-center justify-between px-2 py-1.5 rounded-md text-sm transition-colors ${tab === t.id ? "bg-slate-700/50 text-white" : "text-slate-400 hover:bg-slate-800/50 hover:text-white"}`}>
+                <span className="flex items-center gap-2"><t.icon className="w-3.5 h-3.5" /> {t.label}</span>
+                {t.count !== undefined && <span className="text-[10px] text-slate-500">{t.count}</span>}
+              </button>
+            ))}
+          </div>
         </div>
-        <div className="mt-6 pt-4 border-t border-slate-800">
-          <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 px-2">File Types</h4>
-          <div className="space-y-1 px-2">{reportTypes.map((rt) => <div key={rt} className="text-xs text-slate-500 flex items-center gap-1.5"><ClipboardList className="w-3 h-3" /> {rt}</div>)}</div>
+
+        {/* New File */}
+        <div className="p-2 border-t border-[#2c2f36]">
+          <button onClick={() => setNewFileExpanded(!newFileExpanded)} className="w-full flex items-center justify-between px-2 py-1.5 rounded-md text-sm text-slate-300 hover:bg-slate-800/50 hover:text-white">
+            <span className="flex items-center gap-2"><Plus className="w-3.5 h-3.5 text-green-400" /> New File</span>
+            {newFileExpanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
+          </button>
+          {newFileExpanded && (
+            <div className="mt-1 space-y-0.5 pl-4">
+              {reportTypes.map((rt) => (
+                <button key={rt} onClick={() => openNewFile(rt)} className="w-full text-left px-2 py-1 rounded-md text-xs text-slate-400 hover:bg-slate-800/50 hover:text-white">{rt}</button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Search */}
+        <div className="p-2 border-t border-[#2c2f36]">
+          <h3 className="text-[10px] font-bold uppercase tracking-wider text-slate-500 px-2 py-1.5">Search</h3>
+          <div className="space-y-0.5">
+            {searchItems.map((s) => (
+              <button key={s} onClick={() => setSearchFilter(searchFilter === s ? "" : s)} className={`w-full text-left px-2 py-1 rounded-md text-xs transition-colors ${searchFilter === s ? "bg-slate-700/50 text-white" : "text-slate-400 hover:bg-slate-800/50 hover:text-white"}`}>{s}</button>
+            ))}
+            {searchFilter && <button onClick={() => setSearchFilter("")} className="w-full text-left px-2 py-1 rounded-md text-xs text-red-400 hover:bg-red-500/10">Clear filter</button>}
+          </div>
+        </div>
+
+        {/* File History */}
+        <div className="p-2 border-t border-[#2c2f36]">
+          <button onClick={() => setHistoryExpanded(!historyExpanded)} className="w-full flex items-center justify-between px-2 py-1.5 rounded-md text-sm text-slate-300 hover:bg-slate-800/50 hover:text-white">
+            <span>File History</span>
+            {historyExpanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
+          </button>
+          {historyExpanded && (
+            <div className="mt-1 pl-2">
+              {myReports.length === 0 ? <p className="text-xs text-slate-600 px-2 py-1">No recent records</p> : (
+                <div className="space-y-0.5">
+                  {myReports.slice(0, 5).map(r => (
+                    <button key={r.id} onClick={() => { setTab("myfiles"); setSelected(r); }} className="w-full text-left px-2 py-1 rounded-md text-xs text-slate-400 hover:bg-slate-800/50 hover:text-white truncate">{r.title}</button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Filter Types */}
+        <div className="p-2 border-t border-[#2c2f36] mt-auto">
+          <h3 className="text-[10px] font-bold uppercase tracking-wider text-slate-500 px-2 py-1.5">Filter Types</h3>
+          <div className="space-y-1 px-2">
+            {FILTER_CHECKBOXES.map(f => (
+              <label key={f.key} className="flex items-center gap-2 cursor-pointer text-xs text-slate-400">
+                <input type="checkbox" checked={filters[f.key] || false} onChange={e => setFilters({ ...filters, [f.key]: e.target.checked })} className="w-3.5 h-3.5 rounded border-2 border-red-500 bg-transparent accent-red-500" />
+                {f.label}
+              </label>
+            ))}
+          </div>
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4">
-        {tab === "new" ? (
-          <div className="flex flex-col items-center justify-center h-full text-slate-600"><Plus className="w-12 h-12 mb-3 opacity-30" /><p>Click "New File" to create a report</p></div>
-        ) : !selected ? (
-          <div className="space-y-2">
-            {tab === "bolos" && (
-              <div className="mb-3"><Button onClick={() => setBoloOpen(true)} size="sm" className="bg-yellow-600 hover:bg-yellow-700 gap-1.5"><Plus className="w-3.5 h-3.5" /> New BOLO</Button></div>
-            )}
-            {tab === "warrants" && (
-              <div className="mb-3"><Button onClick={() => setWarrantOpen(true)} size="sm" className="bg-red-600 hover:bg-red-700 gap-1.5"><Plus className="w-3.5 h-3.5" /> New Warrant</Button></div>
-            )}
-            {currentList.length === 0 ? <div className="flex flex-col items-center justify-center h-full text-slate-600"><FileText className="w-12 h-12 mb-3 opacity-30" /><p>No records found</p></div> : (
-              currentList.map((item) => {
-                const title = item.title || item.call_type || item.reason || `${item.person_name || "Unknown"} — Warrant`;
-                const sub = item.report_type || item.bolo_type || (item.charges?.join(", ")) || item.run_number || "";
-                const date = item.created_date ? new Date(item.created_date).toLocaleDateString() : "";
-                return (
-                  <button key={item.id} onClick={() => setSelected(item)} className="w-full flex items-center justify-between bg-slate-900/60 border border-slate-800 rounded-lg p-3 hover:border-slate-600 transition-colors text-left">
-                    <div className="flex items-center gap-3">
-                      {item.status && <span className={`text-xs px-2 py-0.5 rounded-full ${item.status === "Draft" ? "text-yellow-400 bg-yellow-500/10" : item.status === "Active" ? "text-red-400 bg-red-500/10" : item.status === "Closed" ? "text-gray-400 bg-gray-500/10" : "text-green-400 bg-green-500/10"}`}>{item.status}</span>}
-                      <div><p className="text-white font-medium text-sm">{title}</p>{sub && <p className="text-xs text-slate-500">{sub}</p>}</div>
-                    </div>
-                    <div className="text-right"><p className="text-xs text-slate-500">{item.filed_by_name || item.issued_by_name || ""}</p><p className="text-xs text-slate-600">{date}</p></div>
-                  </button>
-                );
-              })
+      {/* Main Content */}
+      <div className="flex-1 overflow-y-auto">
+        {!selected ? (
+          <div className="p-4">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold text-white">Reports / Records</h2>
+              <div className="flex items-center gap-1">
+                <button onClick={() => setViewMode("list")} className={`p-1.5 rounded-md ${viewMode === "list" ? "bg-slate-700 text-white" : "text-slate-500 hover:text-white"}`}><List className="w-4 h-4" /></button>
+                <button onClick={() => setViewMode("grid")} className={`p-1.5 rounded-md ${viewMode === "grid" ? "bg-slate-700 text-white" : "text-slate-500 hover:text-white"}`}><LayoutGrid className="w-4 h-4" /></button>
+              </div>
+            </div>
+
+            {/* Action buttons */}
+            <div className="flex items-center gap-2 mb-4">
+              {tab === "bolos" && <button onClick={() => setBoloOpen(true)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-green-500/10 text-green-400 hover:bg-green-500/20 text-sm"><Plus className="w-3.5 h-3.5" /> New BOLO</button>}
+              {tab === "warrants" && <button onClick={() => setWarrantOpen(true)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-green-500/10 text-green-400 hover:bg-green-500/20 text-sm"><Plus className="w-3.5 h-3.5" /> New Warrant</button>}
+              {(tab === "myfiles" || tab === "drafts" || tab === "supervisor") && <button onClick={() => openNewFile(reportTypes[0])} className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-green-500/10 text-green-400 hover:bg-green-500/20 text-sm"><Plus className="w-3.5 h-3.5" /> New File</button>}
+            </div>
+
+            {/* Record List */}
+            {filteredList.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-20 text-slate-600">
+                <FileText className="w-12 h-12 mb-3 opacity-30" />
+                <p>No Records Found</p>
+              </div>
+            ) : viewMode === "grid" ? (
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {filteredList.map((item) => {
+                  const title = item.title || item.call_type || item.reason || `${item.person_name || "Unknown"}`;
+                  const sub = item.report_type || item.bolo_type || (item.charges?.join(", ")) || item.run_number || "";
+                  return (
+                    <button key={item.id} onClick={() => setSelected(item)} className="bg-[#262a30] border border-[#2c2f36] rounded-lg p-3 hover:border-slate-600 transition-colors text-left">
+                      {item.status && <span className={`text-[10px] px-1.5 py-0.5 rounded-full mb-2 inline-block ${item.status === "Draft" ? "text-yellow-400 bg-yellow-500/10" : item.status === "Active" ? "text-red-400 bg-red-500/10" : item.status === "Closed" ? "text-gray-400 bg-gray-500/10" : "text-green-400 bg-green-500/10"}`}>{item.status}</span>}
+                      <p className="text-white font-medium text-sm truncate">{title}</p>
+                      {sub && <p className="text-xs text-slate-500 mt-0.5 truncate">{sub}</p>}
+                      <p className="text-[10px] text-slate-600 mt-1">{item.filed_by_name || item.issued_by_name || ""}</p>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="space-y-1">
+                {filteredList.map((item) => {
+                  const title = item.title || item.call_type || item.reason || `${item.person_name || "Unknown"} — Warrant`;
+                  const sub = item.report_type || item.bolo_type || (item.charges?.join(", ")) || item.run_number || "";
+                  const date = item.created_date ? new Date(item.created_date).toLocaleDateString() : "";
+                  return (
+                    <button key={item.id} onClick={() => setSelected(item)} className="w-full flex items-center justify-between bg-[#262a30] border border-[#2c2f36] rounded-lg p-3 hover:border-slate-600 transition-colors text-left">
+                      <div className="flex items-center gap-3">
+                        {item.status && <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${item.status === "Draft" ? "text-yellow-400 bg-yellow-500/10" : item.status === "Active" ? "text-red-400 bg-red-500/10" : item.status === "Closed" ? "text-gray-400 bg-gray-500/10" : "text-green-400 bg-green-500/10"}`}>{item.status}</span>}
+                        <div><p className="text-white font-medium text-sm">{title}</p>{sub && <p className="text-xs text-slate-500">{sub}</p>}</div>
+                      </div>
+                      <div className="text-right"><p className="text-xs text-slate-500">{item.filed_by_name || item.issued_by_name || ""}</p><p className="text-[10px] text-slate-600">{date}</p></div>
+                    </button>
+                  );
+                })}
+              </div>
             )}
           </div>
         ) : (
-          <div>
-            <button onClick={() => setSelected(null)} className="text-sm text-slate-400 hover:text-white mb-4">← Back to list</button>
+          <div className="p-4">
+            <button onClick={() => setSelected(null)} className="flex items-center gap-1 text-sm text-slate-400 hover:text-white mb-4"><X className="w-4 h-4" /> Back to list</button>
             {isClosedCall ? (
-              <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-5">
+              <div className="bg-[#262a30] border border-[#2c2f36] rounded-xl p-5">
                 <div className="flex items-start justify-between mb-4">
                   <div><h2 className="text-xl font-bold text-white">{selected.call_type}</h2>{selected.run_number && <p className="text-sm text-blue-400 font-mono">{selected.run_number}</p>}</div>
                   <span className="text-xs px-2.5 py-1 rounded-full text-gray-400 bg-gray-500/10">Closed</span>
@@ -208,8 +257,8 @@ export default function RecordsPanel({ department, session }) {
                   {selected.caller_name && <div><span className="text-slate-500">Caller: </span><span className="text-slate-300">{selected.caller_name}</span></div>}
                   <div><span className="text-slate-500">Units: </span><span className="text-slate-300">{selected.assigned_unit_ids?.length || 0}</span></div>
                 </div>
-                {selected.description && <p className="text-sm text-slate-400 bg-slate-800/40 rounded-lg p-3 mb-3">{selected.description}</p>}
-                {selected.cad_notes && <div className="mb-3"><p className="text-xs text-slate-500 mb-1">CAD Notes:</p><p className="text-sm text-slate-300 bg-slate-800/40 rounded-lg p-3">{selected.cad_notes}</p></div>}
+                {selected.description && <p className="text-sm text-slate-400 bg-[#1a1d21] rounded-lg p-3 mb-3">{selected.description}</p>}
+                {selected.cad_notes && <div className="mb-3"><p className="text-xs text-slate-500 mb-1">CAD Notes:</p><p className="text-sm text-slate-300 bg-[#1a1d21] rounded-lg p-3">{selected.cad_notes}</p></div>}
                 {selected.assignment_log?.length > 0 && (
                   <div>
                     <p className="text-xs text-slate-500 mb-2 flex items-center gap-1.5"><Clock className="w-3 h-3" /> Call Log:</p>
@@ -220,7 +269,7 @@ export default function RecordsPanel({ department, session }) {
                 )}
               </div>
             ) : (
-              <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-5">
+              <div className="bg-[#262a30] border border-[#2c2f36] rounded-xl p-5">
                 <div className="flex items-start justify-between mb-4">
                   <div><h2 className="text-xl font-bold text-white">{selected.title || selected.reason || "Warrant"}</h2>{selected.run_number && <p className="text-sm text-blue-400 font-mono">{selected.run_number}</p>}</div>
                   {selected.status && <span className={`text-xs px-2.5 py-1 rounded-full ${selected.status === "Draft" ? "text-yellow-400 bg-yellow-500/10" : selected.status === "Active" ? "text-red-400 bg-red-500/10" : "text-green-400 bg-green-500/10"}`}>{selected.status}</span>}
@@ -228,15 +277,33 @@ export default function RecordsPanel({ department, session }) {
                 {selected.report_type && <p className="text-sm text-slate-400 mb-2">Type: {selected.report_type}</p>}
                 {selected.location && <p className="text-sm text-slate-400 mb-2">Location: {selected.location}</p>}
                 {selected.linked_civilian_name && <p className="text-sm text-slate-400 mb-2">Linked Civilian: {selected.linked_civilian_name}</p>}
-                {selected.linked_vehicle_plate && <p className="text-sm text-slate-400 mb-2">Linked Vehicle: <span className="font-mono">{selected.linked_vehicle_plate}</span>{selected.field_data?.["Vehicle Model"] && <span className="ml-2">· {selected.field_data["Vehicle Model"]}</span>}{selected.field_data?.["Vehicle Color"] && <span className="ml-1">· {selected.field_data["Vehicle Color"]}</span>}</p>}
+                {selected.linked_vehicle_plate && <p className="text-sm text-slate-400 mb-2">Linked Vehicle: <span className="font-mono">{selected.linked_vehicle_plate}</span>{selected.field_data?.vehicle?.model && <span className="ml-2">· {selected.field_data.vehicle.model}</span>}{selected.field_data?.vehicle?.color && <span className="ml-1">· {selected.field_data.vehicle.color}</span>}</p>}
                 <p className="text-sm text-slate-300 whitespace-pre-wrap mt-3">{selected.description || selected.notes || ""}</p>
-                {selected.field_data && Object.keys(selected.field_data).length > 0 && (
-                  <div className="mt-3 pt-3 border-t border-slate-800">
-                    <p className="text-xs text-slate-500 mb-2">Template Fields:</p>
-                    <div className="space-y-1.5">
-                      {Object.entries(selected.field_data).map(([key, val]) => (
-                        <div key={key} className="text-sm"><span className="text-slate-500">{key}: </span><span className="text-slate-300">{String(val)}</span></div>
+                {selected.field_data?.flags && (selected.field_data.flags.armed || selected.field_data.flags.violent || selected.field_data.flags.mentally_ill) && (
+                  <div className="mt-3 flex gap-2">
+                    {selected.field_data.flags.armed && <span className="text-xs px-2 py-0.5 rounded-full text-red-400 bg-red-500/10">Armed</span>}
+                    {selected.field_data.flags.violent && <span className="text-xs px-2 py-0.5 rounded-full text-red-400 bg-red-500/10">Violent</span>}
+                    {selected.field_data.flags.mentally_ill && <span className="text-xs px-2 py-0.5 rounded-full text-red-400 bg-red-500/10">Mentally Ill</span>}
+                  </div>
+                )}
+                {selected.field_data?.charges?.length > 0 && (
+                  <div className="mt-3 pt-3 border-t border-[#2c2f36]">
+                    <p className="text-xs text-slate-500 mb-2">Charges:</p>
+                    <div className="space-y-1">
+                      {selected.field_data.charges.map((c, i) => (
+                        <div key={i} className="text-sm"><span className="text-slate-300">{c.charge}</span>{c.charge_type && <span className="text-slate-500 ml-2">({c.charge_type})</span>}{c.bond_amount > 0 && <span className="text-yellow-400 ml-2">${c.bond_amount}</span>}</div>
                       ))}
+                    </div>
+                  </div>
+                )}
+                {selected.field_data && Object.keys(selected.field_data).length > 0 && selected.field_data.civilian && (
+                  <div className="mt-3 pt-3 border-t border-[#2c2f36]">
+                    <p className="text-xs text-slate-500 mb-2">Civilian Details:</p>
+                    <div className="grid grid-cols-3 gap-2 text-sm">
+                      {selected.field_data.civilian.first_name && <div><span className="text-slate-500">Name: </span><span className="text-slate-300">{selected.field_data.civilian.first_name} {selected.field_data.civilian.last_name}</span></div>}
+                      {selected.field_data.civilian.dob && <div><span className="text-slate-500">DOB: </span><span className="text-slate-300">{selected.field_data.civilian.dob}</span></div>}
+                      {selected.field_data.civilian.phone && <div><span className="text-slate-500">Phone: </span><span className="text-slate-300">{selected.field_data.civilian.phone}</span></div>}
+                      {selected.field_data.civilian.address && <div><span className="text-slate-500">Address: </span><span className="text-slate-300">{selected.field_data.civilian.address}</span></div>}
                     </div>
                   </div>
                 )}
@@ -247,54 +314,6 @@ export default function RecordsPanel({ department, session }) {
           </div>
         )}
       </div>
-
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="bg-slate-900 border-slate-700 max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle className="text-white">New Report</DialogTitle></DialogHeader>
-          <div className="space-y-3">
-            <CivilianSearch selected={selectedCivilian} onSelected={handleCivilianSelected} />
-            <VehicleSearch selected={selectedVehicle} onSelected={handleVehicleSelected} />
-            <div><Label className="text-slate-300">Title</Label><Input value={reportForm.title} onChange={(e) => setReportForm({ ...reportForm, title: e.target.value })} className="bg-slate-800 border-slate-700 text-white" /></div>
-            <div><Label className="text-slate-300">Report Type</Label><Select value={reportForm.report_type} onValueChange={(v) => setReportForm({ ...reportForm, report_type: v })}><SelectTrigger className="bg-slate-800 border-slate-700 text-white"><SelectValue /></SelectTrigger><SelectContent className="bg-slate-800 border-slate-700">{reportTypes.map((t) => <SelectItem key={t} value={t} className="text-white">{t}</SelectItem>)}</SelectContent></Select></div>
-            <div><Label className="text-slate-300">Location</Label><Input value={reportForm.location} onChange={(e) => setReportForm({ ...reportForm, location: e.target.value })} className="bg-slate-800 border-slate-700 text-white" /></div>
-            <div><Label className="text-slate-300">Description</Label><Textarea value={reportForm.description} onChange={(e) => setReportForm({ ...reportForm, description: e.target.value })} className="bg-slate-800 border-slate-700 text-white" rows={4} /></div>
-            {availableTemplates.length > 0 && (
-              <div>
-                <Label className="text-slate-300">Template</Label>
-                <Select onValueChange={(v) => { const t = availableTemplates.find((t) => t.id === v); if (t) { setSelectedTemplate(t); setReportForm({ ...reportForm, report_type: t.category, title: t.name }); setFieldData({}); } }}>
-                  <SelectTrigger className="bg-slate-800 border-slate-700 text-white"><SelectValue placeholder="Use template..." /></SelectTrigger>
-                  <SelectContent className="bg-slate-800 border-slate-700">{availableTemplates.map((t) => <SelectItem key={t.id} value={t.id} className="text-white">{t.name}</SelectItem>)}</SelectContent>
-                </Select>
-              </div>
-            )}
-            {selectedTemplate?.fields?.length > 0 && (
-              <div className="space-y-3 border-t border-slate-700 pt-3">
-                <p className="text-sm font-semibold text-slate-300">Template Fields</p>
-                {selectedTemplate.fields.map((field, i) => (
-                  <div key={i}>
-                    <Label className="text-slate-300">{field.label}{field.required && <span className="text-red-400 ml-0.5">*</span>}</Label>
-                    {field.field_type === "textarea" ? (
-                      <Textarea value={fieldData[field.label] || ""} onChange={e => setFieldData({ ...fieldData, [field.label]: e.target.value })} className="bg-slate-800 border-slate-700 text-white" rows={3} />
-                    ) : field.field_type === "select" ? (
-                      <Select value={fieldData[field.label] || ""} onValueChange={v => setFieldData({ ...fieldData, [field.label]: v })}>
-                        <SelectTrigger className="bg-slate-800 border-slate-700 text-white"><SelectValue placeholder="Select..." /></SelectTrigger>
-                        <SelectContent className="bg-slate-800 border-slate-700">{(field.options || []).map(o => <SelectItem key={o} value={o} className="text-white">{o}</SelectItem>)}</SelectContent>
-                      </Select>
-                    ) : (
-                      <Input type={field.field_type === "number" ? "number" : field.field_type === "date" ? "date" : "text"} value={fieldData[field.label] || ""} onChange={e => setFieldData({ ...fieldData, [field.label]: e.target.value })} className="bg-slate-800 border-slate-700 text-white" />
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)} className="border-slate-700 text-slate-300">Cancel</Button>
-            <Button variant="outline" onClick={() => handleSaveReport(true)} disabled={!reportForm.title || !reportForm.description} className="border-slate-700 text-yellow-400 hover:text-yellow-300">Save Draft</Button>
-            <Button onClick={() => handleSaveReport(false)} disabled={!reportForm.title || !reportForm.description} className="bg-blue-600 hover:bg-blue-700">File Report</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       <BoloForm open={boloOpen} onOpenChange={setBoloOpen} department={department} session={session} onSaved={load} />
       <WarrantForm open={warrantOpen} onOpenChange={setWarrantOpen} department={department} session={session} onSaved={load} />
