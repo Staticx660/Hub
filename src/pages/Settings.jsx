@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
+import { useAuth } from "@/lib/AuthContext";
 
 export default function Settings() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -23,6 +24,7 @@ export default function Settings() {
   const [inviteRole, setInviteRole] = useState("user");
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { checkUserAuth } = useAuth();
 
   useEffect(() => {
     const load = async () => {
@@ -62,6 +64,7 @@ export default function Settings() {
       await base44.auth.updateMe({ discord_id: null, avatar_url: null });
       const updated = await base44.auth.me();
       setCurrentUser(updated);
+      await checkUserAuth();
       toast({ title: "Discord unlinked", description: "Your Discord account has been disconnected." });
     } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
   };
@@ -72,6 +75,7 @@ export default function Settings() {
       await base44.auth.updateMe({ display_name: displayName });
       const updated = await base44.auth.me();
       setCurrentUser(updated);
+      await checkUserAuth();
       toast({ title: "Name saved", description: "Your display name has been updated." });
     } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
     setSavingName(false);
@@ -86,6 +90,7 @@ export default function Settings() {
       await base44.auth.updateMe({ avatar_url: uploadRes.file_url });
       const updated = await base44.auth.me();
       setCurrentUser(updated);
+      await checkUserAuth();
       toast({ title: "Profile picture updated" });
     } catch (err) { toast({ title: "Upload failed", description: err.message, variant: "destructive" }); }
     setUploadingAvatar(false);

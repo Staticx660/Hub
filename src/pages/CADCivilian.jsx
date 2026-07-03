@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
 import { useToast } from "@/components/ui/use-toast";
@@ -154,13 +154,18 @@ export default function CADCivilian() {
   const fullName = selectedChar ? `${selectedChar.first_name} ${selectedChar.middle_name ? selectedChar.middle_name + " " : ""}${selectedChar.last_name}` : "";
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-3">
-        <img src={OCRP_LOGO} alt="OCRP" className="w-10 h-10 rounded-lg" />
-        <div>
-          <h1 className="text-xl font-bold text-white">{department.name}</h1>
-          <p className="text-sm text-slate-400">Civilian MDT</p>
+    <div className="min-h-screen bg-slate-950 p-4 lg:p-6 space-y-4">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <img src={OCRP_LOGO} alt="OCRP" className="w-10 h-10 rounded-lg" />
+          <div>
+            <h1 className="text-xl font-bold text-white">{department.name}</h1>
+            <p className="text-sm text-slate-400">Civilian MDT</p>
+          </div>
         </div>
+        <Link to="/cad" className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 hover:text-white hover:bg-slate-700 transition-colors text-sm font-medium">
+          <ChevronLeft className="w-4 h-4" /> Back to CAD
+        </Link>
       </div>
 
       <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-4">

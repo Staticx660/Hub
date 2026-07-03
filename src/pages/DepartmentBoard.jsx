@@ -64,7 +64,7 @@ export default function DepartmentBoard() {
       const now = new Date().toISOString();
       const existing = await base44.entities.CADSession.filter({ user_id: user.id, department_id: deptId, is_active: true });
       for (const s of existing) await base44.entities.CADSession.update(s.id, { is_active: false, logout_time: now, status: "Unavailable" });
-      const shift = await base44.entities.Shift.create({ department_id: deptId, member_name: formData.name, start_time: now, status: "In Progress" });
+      const shift = await base44.entities.Shift.create({ member_id: user.id, department_id: deptId, member_name: formData.name, start_time: now, status: "In Progress" });
       const newSession = await base44.entities.CADSession.create({
         user_id: user.id, user_name: formData.name, department_id: deptId, department_name: department.name,
         callsign: formData.callsign, rank: formData.rank, status: "Available", login_time: now, is_active: true, panic_active: false, shift_id: shift.id,

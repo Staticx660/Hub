@@ -44,7 +44,7 @@ export default function Landing() {
         <div className="flex-1 flex flex-col items-center justify-center px-8 pb-12">
           <div className="text-center mb-10">
             <h1 className="text-4xl font-bold text-white tracking-tight mb-3">
-              Welcome back, {user?.full_name?.split(" ")[0] || "Operator"}
+              Welcome back, {(user?.display_name || user?.full_name)?.split(" ")[0] || "Operator"}
             </h1>
             <p className="text-slate-400 text-lg">Select a system to continue</p>
           </div>
@@ -87,11 +87,11 @@ export default function Landing() {
             <div className="flex items-center gap-3 mb-3">
               <div className="w-12 h-12 rounded-full bg-gradient-to-br from-slate-700 to-slate-800 border border-slate-600 flex items-center justify-center">
                 <span className="text-lg font-bold text-white">
-                  {(user?.full_name || "U")[0].toUpperCase()}
+                  {(user?.display_name || user?.full_name || "U")[0].toUpperCase()}
                 </span>
               </div>
               <div className="min-w-0">
-                <h3 className="font-semibold text-white text-sm truncate">{user?.full_name || "User"}</h3>
+                <h3 className="font-semibold text-white text-sm truncate">{user?.display_name || user?.full_name || "User"}</h3>
                 <p className="text-xs text-slate-400 truncate">{user?.email}</p>
               </div>
             </div>
