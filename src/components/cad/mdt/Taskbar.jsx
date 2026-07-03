@@ -55,11 +55,11 @@ export default function Taskbar({ activeView, setActiveView, session, onStatusCh
   ];
 
   return (
-    <div className={`h-12 bg-[#131519] border-t border-[#2c2f36] flex items-center px-2 gap-1 ${isPanic ? "border-red-500 animate-pulse" : ""}`}>
+    <div className={`h-14 bg-[#131519] border-t border-[#2c2f36] flex items-center px-2 gap-1 ${isPanic ? "border-red-500 animate-pulse" : ""}`}>
       {/* Logo */}
       <div ref={logoRef} className="relative">
-        <button onClick={() => setLogoMenu(!logoMenu)} className="flex items-center gap-2 px-2 h-9 rounded-lg hover:bg-slate-800 transition-colors">
-          <img src="https://media.base44.com/images/public/6a441f279b9d3cd678958799/5a43a1b46_OCRP20.png" alt="OCRP" className="w-7 h-7 rounded object-cover" />
+        <button onClick={() => setLogoMenu(!logoMenu)} className="flex items-center gap-2 px-2 h-10 rounded-lg hover:bg-slate-800 transition-colors">
+          <img src="https://media.base44.com/images/public/6a441f279b9d3cd678958799/5a43a1b46_OCRP20.png" alt="OCRP" className="w-8 h-8 rounded object-cover" />
         </button>
         {logoMenu && (
           <div className="absolute bottom-11 left-0 w-48 bg-slate-800 border border-slate-700 rounded-lg shadow-xl py-1 z-50">
@@ -75,11 +75,6 @@ export default function Taskbar({ activeView, setActiveView, session, onStatusCh
           </div>
         )}
       </div>
-
-      {/* Quick Search Icon */}
-      <button onClick={() => setActiveView("lookups")} className={`flex items-center justify-center w-9 h-9 rounded-lg transition-colors ${activeView === "lookups" ? "bg-slate-800 text-white" : "text-slate-400 hover:bg-slate-800 hover:text-white"}`}>
-        <Search className="w-4 h-4" />
-      </button>
 
       {/* Nav Buttons */}
       <div className="flex items-center gap-1">
@@ -141,12 +136,12 @@ export default function Taskbar({ activeView, setActiveView, session, onStatusCh
       </div>
 
       {/* Panic Quick Button */}
-      <button onClick={onPanic} className={`flex items-center justify-center w-9 h-9 rounded-lg text-sm font-bold transition-colors ${isPanic ? "bg-red-500 text-white animate-pulse" : "bg-red-500/10 text-red-400 hover:bg-red-500/20"}`}>
+      <button onClick={onPanic} className={`flex items-center justify-center w-10 h-10 rounded-lg text-sm font-bold transition-colors ${isPanic ? "bg-red-500 text-white animate-pulse" : "bg-red-500/10 text-red-400 hover:bg-red-500/20"}`}>
         <AlertTriangle className="w-4 h-4" />
       </button>
 
       {/* Clock Out */}
-      <button onClick={onClockOut} className="flex items-center gap-1.5 px-3 h-9 rounded-lg text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition-colors">
+      <button onClick={onClockOut} className="flex items-center gap-1.5 px-3 h-10 rounded-lg text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition-colors">
         <LogOut className="w-4 h-4" />
         <span className="hidden sm:block">Clock Out</span>
       </button>

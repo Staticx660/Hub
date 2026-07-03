@@ -1,8 +1,10 @@
 import React from "react";
 import { Outlet } from "react-router-dom";
 import CADSidebar from "./CADSidebar";
+import { useCommunityBranding } from "@/hooks/useCommunityBranding";
 
 export default function CADLayout() {
+  useCommunityBranding();
   return (
     <div className="flex h-screen bg-slate-950 overflow-hidden">
       <CADSidebar />

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
-import { Building2, ChevronRight, Users, Siren, Radio, Lock, AlertCircle, Activity, PhoneCall } from "lucide-react";
+import { Building2, ChevronRight, Users, Siren, Radio, Lock, AlertCircle, Flame, Ambulance } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
 export default function CADDepartments() {
@@ -41,34 +41,6 @@ export default function CADDepartments() {
       <h1 className="text-2xl font-bold text-white mb-1">CAD System</h1>
       <p className="text-sm text-slate-400 mb-6">Select a department to view calls, units, and personnel</p>
 
-      {/* Dispatch Tools */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-        <Link to="/dispatch-dashboard" className="group bg-slate-900/80 border border-slate-800 rounded-xl p-5 hover:border-cyan-500/50 hover:bg-slate-900 transition-all">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-cyan-500/20">
-              <Activity className="w-5 h-5 text-cyan-400" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-white">Dispatch Dashboard</h3>
-              <span className="text-xs text-slate-500">Monitor all active calls and units</span>
-            </div>
-            <ChevronRight className="w-5 h-5 text-slate-600 group-hover:text-slate-300 ml-auto transition-colors" />
-          </div>
-        </Link>
-        <Link to="/dispatch-center" className="group bg-slate-900/80 border border-slate-800 rounded-xl p-5 hover:border-cyan-500/50 hover:bg-slate-900 transition-all">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-cyan-500/20">
-              <PhoneCall className="w-5 h-5 text-cyan-400" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-white">Dispatch Center</h3>
-              <span className="text-xs text-slate-500">Coordinate calls and 911 reports</span>
-            </div>
-            <ChevronRight className="w-5 h-5 text-slate-600 group-hover:text-slate-300 ml-auto transition-colors" />
-          </div>
-        </Link>
-      </div>
-
       {/* Departments */}
       <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">Departments</h2>
       {accessInfo && !accessInfo.isAdmin && !accessInfo.hasDiscordLink && departments.some(d => d.discord_role_id) && (
@@ -92,7 +64,7 @@ export default function CADDepartments() {
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: (d.color || "#3b82f6") + "20" }}>
-                      {d.category === "Dispatch" ? <Radio className="w-5 h-5" style={{ color: d.color || "#3b82f6" }} /> : <Building2 className="w-5 h-5" style={{ color: d.color || "#3b82f6" }} />}
+                      {d.category === "Dispatch" ? <Radio className="w-5 h-5" style={{ color: d.color || "#3b82f6" }} /> : d.category === "Fire" ? <Flame className="w-5 h-5" style={{ color: d.color || "#ef4444" }} /> : d.category === "EMS" ? <Ambulance className="w-5 h-5" style={{ color: d.color || "#22c55e" }} /> : <Building2 className="w-5 h-5" style={{ color: d.color || "#3b82f6" }} />}
                     </div>
                     <div>
                       <h3 className={`font-semibold ${locked ? "text-slate-500" : "text-white"}`}>{d.name}</h3>
@@ -115,7 +87,7 @@ export default function CADDepartments() {
             return locked ? (
               <div key={d.id} className="bg-slate-900/40 border border-slate-800/50 rounded-xl p-5 opacity-60">{cardContent}</div>
             ) : (
-              <Link key={d.id} to={d.category === "Dispatch" ? "/cad/dispatch" : d.category === "Civilian" ? `/cad/civilian/${d.id}` : `/cad/mdt/${d.id}`} className="group bg-slate-900/80 border border-slate-800 rounded-xl p-5 hover:border-slate-600 hover:bg-slate-900 transition-all">{cardContent}</Link>
+              <Link key={d.id} to={d.category === "Civilian" ? `/cad/civilian/${d.id}` : ["Dispatch", "Fire", "EMS"].includes(d.category) ? `/cad/board/${d.id}` : `/cad/mdt/${d.id}`} className="group bg-slate-900/80 border border-slate-800 rounded-xl p-5 hover:border-slate-600 hover:bg-slate-900 transition-all">{cardContent}</Link>
             );
           })}
         </div>

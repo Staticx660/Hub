@@ -45,6 +45,10 @@ export default function ReportFormView({ department, session, initialType, templ
   const [showCivilianSearch, setShowCivilianSearch] = useState(false);
   const [showVehicleSearch, setShowVehicleSearch] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [recordNumber, setRecordNumber] = useState("");
+  const [officerName, setOfficerName] = useState("");
+  const [observingSignature, setObservingSignature] = useState("");
+  const [supervisorSignature, setSupervisorSignature] = useState("");
   const { toast } = useToast();
 
   const reportTypes = department?.category === "Police" ? ["Incident", "Traffic Stop", "Field Contact", "Arrest", "Vehicle Accident", "Use of Force", "Evidence", "Other"]
@@ -67,6 +71,17 @@ export default function ReportFormView({ department, session, initialType, templ
   }, []);
 
   useEffect(() => { setTitle(`${reportType} Report`); }, [reportType]);
+
+  useEffect(() => {
+    const genRecordNum = async () => {
+      try {
+        const existing = await base44.entities.CADReport.filter({ department_id: department.id });
+        const num = String(existing.length + 1).padStart(4, "0");
+        setRecordNumber(`REC-${num}`);
+      } catch { setRecordNumber(`REC-${Date.now().toString().slice(-6)}`); }
+    };
+    genRecordNum();
+  }, []);
 
   const handleCivilianSelected = (civilian) => {
     if (civilian) {
@@ -135,7 +150,6 @@ export default function ReportFormView({ department, session, initialType, templ
     if (!title.trim()) { toast({ title: "Title required", variant: "destructive" }); return; }
     setSaving(true);
     try {
-      const runNum = `RUN-${Date.now().toString().slice(-6)}`;
       const allFieldData = {
         ...fieldData,
         flags,
@@ -143,6 +157,11 @@ export default function ReportFormView({ department, session, initialType, templ
         vehicle: vehicleData,
         charges,
         narrative,
+        signatures: {
+          officer_name: officerName,
+          observing_unit: observingSignature,
+          supervisor: supervisorSignature,
+        },
         agency: {
           unit: session?.callsign || session?.user_name,
           unit_name: session?.user_name,
@@ -154,7 +173,7 @@ export default function ReportFormView({ department, session, initialType, templ
         title, report_type: reportType, description: narrative || "No narrative provided",
         location, department_id: department.id,
         filed_by_name: session.callsign || session.user_name, filed_by_id: session.user_id,
-        status: asDraft ? "Draft" : "Filed", run_number: runNum,
+        status: asDraft ? "Draft" : "Filed", run_number: recordNumber,
         template_id: selectedTemplate?.id || "",
         linked_civilian_id: selectedCivilian?.id || "",
         linked_civilian_name: selectedCivilian ? `${selectedCivilian.first_name} ${selectedCivilian.last_name}` : "",
@@ -214,7 +233,7 @@ export default function ReportFormView({ department, session, initialType, templ
         <div className="bg-[#262a30] rounded-lg p-3">
           <h3 className="text-xs font-bold uppercase tracking-wider text-red-500 mb-3">Agency Information</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <GridField label="Record #"><Input value="NEW" readOnly className={darkInput} /></GridField>
+            <GridField label="Record #"><Input value={recordNumber} readOnly className={`${darkInput} font-mono text-cyan-400`} /></GridField>
             <GridField label="Agency"><Input value="PUBLIC SAFETY" readOnly className={darkInput} /></GridField>
             <GridField label="Department"><Input value={department?.name || ""} readOnly className={darkInput} /></GridField>
             <GridField label="Subdivision"><Input value="NOT SET" readOnly className={darkInput} /></GridField>
@@ -369,9 +388,9 @@ export default function ReportFormView({ department, session, initialType, templ
                 <SelectContent className="bg-slate-800 border-slate-700">{["Draft", "Filed", "Reviewed", "Approved"].map(s => <SelectItem key={s} value={s} className="text-white">{s}</SelectItem>)}</SelectContent>
               </Select>
             </GridField>
-            <GridField label="New Field Name"><Input className={darkInput} placeholder="Custom field..." /></GridField>
-            <GridField label="Supervisor/Judicial Signature"><div className="bg-red-500/20 border border-red-500/40 rounded-md h-9 flex items-center px-3 text-xs text-red-400">Pending Signature</div></GridField>
-            <GridField label="Observing Unit's Signature"><div className="bg-[#0f1115] rounded-md h-9 flex items-center px-3 text-xs text-slate-500">Pending Signature</div></GridField>
+            <GridField label="Officer Name"><Input value={officerName} onChange={e => setOfficerName(e.target.value)} className={darkInput} placeholder="Type officer name..." /></GridField>
+            <GridField label="Supervisor/Judicial Signature"><Input value={supervisorSignature} onChange={e => setSupervisorSignature(e.target.value)} className={`${darkInput} ${supervisorSignature ? "text-green-400" : ""}`} placeholder="Type name to sign..." /></GridField>
+            <GridField label="Observing Unit's Signature"><Input value={observingSignature} onChange={e => setObservingSignature(e.target.value)} className={`${darkInput} ${observingSignature ? "text-green-400" : ""}`} placeholder="Type name to sign..." /></GridField>
           </div>
         </div>
 

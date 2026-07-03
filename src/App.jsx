@@ -24,10 +24,10 @@ import CADCivilian from '@/pages/CADCivilian';
 import CADReports from '@/pages/CADReports';
 import CADAdmin from '@/pages/CADAdmin';
 import CADSettings from '@/pages/CADSettings';
-import DispatchDashboard from '@/pages/DispatchDashboard';
 import CADPersonnel from '@/pages/CADPersonnel';
 import KeybindConfig from '@/pages/KeybindConfig';
 import DepartmentArchive from '@/pages/DepartmentArchive';
+import DepartmentBoard from '@/pages/DepartmentBoard';
 import Departments from '@/pages/Departments';
 import DepartmentDetail from '@/pages/DepartmentDetail';
 import Roster from '@/pages/Roster';
@@ -41,7 +41,6 @@ import Uniforms from '@/pages/Uniforms';
 import DiscordSync from '@/pages/DiscordSync';
 import Settings from '@/pages/Settings';
 import CivilianDashboard from '@/pages/CivilianDashboard';
-import DispatchCenter from '@/pages/DispatchCenter';
 import MyRecords from '@/pages/MyRecords';
 import SystemLogs from '@/pages/SystemLogs';
 
@@ -93,20 +92,16 @@ const AuthenticatedApp = () => {
           </Route>
         </Route>
 
-        {/* CAD section */}
+        {/* CAD section - with sidebar */}
         <Route element={<CADLayout />}>
           <Route path="/cad" element={<CADDepartments />} />
           <Route path="/cad/dispatch" element={<CAD />} />
           <Route path="/cad/departments/:id" element={<CADDepartmentDetail />} />
-          <Route path="/cad/mdt/:deptId" element={<CADMDT />} />
-          <Route path="/cad/civilian/:deptId" element={<CADCivilian />} />
           <Route path="/cad/reports" element={<CADReports />} />
           <Route path="/civilian-dashboard" element={<CivilianDashboard />} />
           <Route path="/my-records" element={<MyRecords />} />
           <Route path="/keybinds" element={<KeybindConfig />} />
           <Route path="/department-archive" element={<DepartmentArchive />} />
-          <Route path="/dispatch-dashboard" element={<DispatchDashboard />} />
-          <Route path="/dispatch-center" element={<DispatchCenter />} />
           <Route element={<AdminRoute />}>
             <Route path="/cad/admin" element={<CADAdmin />} />
             <Route path="/cad-settings" element={<CADSettings />} />
@@ -114,6 +109,11 @@ const AuthenticatedApp = () => {
             <Route path="/system-logs" element={<SystemLogs />} />
           </Route>
         </Route>
+
+        {/* Full-screen CAD apps - no sidebar, fills viewport */}
+        <Route path="/cad/mdt/:deptId" element={<CADMDT />} />
+        <Route path="/cad/board/:deptId" element={<DepartmentBoard />} />
+        <Route path="/cad/civilian/:deptId" element={<CADCivilian />} />
 
         {/* Settings - accessible to all authenticated users */}
         <Route path="/settings" element={<Settings />} />

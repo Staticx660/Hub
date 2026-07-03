@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/lib/AuthContext";
 import {
@@ -19,6 +19,17 @@ export default function CADSidebar() {
   const isAdmin = user?.role === "admin";
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [logoUrl, setLogoUrl] = useState("");
+
+  useEffect(() => {
+    const loadBranding = async () => {
+      try {
+        const list = await base44.entities.CommunitySetting.list();
+        if (list.length > 0 && list[0].logo_url) setLogoUrl(list[0].logo_url);
+      } catch (e) { /* silent */ }
+    };
+    loadBranding();
+  }, []);
 
   const visibleNavItems = navItems.filter(item => !item.adminOnly || isAdmin);
 
@@ -40,9 +51,13 @@ export default function CADSidebar() {
         <div className="flex items-center justify-between">
           {!collapsed && (
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-cyan-500 rounded-lg flex items-center justify-center">
-                <Radio className="w-5 h-5 text-white" />
-              </div>
+              {logoUrl ? (
+                <img src={logoUrl} alt="Logo" className="w-8 h-8 rounded-lg object-cover" />
+              ) : (
+                <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                  <Radio className="w-5 h-5 text-white" />
+                </div>
+              )}
               <span className="font-bold text-white text-lg tracking-tight">CAD</span>
             </div>
           )}
@@ -72,7 +87,7 @@ export default function CADSidebar() {
               onClick={() => setMobileOpen(false)}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 ${
                 active
-                  ? "bg-cyan-500/15 text-cyan-400 border border-cyan-500/20"
+                  ? "bg-primary/15 text-primary border border-primary/20"
                   : "text-slate-400 hover:text-white hover:bg-slate-700/40"
               }`}
             >

@@ -1,0 +1,491 @@
+import { useState, useEffect, useRef } from "react";
+import { useParams, useNavigate, Link } from "react-router-dom";
+import { base44 } from "@/api/base44Client";
+import { useAuth } from "@/lib/AuthContext";
+import { useToast } from "@/components/ui/use-toast";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import Taskbar from "@/components/cad/mdt/Taskbar";
+import ClockInDialog from "@/components/cad/mdt/ClockInDialog";
+import { useCommunityBranding } from "@/hooks/useCommunityBranding";
+import { Clock, Siren, Users, PhoneCall, Activity, Flame, Ambulance, Radio, Plus, X, MapPin, AlertTriangle, CheckCircle, Building2, Stethoscope } from "lucide-react";
+
+export default function DepartmentBoard() {
+  const { deptId } = useParams();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [department, setDepartment] = useState(null);
+  const [session, setSession] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [clockInOpen, setClockInOpen] = useState(false);
+  const [calls, setCalls] = useState([]);
+  const [units, setUnits] = useState([]);
+  const [personnel, setPersonnel] = useState([]);
+  const [selectedCall, setSelectedCall] = useState(null);
+  const [showIntake, setShowIntake] = useState(false);
+  useCommunityBranding();
+
+  useEffect(() => {
+    const init = async () => {
+      try {
+        const dept = await base44.entities.CADDepartment.get(deptId);
+        setDepartment(dept);
+        const sessions = await base44.entities.CADSession.filter({ user_id: user.id, department_id: deptId, is_active: true });
+        if (sessions.length > 0) setSession(sessions[0]);
+        await loadData();
+      } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
+      setLoading(false);
+    };
+    init();
+  }, [deptId]);
+
+  useEffect(() => {
+    const unsub = base44.entities.ActiveCall.subscribe(() => loadData());
+    return unsub;
+  }, []);
+
+  const loadData = async () => {
+    try {
+      const [c, u, p] = await Promise.all([
+        base44.entities.ActiveCall.filter({ status: { $ne: "Closed" } }),
+        base44.entities.CADUnit.list(),
+        base44.entities.CADPersonnel.filter({ status: { $ne: "Off Duty" } }),
+      ]);
+      setCalls(c); setUnits(u); setPersonnel(p);
+    } catch (e) { /* silent */ }
+  };
+
+  const handleClockIn = async (formData) => {
+    try {
+      const now = new Date().toISOString();
+      const existing = await base44.entities.CADSession.filter({ user_id: user.id, department_id: deptId, is_active: true });
+      for (const s of existing) await base44.entities.CADSession.update(s.id, { is_active: false, logout_time: now, status: "Unavailable" });
+      const shift = await base44.entities.Shift.create({ department_id: deptId, member_name: formData.name, start_time: now, status: "In Progress" });
+      const newSession = await base44.entities.CADSession.create({
+        user_id: user.id, user_name: formData.name, department_id: deptId, department_name: department.name,
+        callsign: formData.callsign, rank: formData.rank, status: "Available", login_time: now, is_active: true, panic_active: false, shift_id: shift.id,
+      });
+      setSession(newSession); setClockInOpen(false);
+      toast({ title: "Clocked In", description: `On duty as ${formData.callsign || formData.name}` });
+    } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
+  };
+
+  const sessionRef = useRef(null);
+  useEffect(() => { sessionRef.current = session; }, [session]);
+
+  const performClockOut = async (s) => {
+    if (!s) return;
+    try {
+      const now = new Date().toISOString();
+      await base44.entities.CADSession.update(s.id, { is_active: false, logout_time: now, status: "Unavailable" });
+      if (s.shift_id) {
+        const duration = (new Date(now) - new Date(s.login_time)) / (1000 * 60 * 60);
+        await base44.entities.Shift.update(s.shift_id, { end_time: now, duration_hours: duration, status: "Completed" });
+      }
+    } catch (e) { /* silent */ }
+  };
+
+  useEffect(() => {
+    const handler = () => performClockOut(sessionRef.current);
+    window.addEventListener('beforeunload', handler);
+    return () => { window.removeEventListener('beforeunload', handler); performClockOut(sessionRef.current); };
+  }, []);
+
+  const handleClockOut = async () => {
+    if (!confirm("Clock out and end your shift?")) return;
+    await performClockOut(session);
+    setSession(null); setSelectedCall(null);
+    toast({ title: "Clocked Out" });
+    navigate("/cad");
+  };
+
+  const handleStatusChange = async (newStatus) => {
+    try {
+      await base44.entities.CADSession.update(session.id, { status: newStatus });
+      setSession({ ...session, status: newStatus });
+    } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
+  };
+
+  const handlePanic = async () => {
+    try {
+      const newPanic = !session.panic_active;
+      await base44.entities.CADSession.update(session.id, { panic_active: newPanic, status: newPanic ? "Panic" : "Available" });
+      setSession({ ...session, panic_active: newPanic, status: newPanic ? "Panic" : "Available" });
+      toast({ title: newPanic ? "🚨 PANIC ACTIVATED" : "Panic Cancelled", variant: newPanic ? "destructive" : "default" });
+    } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
+  };
+
+  if (loading) return <div className="flex justify-center items-center h-screen bg-slate-950"><div className="w-8 h-8 border-4 border-slate-700 border-t-blue-500 rounded-full animate-spin" /></div>;
+  if (!department) return <div className="flex justify-center items-center h-screen bg-slate-950 text-slate-400">Department not found</div>;
+
+  if (!session) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen bg-slate-950 gap-6">
+        <div className="w-20 h-20 rounded-2xl flex items-center justify-center" style={{ background: (department.color || "#3b82f6") + "20" }}>
+          {department.category === "Fire" ? <Flame className="w-10 h-10" style={{ color: department.color || "#ef4444" }} /> : department.category === "EMS" ? <Ambulance className="w-10 h-10" style={{ color: department.color || "#22c55e" }} /> : <Radio className="w-10 h-10" style={{ color: department.color || "#3b82f6" }} />}
+        </div>
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-white mb-1">{department.name}</h1>
+          <p className="text-slate-400">{department.category} · Command Board</p>
+          <p className="text-slate-500 text-sm mt-2">You are not currently on duty</p>
+        </div>
+        <Button onClick={() => setClockInOpen(true)} style={{ backgroundColor: department.color || "#3b82f6" }} className="gap-2 px-8"><Clock className="w-4 h-4" /> Clock In & Start Board</Button>
+        <ClockInDialog open={clockInOpen} onOpenChange={setClockInOpen} department={department} user={user} onClockIn={handleClockIn} />
+      </div>
+    );
+  }
+
+  const activeCalls = calls.filter(c => c.status !== "Closed");
+  const deptCalls = activeCalls.filter(c => c.department_id === deptId);
+  const deptUnits = units.filter(u => u.department_id === deptId);
+  const deptPersonnel = personnel.filter(p => p.department_id === deptId);
+  const isDispatch = department.category === "Dispatch";
+  const isFire = department.category === "Fire";
+  const isEMS = department.category === "EMS";
+  const accent = department.color || "#3b82f6";
+
+  return (
+    <div className="flex flex-col h-screen bg-slate-950 overflow-hidden">
+      {session.panic_active && <div className="bg-red-500/20 border-y border-red-500 text-red-400 text-center py-1.5 text-sm font-bold animate-pulse">🚨 PANIC ACTIVE — {session.callsign || session.user_name}</div>}
+      
+      <div className="flex-1 overflow-hidden flex">
+        {/* Left Panel - Active Calls */}
+        <div className="w-80 border-r border-slate-800 flex flex-col flex-shrink-0">
+          <div className="p-3 border-b border-slate-800 flex items-center justify-between">
+            <h2 className="text-sm font-bold text-white flex items-center gap-2"><Activity className="w-4 h-4" style={{ color: accent }} /> Active Calls</h2>
+            <span className="text-xs px-2 py-0.5 rounded-full bg-slate-800 text-slate-400">{isDispatch ? activeCalls.length : deptCalls.length}</span>
+          </div>
+          <div className="flex-1 overflow-y-auto p-2 space-y-2">
+            {(isDispatch ? activeCalls : deptCalls).length === 0 ? (
+              <p className="text-xs text-slate-600 text-center py-8">No active calls</p>
+            ) : (
+              (isDispatch ? activeCalls : deptCalls).map(call => (
+                <button key={call.id} onClick={() => setSelectedCall(call)} className={`w-full text-left p-2.5 rounded-lg border transition-colors ${selectedCall?.id === call.id ? "bg-slate-800 border-slate-600" : "bg-slate-900 border-slate-800 hover:border-slate-700"}`}>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${call.priority === "1 - High" ? "text-red-400 bg-red-500/10" : call.priority === "2 - Medium" ? "text-yellow-400 bg-yellow-500/10" : "text-green-400 bg-green-500/10"}`}>{call.priority}</span>
+                    {call.run_number && <span className="text-[10px] text-slate-500 font-mono">{call.run_number}</span>}
+                  </div>
+                  <p className="text-sm text-white font-medium truncate">{call.call_type}</p>
+                  <p className="text-xs text-slate-500 flex items-center gap-1 mt-0.5"><MapPin className="w-3 h-3" /> {call.location}</p>
+                  {call.assigned_unit_ids?.length > 0 && <p className="text-[10px] text-cyan-400 mt-1">{call.assigned_unit_ids.length} unit(s) assigned</p>}
+                </button>
+              ))
+            )}
+          </div>
+          {isDispatch && (
+            <div className="p-2 border-t border-slate-800">
+              <button onClick={() => setShowIntake(true)} className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium text-white" style={{ backgroundColor: accent }}><Plus className="w-4 h-4" /> New 911 Call</button>
+            </div>
+          )}
+        </div>
+
+        {/* Center Panel - Call Details or Board */}
+        <div className="flex-1 overflow-y-auto">
+          {selectedCall ? (
+            <div className="p-4">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h2 className="text-xl font-bold text-white">{selectedCall.call_type}</h2>
+                  {selectedCall.run_number && <p className="text-sm font-mono" style={{ color: accent }}>{selectedCall.run_number}</p>}
+                </div>
+                <button onClick={() => setSelectedCall(null)} className="text-slate-400 hover:text-white"><X className="w-5 h-5" /></button>
+              </div>
+              <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-3">
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div><span className="text-slate-500">Status: </span><span className="text-white">{selectedCall.status}</span></div>
+                  <div><span className="text-slate-500">Priority: </span><span className="text-white">{selectedCall.priority}</span></div>
+                  <div><span className="text-slate-500">Location: </span><span className="text-white">{selectedCall.location}</span></div>
+                  {selectedCall.caller_name && <div><span className="text-slate-500">Caller: </span><span className="text-white">{selectedCall.caller_name}</span></div>}
+                  {selectedCall.caller_phone && <div><span className="text-slate-500">Phone: </span><span className="text-white">{selectedCall.caller_phone}</span></div>}
+                </div>
+                {selectedCall.description && <div className="bg-slate-950 rounded-lg p-3"><p className="text-xs text-slate-500 mb-1">Description:</p><p className="text-sm text-slate-300">{selectedCall.description}</p></div>}
+                {selectedCall.cad_notes && <div className="bg-slate-950 rounded-lg p-3"><p className="text-xs text-slate-500 mb-1">CAD Notes:</p><p className="text-sm text-slate-300">{selectedCall.cad_notes}</p></div>}
+                <div className="flex gap-2 pt-2">
+                  <Button size="sm" variant="outline" className="border-slate-700 text-slate-300 hover:bg-slate-800" onClick={() => { base44.entities.ActiveCall.update(selectedCall.id, { status: "Closed" }); setSelectedCall(null); loadData(); toast({ title: "Call closed" }); }}>
+                    <CheckCircle className="w-4 h-4" /> Close Call
+                  </Button>
+                  <Link to={`/cad/mdt/${deptId}`}><Button size="sm" variant="outline" className="border-slate-700 text-slate-300 hover:bg-slate-800"><Siren className="w-4 h-4" /> Open MDT</Button></Link>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="p-4">
+              {/* Category-specific board header */}
+              <div className="flex items-center gap-3 mb-4">
+                {isFire ? <Flame className="w-6 h-6 text-red-400" /> : isEMS ? <Ambulance className="w-6 h-6 text-green-400" /> : <Radio className="w-6 h-6" style={{ color: accent }} />}
+                <div>
+                  <h2 className="text-lg font-bold text-white">{department.name} Command Board</h2>
+                  <p className="text-xs text-slate-500">{department.category} Department</p>
+                </div>
+              </div>
+
+              {/* Stats Row */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                <div className="bg-slate-900 border border-slate-800 rounded-lg p-3">
+                  <div className="flex items-center gap-2 mb-1"><Activity className="w-4 h-4 text-cyan-400" /><span className="text-xs text-slate-500 uppercase">Active Calls</span></div>
+                  <p className="text-2xl font-bold text-white">{isDispatch ? activeCalls.length : deptCalls.length}</p>
+                </div>
+                <div className="bg-slate-900 border border-slate-800 rounded-lg p-3">
+                  <div className="flex items-center gap-2 mb-1"><Siren className="w-4 h-4 text-yellow-400" /><span className="text-xs text-slate-500 uppercase">Units</span></div>
+                  <p className="text-2xl font-bold text-white">{deptUnits.length}</p>
+                </div>
+                <div className="bg-slate-900 border border-slate-800 rounded-lg p-3">
+                  <div className="flex items-center gap-2 mb-1"><Users className="w-4 h-4 text-green-400" /><span className="text-xs text-slate-500 uppercase">On Duty</span></div>
+                  <p className="text-2xl font-bold text-white">{deptPersonnel.length}</p>
+                </div>
+                <div className="bg-slate-900 border border-slate-800 rounded-lg p-3">
+                  <div className="flex items-center gap-2 mb-1"><AlertTriangle className="w-4 h-4 text-red-400" /><span className="text-xs text-slate-500 uppercase">High Priority</span></div>
+                  <p className="text-2xl font-bold text-white">{(isDispatch ? activeCalls : deptCalls).filter(c => c.priority === "1 - High").length}</p>
+                </div>
+              </div>
+
+              {/* Category-specific content */}
+              {isDispatch && <DispatchContent calls={activeCalls} units={units} personnel={personnel} accent={accent} onAssign={loadData} session={session} />}
+              {isFire && <FireContent calls={deptCalls} units={deptUnits} personnel={deptPersonnel} accent={accent} deptId={deptId} />}
+              {isEMS && <EMSContent calls={deptCalls} units={deptUnits} personnel={deptPersonnel} accent={accent} deptId={deptId} />}
+              {!isDispatch && !isFire && !isEMS && (
+                <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 text-center">
+                  <Building2 className="w-12 h-12 mx-auto text-slate-600 mb-3" />
+                  <p className="text-slate-400">Select a call from the left to view details</p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Right Panel - Units & Personnel */}
+        <div className="w-72 border-l border-slate-800 flex flex-col flex-shrink-0">
+          <div className="p-3 border-b border-slate-800">
+            <h2 className="text-sm font-bold text-white flex items-center gap-2"><Siren className="w-4 h-4 text-yellow-400" /> Active Units</h2>
+          </div>
+          <div className="flex-1 overflow-y-auto p-2 space-y-1.5">
+            {(isDispatch ? personnel : deptPersonnel).length === 0 ? (
+              <p className="text-xs text-slate-600 text-center py-8">No units on duty</p>
+            ) : (
+              (isDispatch ? personnel : deptPersonnel).map(p => (
+                <div key={p.id} className="bg-slate-900 border border-slate-800 rounded-lg p-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-white font-medium">{p.name}</span>
+                    <span className={`w-2 h-2 rounded-full ${p.status === "Available" ? "bg-green-400" : p.status === "On Duty" || p.status === "On Call" ? "bg-red-400" : "bg-gray-400"}`} />
+                  </div>
+                  <div className="flex items-center gap-2 mt-1">
+                    {p.callsign && <span className="text-[10px] font-mono text-slate-500">{p.callsign}</span>}
+                    {p.rank && <span className="text-[10px] text-slate-600">{p.rank}</span>}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+          <div className="p-2 border-t border-slate-800">
+            <Link to="/cad/admin" className="block text-center text-xs text-slate-500 hover:text-white py-1">Manage in Admin Panel →</Link>
+          </div>
+        </div>
+      </div>
+
+      {/* 911 Intake Dialog */}
+      {showIntake && <CallIntakeDialog department={department} session={session} onClose={() => setShowIntake(false)} onSaved={() => { setShowIntake(false); loadData(); }} />}
+
+      <Taskbar activeView="dispatch" setActiveView={(v) => { if (v !== "dispatch") navigate(`/cad/mdt/${deptId}`); }} session={session} onStatusChange={handleStatusChange} onPanic={handlePanic} onClockOut={handleClockOut} onOpenKeybinds={() => {}} />
+    </div>
+  );
+}
+
+function DispatchContent({ calls, units, personnel, accent, onAssign, session }) {
+  const unassigned = calls.filter(c => !c.assigned_unit_ids?.length);
+  const assigned = calls.filter(c => c.assigned_unit_ids?.length > 0);
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 gap-4">
+        <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
+          <h3 className="text-sm font-bold text-white mb-3 flex items-center gap-2"><AlertTriangle className="w-4 h-4 text-yellow-400" /> Unassigned ({unassigned.length})</h3>
+          <div className="space-y-2">
+            {unassigned.length === 0 ? <p className="text-xs text-slate-600 text-center py-4">All calls assigned</p> : unassigned.map(call => (
+              <div key={call.id} className="bg-slate-950 rounded-lg p-2.5">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-sm text-white">{call.call_type}</span>
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${call.priority === "1 - High" ? "text-red-400 bg-red-500/10" : "text-yellow-400 bg-yellow-500/10"}`}>{call.priority}</span>
+                </div>
+                <p className="text-xs text-slate-500">{call.location}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
+          <h3 className="text-sm font-bold text-white mb-3 flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-400" /> Assigned ({assigned.length})</h3>
+          <div className="space-y-2">
+            {assigned.length === 0 ? <p className="text-xs text-slate-600 text-center py-4">No assigned calls</p> : assigned.map(call => (
+              <div key={call.id} className="bg-slate-950 rounded-lg p-2.5">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-sm text-white">{call.call_type}</span>
+                  <span className="text-[10px] text-cyan-400">{call.assigned_unit_ids.length} unit(s)</span>
+                </div>
+                <p className="text-xs text-slate-500">{call.location}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+      <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
+        <h3 className="text-sm font-bold text-white mb-3 flex items-center gap-2"><Users className="w-4 h-4 text-cyan-400" /> All Active Personnel ({personnel.length})</h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          {personnel.map(p => (
+            <div key={p.id} className="bg-slate-950 rounded-lg p-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-white font-medium truncate">{p.name}</span>
+                <span className={`w-1.5 h-1.5 rounded-full ${p.status === "Available" ? "bg-green-400" : p.status === "On Duty" || p.status === "On Call" ? "bg-red-400" : "bg-gray-400"}`} />
+              </div>
+              {p.callsign && <span className="text-[10px] font-mono text-slate-500">{p.callsign}</span>}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FireContent({ calls, units, personnel, accent, deptId }) {
+  const fireCalls = calls.filter(c => c.call_type?.toLowerCase().includes("fire") || c.call_type?.toLowerCase().includes("rescue") || c.call_type?.toLowerCase().includes("hazmat"));
+  return (
+    <div className="space-y-4">
+      <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
+        <h3 className="text-sm font-bold text-white mb-3 flex items-center gap-2"><Flame className="w-4 h-4 text-red-400" /> Active Fire Incidents</h3>
+        <div className="space-y-2">
+          {fireCalls.length === 0 && calls.length === 0 ? <p className="text-xs text-slate-600 text-center py-4">No active incidents</p> :
+            calls.map(call => (
+              <div key={call.id} className="bg-slate-950 rounded-lg p-3">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-sm text-white font-medium">{call.call_type}</span>
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${call.priority === "1 - High" ? "text-red-400 bg-red-500/10" : "text-yellow-400 bg-yellow-500/10"}`}>{call.priority}</span>
+                </div>
+                <p className="text-xs text-slate-500 flex items-center gap-1"><MapPin className="w-3 h-3" /> {call.location}</p>
+                <p className="text-[10px] text-cyan-400 mt-1">{call.assigned_unit_ids?.length || 0} apparatus assigned</p>
+              </div>
+            ))
+          }
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
+          <h3 className="text-sm font-bold text-white mb-3 flex items-center gap-2"><Siren className="w-4 h-4 text-yellow-400" /> Apparatus ({units.length})</h3>
+          <div className="space-y-1.5">
+            {units.length === 0 ? <p className="text-xs text-slate-600 text-center py-4">No apparatus</p> : units.map(u => (
+              <div key={u.id} className="bg-slate-950 rounded-lg p-2 flex items-center justify-between">
+                <span className="text-xs text-white">{u.name || u.identifier || "Unit"}</span>
+                <span className={`text-[10px] ${u.status === "Available" ? "text-green-400" : "text-yellow-400"}`}>{u.status || "Unknown"}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
+          <h3 className="text-sm font-bold text-white mb-3 flex items-center gap-2"><Users className="w-4 h-4 text-green-400" /> Personnel ({personnel.length})</h3>
+          <div className="space-y-1.5">
+            {personnel.length === 0 ? <p className="text-xs text-slate-600 text-center py-4">No personnel on duty</p> : personnel.map(p => (
+              <div key={p.id} className="bg-slate-950 rounded-lg p-2 flex items-center justify-between">
+                <div><span className="text-xs text-white">{p.name}</span>{p.rank && <span className="text-[10px] text-slate-500 ml-2">{p.rank}</span>}</div>
+                <span className={`w-1.5 h-1.5 rounded-full ${p.status === "Available" ? "bg-green-400" : "bg-red-400"}`} />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function EMSContent({ calls, units, personnel, accent, deptId }) {
+  return (
+    <div className="space-y-4">
+      <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
+        <h3 className="text-sm font-bold text-white mb-3 flex items-center gap-2"><Ambulance className="w-4 h-4 text-green-400" /> Active Medical Calls</h3>
+        <div className="space-y-2">
+          {calls.length === 0 ? <p className="text-xs text-slate-600 text-center py-4">No active medical calls</p> : calls.map(call => (
+            <div key={call.id} className="bg-slate-950 rounded-lg p-3">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-sm text-white font-medium">{call.call_type}</span>
+                <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${call.priority === "1 - High" ? "text-red-400 bg-red-500/10" : "text-yellow-400 bg-yellow-500/10"}`}>{call.priority}</span>
+              </div>
+              <p className="text-xs text-slate-500 flex items-center gap-1"><MapPin className="w-3 h-3" /> {call.location}</p>
+              {call.caller_name && <p className="text-[10px] text-slate-600 mt-1">Patient: {call.caller_name}</p>}
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
+          <h3 className="text-sm font-bold text-white mb-3 flex items-center gap-2"><Siren className="w-4 h-4 text-yellow-400" /> Ambulances ({units.length})</h3>
+          <div className="space-y-1.5">
+            {units.length === 0 ? <p className="text-xs text-slate-600 text-center py-4">No ambulances</p> : units.map(u => (
+              <div key={u.id} className="bg-slate-950 rounded-lg p-2 flex items-center justify-between">
+                <span className="text-xs text-white">{u.name || u.identifier || "Unit"}</span>
+                <span className={`text-[10px] ${u.status === "Available" ? "text-green-400" : u.status === "Transporting" ? "text-yellow-400" : "text-red-400"}`}>{u.status || "Unknown"}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
+          <h3 className="text-sm font-bold text-white mb-3 flex items-center gap-2"><Stethoscope className="w-4 h-4 text-green-400" /> Medics ({personnel.length})</h3>
+          <div className="space-y-1.5">
+            {personnel.length === 0 ? <p className="text-xs text-slate-600 text-center py-4">No medics on duty</p> : personnel.map(p => (
+              <div key={p.id} className="bg-slate-950 rounded-lg p-2 flex items-center justify-between">
+                <div><span className="text-xs text-white">{p.name}</span>{p.rank && <span className="text-[10px] text-slate-500 ml-2">{p.rank}</span>}</div>
+                <span className={`w-1.5 h-1.5 rounded-full ${p.status === "Available" ? "bg-green-400" : "bg-red-400"}`} />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CallIntakeDialog({ department, session, onClose, onSaved }) {
+  const [form, setForm] = useState({ call_type: "", priority: "2 - Medium", location: "", description: "", caller_name: "", caller_phone: "" });
+  const [saving, setSaving] = useState(false);
+  const { toast } = useToast();
+
+  const handleSave = async () => {
+    if (!form.call_type.trim() || !form.location.trim()) { toast({ title: "Call type and location required", variant: "destructive" }); return; }
+    setSaving(true);
+    try {
+      const runNum = `911-${Date.now().toString().slice(-6)}`;
+      await base44.entities.ActiveCall.create({ ...form, status: "Pending", department_id: department.id, run_number: runNum });
+      toast({ title: "911 call created" });
+      onSaved();
+    } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
+    setSaving(false);
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+      <div className="bg-slate-900 border border-slate-700 rounded-xl p-5 w-full max-w-md">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-bold text-white flex items-center gap-2"><PhoneCall className="w-5 h-5 text-cyan-400" /> New 911 Call</h2>
+          <button onClick={onClose} className="text-slate-400 hover:text-white"><X className="w-5 h-5" /></button>
+        </div>
+        <div className="space-y-3">
+          <div><Label className="text-slate-300 text-xs">Call Type *</Label><Input value={form.call_type} onChange={e => setForm({ ...form, call_type: e.target.value })} className="bg-slate-800 border-slate-700 text-white" placeholder="e.g. Structure Fire, Medical Emergency" /></div>
+          <div><Label className="text-slate-300 text-xs">Priority</Label>
+            <Select value={form.priority} onValueChange={v => setForm({ ...form, priority: v })}>
+              <SelectTrigger className="bg-slate-800 border-slate-700 text-white"><SelectValue /></SelectTrigger>
+              <SelectContent className="bg-slate-800 border-slate-700">{["1 - High", "2 - Medium", "3 - Low"].map(p => <SelectItem key={p} value={p} className="text-white">{p}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div><Label className="text-slate-300 text-xs">Location *</Label><Input value={form.location} onChange={e => setForm({ ...form, location: e.target.value })} className="bg-slate-800 border-slate-700 text-white" placeholder="Street address or landmark" /></div>
+          <div className="grid grid-cols-2 gap-2">
+            <div><Label className="text-slate-300 text-xs">Caller Name</Label><Input value={form.caller_name} onChange={e => setForm({ ...form, caller_name: e.target.value })} className="bg-slate-800 border-slate-700 text-white" /></div>
+            <div><Label className="text-slate-300 text-xs">Caller Phone</Label><Input value={form.caller_phone} onChange={e => setForm({ ...form, caller_phone: e.target.value })} className="bg-slate-800 border-slate-700 text-white" /></div>
+          </div>
+          <div><Label className="text-slate-300 text-xs">Description</Label><Textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} className="bg-slate-800 border-slate-700 text-white" rows={2} /></div>
+        </div>
+        <div className="flex gap-2 mt-4">
+          <Button onClick={handleSave} disabled={saving} className="flex-1 bg-cyan-600 hover:bg-cyan-700">{saving ? "Creating..." : "Create Call"}</Button>
+          <Button onClick={onClose} variant="outline" className="border-slate-700 text-slate-300">Cancel</Button>
+        </div>
+      </div>
+    </div>
+  );
+}
