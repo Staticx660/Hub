@@ -46,19 +46,19 @@ export default function LookupPanel({ department, session }) {
     setSearching(true);
     setSearched(true);
     try {
-      let found = [];
-      if (searchType === "person") {
-        const all = await base44.entities.Civilian.list();
-        found = all.filter((c) => match(c.first_name, form.firstName) && match(c.last_name, form.lastName) && (!form.dob || c.dob === form.dob));
-        if (found.length > 0) saveHistory("person", `${found[0].first_name} ${found[0].last_name}`);
-      } else if (searchType === "vehicle") {
-        const all = await base44.entities.CivilianVehicle.list();
-        found = all.filter((v) => match(v.plate, form.plate));
-        if (found.length > 0) saveHistory("vehicle", found[0].plate);
-      } else if (searchType === "firearm") {
-        const all = await base44.entities.Firearm.list();
-        found = all.filter((f) => match(f.serial_number, form.serial));
-        if (found.length > 0) saveHistory("firearm", found[0].serial_number);
+      const res = await base44.functions.invoke('searchCADRecords', {
+        searchType,
+        firstName: form.firstName,
+        lastName: form.lastName,
+        dob: form.dob,
+        plate: form.plate,
+        serial: form.serial,
+        exact,
+      });
+      const found = res.data.results || [];
+      if (found.length > 0) {
+        const label = searchType === "person" ? `${found[0].first_name} ${found[0].last_name}` : searchType === "vehicle" ? found[0].plate : found[0].serial_number;
+        saveHistory(searchType, label);
       }
       setResults(found);
       setSelected(null);
@@ -68,12 +68,18 @@ export default function LookupPanel({ department, session }) {
 
   const selectPerson = async (person) => {
     setSelected({ type: "person", data: person });
-    const [w, v] = await Promise.all([
-      base44.entities.Warrant.filter({ person_id: person.id, status: "Active" }),
-      base44.entities.CivilianVehicle.filter({ owner_id: person.id }),
-    ]);
-    setWarrants(w);
-    setVehicles(v);
+    try {
+      const res = await base44.functions.invoke('searchCADRecords', {
+        searchType: "person",
+        personId: person.id,
+        personName: `${person.first_name} ${person.last_name}`,
+      });
+      setWarrants(res.data.warrants || []);
+      setVehicles(res.data.vehicles || []);
+    } catch (e) {
+      setWarrants([]);
+      setVehicles([]);
+    }
   };
 
   const toggleLicense = async (field) => {

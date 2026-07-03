@@ -1,25 +1,7 @@
-import { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
-import { useToast } from "@/components/ui/use-toast";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Settings, RefreshCw, Loader2, CheckCircle2, Server, Users, Webhook } from "lucide-react";
-import DiscordSettings from "@/components/cad/DiscordSettings";
+import { useState } from "react";
+import { Settings, Server, Webhook, Users } from "lucide-react";
 
 export default function CADSettings() {
-  const [guildId, setGuildId] = useState("");
-  const [saving, setSaving] = useState(false);
-  const [syncing, setSyncing] = useState(false);
-  const [syncReport, setSyncReport] = useState(null);
-  const { toast } = useToast();
-
-  useEffect(() => {
-    // The guild ID is stored as a secret — we can't read it directly, but we can show a placeholder
-    // The DiscordSettings component handles the actual sync display
-  }, []);
-
   return (
     <div className="space-y-6">
       <div>
@@ -27,7 +9,6 @@ export default function CADSettings() {
         <p className="text-sm text-slate-400 mt-1">Manage global Discord sync, server configuration, and system preferences</p>
       </div>
 
-      {/* Discord Configuration Summary */}
       <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-5">
         <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2"><Server className="w-5 h-5 text-cyan-400" /> Discord Configuration</h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -47,8 +28,10 @@ export default function CADSettings() {
         <p className="text-xs text-slate-500 mt-3">Discord secrets are managed in the app dashboard under Environment Variables. The Guild ID, Bot Token, and Public Key are used for all Discord integrations across the CAD system.</p>
       </div>
 
-      {/* Discord Sync Controls */}
-      <DiscordSettings />
+      <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-5">
+        <h2 className="text-lg font-semibold text-white mb-2">Discord Sync</h2>
+        <p className="text-sm text-slate-400">Discord member sync and role management is available in the <span className="text-cyan-400">Admin Panel → Discord</span> tab. Visit the Admin Panel to sync members, manage roles, and configure department access.</p>
+      </div>
     </div>
   );
 }

@@ -35,7 +35,7 @@
     "weight": {
       "type": "string"
     },
-    "skin_color": {
+    "race": {
       "type": "string"
     },
     "occupation": {
@@ -98,6 +98,12 @@
         "None"
       ],
       "default": "None"
+    },
+    "drivers_license_types": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
     },
     "pilot_license_status": {
       "type": "string",

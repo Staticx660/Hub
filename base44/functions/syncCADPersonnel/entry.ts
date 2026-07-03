@@ -31,15 +31,92 @@ Deno.serve(async (req) => {
       if (m.discord_id) rosterByDiscordId[m.discord_id] = m;
     }
 
+    // === DEDUP STEP: Clean up existing duplicate personnel records ===
     const existingPersonnel = await base44.asServiceRole.entities.CADPersonnel.filter({});
-    // Deduplicate by discord_id (fallback to name) — ONE record per person
+    const dedupReport = { merged: 0, deleted: 0 };
+
+    // Group by discord_id
+    const byDiscordId = {};
+    const byName = {};
+    for (const p of existingPersonnel) {
+      if (p.discord_id) {
+        if (!byDiscordId[p.discord_id]) byDiscordId[p.discord_id] = [];
+        byDiscordId[p.discord_id].push(p);
+      }
+      if (p.name) {
+        const key = p.name.toLowerCase().trim();
+        if (!byName[key]) byName[key] = [];
+        byName[key].push(p);
+      }
+    }
+
+    // Merge duplicates by discord_id
+    for (const [did, records] of Object.entries(byDiscordId)) {
+      if (records.length <= 1) continue;
+      records.sort((a, b) => new Date(a.created_date || 0) - new Date(b.created_date || 0));
+      const keep = records[0];
+      const mergeDeptIds = new Set();
+      records.forEach(r => {
+        if (r.department_id) mergeDeptIds.add(r.department_id);
+        (r.additional_department_ids || []).forEach(id => mergeDeptIds.add(id));
+      });
+      const primaryDept = keep.department_id;
+      const additionalDepts = [...mergeDeptIds].filter(id => id !== primaryDept);
+      let bestRank = keep.rank || "";
+      let bestBadge = keep.badge_number || "";
+      let bestCallsign = keep.callsign || "";
+      for (const r of records.slice(1)) {
+        if (!bestRank && r.rank) bestRank = r.rank;
+        if (!bestBadge && r.badge_number) bestBadge = r.badge_number;
+        if (!bestCallsign && r.callsign) bestCallsign = r.callsign;
+      }
+      try {
+        await base44.asServiceRole.entities.CADPersonnel.update(keep.id, {
+          additional_department_ids: additionalDepts, rank: bestRank, badge_number: bestBadge, callsign: bestCallsign,
+        });
+      } catch (e) { /* continue */ }
+      for (const r of records.slice(1)) {
+        try { await base44.asServiceRole.entities.CADPersonnel.delete(r.id); dedupReport.deleted++; } catch (e) { /* continue */ }
+      }
+      dedupReport.merged++;
+    }
+
+    // Merge duplicates by name (personnel without discord_id that share a name)
+    const dedupedByName = new Set();
+    for (const [name, records] of Object.entries(byName)) {
+      if (records.length <= 1) continue;
+      // Skip if any of these were already handled by discord_id dedup
+      if (records.some(r => r.discord_id && byDiscordId[r.discord_id]?.length > 1 && r.id !== byDiscordId[r.discord_id][0].id)) continue;
+      if (records.some(r => dedupedByName.has(r.id))) continue;
+      records.sort((a, b) => new Date(a.created_date || 0) - new Date(b.created_date || 0));
+      const keep = records[0];
+      const mergeDeptIds = new Set();
+      records.forEach(r => {
+        if (r.department_id) mergeDeptIds.add(r.department_id);
+        (r.additional_department_ids || []).forEach(id => mergeDeptIds.add(id));
+      });
+      const primaryDept = keep.department_id;
+      const additionalDepts = [...mergeDeptIds].filter(id => id !== primaryDept);
+      try {
+        await base44.asServiceRole.entities.CADPersonnel.update(keep.id, { additional_department_ids: additionalDepts });
+      } catch (e) { /* continue */ }
+      for (const r of records.slice(1)) {
+        dedupedByName.add(r.id);
+        try { await base44.asServiceRole.entities.CADPersonnel.delete(r.id); dedupReport.deleted++; } catch (e) { /* continue */ }
+      }
+      dedupReport.merged++;
+    }
+
+    // Reload personnel after dedup
+    const cleanPersonnel = await base44.asServiceRole.entities.CADPersonnel.filter({});
     const existingByDiscordId = {};
     const existingByName = {};
-    for (const p of existingPersonnel) {
+    for (const p of cleanPersonnel) {
       if (p.discord_id) existingByDiscordId[p.discord_id] = p;
       if (p.name) existingByName[p.name.toLowerCase().trim()] = p;
     }
 
+    // === DISCORD SYNC ===
     let members = [];
     let hasMore = true;
     let lastMemberId = null;
@@ -50,7 +127,7 @@ Deno.serve(async (req) => {
       const membersRes = await fetch(url.toString(), { headers });
       if (!membersRes.ok) {
         const errText = await membersRes.text();
-        return Response.json({ error: `Failed to list guild members (Discord API ${membersRes.status}): ${errText}. Make sure the bot has the Server Members Intent enabled.` }, { status: 502 });
+        return Response.json({ error: `Failed to list guild members (Discord API ${membersRes.status}): ${errText}.` }, { status: 502 });
       }
       const batch = await membersRes.json();
       if (!batch || batch.length === 0) { hasMore = false; break; }
@@ -59,9 +136,7 @@ Deno.serve(async (req) => {
       if (batch.length < 1000) hasMore = false;
     }
 
-    // Track which personnel records we've seen, to detect stale ones
-    const seenIds = new Set();
-    const report = { totalDiscordMembers: members.length, added: 0, updated: 0, skipped: 0, merged: 0, addedToDefault: 0, errors: [] };
+    const report = { totalDiscordMembers: members.length, added: 0, updated: 0, skipped: 0, merged: dedupReport.merged, deleted: dedupReport.deleted, addedToDefault: 0, errors: [] };
 
     for (const member of members) {
       if (!member.user || member.user.bot) { report.skipped++; continue; }
@@ -71,7 +146,6 @@ Deno.serve(async (req) => {
       const rosterMember = rosterByDiscordId[discordId];
       const displayName = rosterMember?.name || member.nick || member.user.global_name || member.user.username;
 
-      // Find ALL CAD departments this member belongs to via Discord roles
       const matchedDepts = [];
       const seenDeptIds = new Set();
       for (const roleId of memberRoles) {
@@ -96,14 +170,11 @@ Deno.serve(async (req) => {
         continue;
       }
 
-      // Find existing record — by discord_id first, then by name
       const existing = (discordId && existingByDiscordId[discordId]) || existingByName[displayName.toLowerCase().trim()];
 
       if (existing) {
-        seenIds.add(existing.id);
         const updates = {};
         if (existing.department_id !== primaryDept.id) updates.department_id = primaryDept.id;
-        // Sync additional departments
         const currentAdditional = existing.additional_department_ids || [];
         const mergedAdditional = [...new Set([...currentAdditional, ...additionalDeptIds])];
         if (JSON.stringify(mergedAdditional.sort()) !== JSON.stringify(currentAdditional.sort())) {
@@ -121,7 +192,6 @@ Deno.serve(async (req) => {
           try {
             await base44.asServiceRole.entities.CADPersonnel.update(existing.id, updates);
             report.updated++;
-            if (updates.additional_department_ids) report.merged++;
           } catch (e) { report.errors.push(`Failed to update ${displayName}: ${e.message}`); }
         } else {
           report.skipped++;
@@ -134,7 +204,6 @@ Deno.serve(async (req) => {
             rank: rosterMember?.rank || "", badge_number: rosterMember?.badge_number || "",
             callsign: rosterMember?.callsign || "", status: "Off Duty",
           });
-          seenIds.add(newRec.id);
           existingByDiscordId[discordId] = newRec;
           existingByName[displayName.toLowerCase().trim()] = newRec;
           report.added++;

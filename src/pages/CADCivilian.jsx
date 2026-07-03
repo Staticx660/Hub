@@ -85,6 +85,14 @@ export default function CADCivilian() {
 
   useEffect(() => { if (panel === "records" && selectedChar) loadRecords(); }, [panel, selectedChar]);
 
+  const reloadCharacter = async () => {
+    if (!selectedChar) return;
+    try {
+      const updated = await base44.entities.Civilian.get(selectedChar.id);
+      setSelectedChar(updated);
+    } catch (e) { /* silent */ }
+  };
+
   const reloadCharacters = async () => {
     if (!user?.id) return;
     try {
@@ -99,7 +107,8 @@ export default function CADCivilian() {
     if (!call911Form.location || !selectedChar) return;
     try {
       const depts = await base44.entities.CADDepartment.list();
-      const dispatchDept = depts.find(d => d.category === "Dispatch") || depts.find(d => d.id === deptId);
+      const policeDept = depts.find(d => d.category === "Police");
+      const dispatchDept = depts.find(d => d.category === "Dispatch") || policeDept || depts.find(d => d.id === deptId);
       const runNum = `911-${Date.now().toString().slice(-6)}`;
       await base44.entities.ActiveCall.create({
         call_type: "911 Emergency Call", priority: call911Form.priority, status: "Pending",
@@ -176,12 +185,12 @@ export default function CADCivilian() {
             </Button>
           )}
           {selectedChar && (
-            <Button onClick={() => setPanel(panel === "records" ? null : "records")} size="sm" variant={panel === "records" ? "secondary" : "outline"} className="gap-1.5">
+            <Button onClick={() => setPanel(panel === "records" ? null : "records")} size="sm" variant="outline" className={`gap-1.5 ${panel === "records" ? "bg-blue-500/20 text-blue-400 border-blue-500/30" : "border-slate-700 text-slate-300"}`}>
               <FileText className="w-3.5 h-3.5" /> Records
             </Button>
           )}
           {selectedChar && (
-            <Button onClick={() => setPanel(panel === "dmv" ? null : "dmv")} size="sm" variant={panel === "dmv" ? "secondary" : "outline"} className="gap-1.5">
+            <Button onClick={() => setPanel(panel === "dmv" ? null : "dmv")} size="sm" variant="outline" className={`gap-1.5 ${panel === "dmv" ? "bg-blue-500/20 text-blue-400 border-blue-500/30" : "border-slate-700 text-slate-300"}`}>
               <Car className="w-3.5 h-3.5" /> DMV
             </Button>
           )}
@@ -250,7 +259,7 @@ export default function CADCivilian() {
           )}
         </div>
       ) : panel === "dmv" ? (
-        <CivilianDMV character={selectedChar} department={department} user={user} />
+        <CivilianDMV character={selectedChar} department={department} user={user} onUpdate={reloadCharacter} />
       ) : (
         <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-5">
           <div className="flex items-start gap-4 mb-4">
@@ -274,7 +283,7 @@ export default function CADCivilian() {
             {selectedChar.eye_color && <div><span className="text-slate-500 block text-xs">Eyes</span><span className="text-slate-300">{selectedChar.eye_color}</span></div>}
             {selectedChar.height && <div><span className="text-slate-500 block text-xs">Height</span><span className="text-slate-300">{selectedChar.height}</span></div>}
             {selectedChar.weight && <div><span className="text-slate-500 block text-xs">Weight</span><span className="text-slate-300">{selectedChar.weight}</span></div>}
-            {selectedChar.skin_color && <div><span className="text-slate-500 block text-xs">Skin</span><span className="text-slate-300">{selectedChar.skin_color}</span></div>}
+            {selectedChar.race && <div><span className="text-slate-500 block text-xs">Race</span><span className="text-slate-300">{selectedChar.race}</span></div>}
             {selectedChar.zip_code && <div><span className="text-slate-500 block text-xs">Zip</span><span className="text-slate-300">{selectedChar.zip_code}</span></div>}
           </div>
           {(selectedChar.allergies?.length > 0 || selectedChar.medications?.length > 0 || selectedChar.medical_history?.length > 0 || selectedChar.food_allergies?.length > 0) && (

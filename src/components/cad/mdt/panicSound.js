@@ -27,7 +27,7 @@ export function playStatusBeep() {
   } catch (e) { /* silent */ }
 }
 
-// Emergency siren wail — plays for 10 seconds, then voice announces the unit
+// Emergency siren wail — plays for 3 seconds, then voice announces the unit
 export function startPanicSound(unitName) {
   stopPanicSound();
   try {
@@ -53,11 +53,11 @@ export function startPanicSound(unitName) {
     playWail();
     panicIntervalId = setInterval(playWail, 1400);
 
-    // After 10 seconds, stop the siren and play the voice announcement
+    // After 3 seconds, stop the siren and play the voice announcement
     voiceTimeoutId = setTimeout(() => {
       stopPanicSound();
       if (unitName) speakPanicAlert(unitName);
-    }, 10000);
+    }, 3000);
   } catch (e) { /* silent */ }
 }
 

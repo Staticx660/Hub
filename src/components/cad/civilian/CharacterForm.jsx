@@ -10,11 +10,19 @@ import { Upload, X, ChevronDown, ChevronUp, Camera } from "lucide-react";
 
 const HAIR_COLORS = ["Black", "Brown", "Blonde", "Red", "Gray", "White", "Bald", "Blue", "Green", "Pink", "Purple"];
 const EYE_COLORS = ["Brown", "Blue", "Green", "Hazel", "Gray", "Amber", "Black"];
-const SKIN_TONES = ["Fair", "Light", "Medium", "Tan", "Dark", "Deep"];
-const ALLERGY_OPTIONS = ["Penicillin", "Aspirin", "Ibuprofen", "Latex", "Bee Stings", "Pollen", "Dust Mites", "Pet Dander", "Mold", "Sulfa Drugs"];
-const MEDICATION_OPTIONS = ["Insulin", "Albuterol", "EpiPen", "Blood Pressure Meds", "Pain Relievers", "Antidepressants", "Antibiotics", "Blood Thinners", "Steroids", "Inhaler"];
-const MEDICAL_HISTORY_OPTIONS = ["Diabetes", "Asthma", "Heart Disease", "High Blood Pressure", "Epilepsy", "Anxiety", "Depression", "PTSD", "Arthritis", "Cancer", "Stroke", "Sleep Apnea"];
-const FOOD_ALLERGY_OPTIONS = ["Peanuts", "Shellfish", "Dairy", "Gluten", "Eggs", "Soy", "Tree Nuts", "Wheat", "Fish", "Sesame"];
+const RACES = ["White", "Black", "Hispanic", "Asian", "Native American", "Middle Eastern", "Pacific Islander", "Mixed", "Other"];
+const ALLERGY_OPTIONS = ["Penicillin", "Amoxicillin", "Aspirin", "Ibuprofen", "Sulfa Drugs", "Latex", "Bee Stings", "Wasp Stings", "Pollen", "Dust Mites", "Pet Dander", "Mold", "Codeine", "Morphine", "Iodine", "Contrast Dye", "Local Anesthetics", "NSAIDs", "Antibiotics", "Anticonvulsants", "Insulin", "Chemotherapy", "Adhesive Tape", "Nickel", "Gold", "Copper"];
+const MEDICATION_OPTIONS = ["Insulin", "Albuterol", "EpiPen", "Blood Pressure Meds", "Pain Relievers", "Antidepressants", "Antibiotics", "Blood Thinners", "Steroids", "Inhaler", "Adderall", "Xanax", "Zoloft", "Prozac", "Lisinopril", "Metformin", "Atorvastatin", "Omeprazole", "Levothyroxine", "Gabapentin", "Hydrocodone", "Tramadol", "Warfarin", "Clopidogrel", "Amlodipine", "Metoprolol", "Losartan", "Pantoprazole", "Sertraline", "Lorazepam", "Diazepam", "Methylphenidate", "Insulin Pump", "Nitroglycerin", "Sumatriptan"];
+const MEDICAL_HISTORY_OPTIONS = ["Diabetes Type 1", "Diabetes Type 2", "Asthma", "Heart Disease", "High Blood Pressure", "High Cholesterol", "Epilepsy", "Anxiety", "Depression", "PTSD", "Bipolar Disorder", "ADHD", "Arthritis", "Cancer", "Stroke", "Sleep Apnea", "COPD", "Kidney Disease", "Liver Disease", "Thyroid Condition", "Migraines", "Seizures", "Autoimmune Disease", "HIV/AIDS", "Hepatitis", "Osteoporosis", "Alzheimer's", "Parkinson's", "Sickle Cell", "Hemophilia", "Coronary Artery Disease", "Arrhythmia", "Cirrhosis", "Celiac Disease", "Crohn's Disease", "Ulcerative Colitis"];
+const FOOD_ALLERGY_OPTIONS = ["Peanuts", "Shellfish", "Dairy", "Gluten", "Eggs", "Soy", "Tree Nuts", "Wheat", "Fish", "Sesame", "Corn", "Rice", "Oats", "Barley", "Rye", "Beef", "Pork", "Chicken", "Lamb", "Tomato", "Potato", "Carrot", "Celery", "Mustard", "Garlic", "Onion", "Apple", "Banana", "Strawberry", "Citrus", "Chocolate", "Caffeine", "Mushroom", "Avocado", "Coconut"];
+
+function formatPhone(value) {
+  const digits = (value || "").replace(/\D/g, "").slice(0, 10);
+  if (digits.length === 0) return "";
+  if (digits.length <= 3) return `(${digits}`;
+  if (digits.length <= 6) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
+  return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+}
 
 function calculateAge(dob) {
   if (!dob) return "";
@@ -60,10 +68,11 @@ function TagSelector({ label, options, selected, onChange }) {
 
 const emptyForm = {
   first_name: "", middle_name: "", last_name: "", dob: "", gender: "Male",
-  hair_color: "", eye_color: "", height: "", weight: "", skin_color: "",
+  hair_color: "", eye_color: "", height: "", weight: "", race: "",
   occupation: "", address: "", zip_code: "", phone: "",
   emergency_contact_name: "", emergency_contact_phone: "", emergency_contact_relationship: "",
-  photo_url: "", allergies: [], medications: [], medical_history: [], food_allergies: [], notes: ""
+  photo_url: "", allergies: [], medications: [], medical_history: [], food_allergies: [],
+  drivers_license_types: [], notes: ""
 };
 
 export default function CharacterForm({ open, onOpenChange, editing, department, user, onSaved }) {
@@ -116,7 +125,6 @@ export default function CharacterForm({ open, onOpenChange, editing, department,
       <DialogContent className="bg-slate-900 border-slate-700 max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader><DialogTitle className="text-white">{editing ? "Edit Character" : "New Character"}</DialogTitle></DialogHeader>
         <div className="space-y-4">
-          {/* Photo */}
           <div className="flex items-center gap-4">
             <div className="w-20 h-20 rounded-lg bg-slate-800 border border-slate-700 overflow-hidden flex items-center justify-center">
               {form.photo_url ? <img src={form.photo_url} alt="" className="w-full h-full object-cover" /> : <Camera className="w-8 h-8 text-slate-600" />}
@@ -129,7 +137,6 @@ export default function CharacterForm({ open, onOpenChange, editing, department,
             </label>
           </div>
 
-          {/* Identity */}
           <div className="grid grid-cols-3 gap-3">
             <div><Label className="text-slate-300">First Name *</Label><Input value={form.first_name} onChange={e => set("first_name", e.target.value)} className="bg-slate-800 border-slate-700 text-white" /></div>
             <div><Label className="text-slate-300">Middle Name</Label><Input value={form.middle_name} onChange={e => set("middle_name", e.target.value)} className="bg-slate-800 border-slate-700 text-white" /></div>
@@ -146,7 +153,6 @@ export default function CharacterForm({ open, onOpenChange, editing, department,
             </div>
           </div>
 
-          {/* Physical */}
           <div className="grid grid-cols-4 gap-3">
             <div><Label className="text-slate-300">Hair</Label>
               <Select value={form.hair_color} onValueChange={v => set("hair_color", v)}>
@@ -160,10 +166,10 @@ export default function CharacterForm({ open, onOpenChange, editing, department,
                 <SelectContent className="bg-slate-800 border-slate-700">{EYE_COLORS.map(c => <SelectItem key={c} value={c} className="text-white">{c}</SelectItem>)}</SelectContent>
               </Select>
             </div>
-            <div><Label className="text-slate-300">Skin</Label>
-              <Select value={form.skin_color} onValueChange={v => set("skin_color", v)}>
+            <div><Label className="text-slate-300">Race</Label>
+              <Select value={form.race} onValueChange={v => set("race", v)}>
                 <SelectTrigger className="bg-slate-800 border-slate-700 text-white"><SelectValue placeholder="—" /></SelectTrigger>
-                <SelectContent className="bg-slate-800 border-slate-700">{SKIN_TONES.map(c => <SelectItem key={c} value={c} className="text-white">{c}</SelectItem>)}</SelectContent>
+                <SelectContent className="bg-slate-800 border-slate-700">{RACES.map(c => <SelectItem key={c} value={c} className="text-white">{c}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div><Label className="text-slate-300">Height</Label><Input value={form.height} onChange={e => set("height", e.target.value)} className="bg-slate-800 border-slate-700 text-white" placeholder="5ft 10in" /></div>
@@ -174,18 +180,16 @@ export default function CharacterForm({ open, onOpenChange, editing, department,
             <div><Label className="text-slate-300">Zip Code</Label><Input value={form.zip_code} onChange={e => set("zip_code", e.target.value)} className="bg-slate-800 border-slate-700 text-white" /></div>
           </div>
 
-          {/* Contact */}
           <div className="grid grid-cols-2 gap-3">
             <div><Label className="text-slate-300">Address</Label><Input value={form.address} onChange={e => set("address", e.target.value)} className="bg-slate-800 border-slate-700 text-white" /></div>
-            <div><Label className="text-slate-300">Phone</Label><Input value={form.phone} onChange={e => set("phone", e.target.value)} className="bg-slate-800 border-slate-700 text-white" /></div>
+            <div><Label className="text-slate-300">Phone</Label><Input value={form.phone} onChange={e => set("phone", formatPhone(e.target.value))} className="bg-slate-800 border-slate-700 text-white" placeholder="(555) 123-4567" /></div>
           </div>
           <div className="grid grid-cols-3 gap-3">
             <div><Label className="text-slate-300">Emergency Contact</Label><Input value={form.emergency_contact_name} onChange={e => set("emergency_contact_name", e.target.value)} className="bg-slate-800 border-slate-700 text-white" /></div>
-            <div><Label className="text-slate-300">EC Phone</Label><Input value={form.emergency_contact_phone} onChange={e => set("emergency_contact_phone", e.target.value)} className="bg-slate-800 border-slate-700 text-white" /></div>
+            <div><Label className="text-slate-300">EC Phone</Label><Input value={form.emergency_contact_phone} onChange={e => set("emergency_contact_phone", formatPhone(e.target.value))} className="bg-slate-800 border-slate-700 text-white" placeholder="(555) 123-4567" /></div>
             <div><Label className="text-slate-300">EC Relationship</Label><Input value={form.emergency_contact_relationship} onChange={e => set("emergency_contact_relationship", e.target.value)} className="bg-slate-800 border-slate-700 text-white" /></div>
           </div>
 
-          {/* Medical */}
           <div className="space-y-2">
             <Label className="text-slate-300 text-sm font-semibold">Medical Information</Label>
             <TagSelector label="Allergies" options={ALLERGY_OPTIONS} selected={form.allergies} onChange={v => set("allergies", v)} />
