@@ -1,0 +1,199 @@
+{
+  "name": "PatientCareReport",
+  "type": "object",
+  "properties": {
+    "department_id": {
+      "type": "string"
+    },
+    "pcr_number": {
+      "type": "string"
+    },
+    "patient_name": {
+      "type": "string"
+    },
+    "patient_dob": {
+      "type": "string",
+      "format": "date"
+    },
+    "patient_age": {
+      "type": "string"
+    },
+    "patient_gender": {
+      "type": "string",
+      "enum": [
+        "Male",
+        "Female",
+        "Other",
+        "Unknown"
+      ],
+      "default": "Unknown"
+    },
+    "patient_address": {
+      "type": "string"
+    },
+    "patient_phone": {
+      "type": "string"
+    },
+    "incident_location": {
+      "type": "string"
+    },
+    "incident_type": {
+      "type": "string"
+    },
+    "chief_complaint": {
+      "type": "string"
+    },
+    "mechanism_of_injury": {
+      "type": "string"
+    },
+    "loc": {
+      "type": "string",
+      "enum": [
+        "Alert",
+        "Verbal",
+        "Pain",
+        "Unresponsive"
+      ],
+      "default": "Alert"
+    },
+    "gcs_eye": {
+      "type": "string"
+    },
+    "gcs_verbal": {
+      "type": "string"
+    },
+    "gcs_motor": {
+      "type": "string"
+    },
+    "pupils_left": {
+      "type": "string"
+    },
+    "pupils_right": {
+      "type": "string"
+    },
+    "skin_color": {
+      "type": "string"
+    },
+    "skin_temp": {
+      "type": "string"
+    },
+    "skin_condition": {
+      "type": "string"
+    },
+    "vitals": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "timestamp": {
+            "type": "string"
+          },
+          "bp_systolic": {
+            "type": "string"
+          },
+          "bp_diastolic": {
+            "type": "string"
+          },
+          "heart_rate": {
+            "type": "string"
+          },
+          "respiratory_rate": {
+            "type": "string"
+          },
+          "spo2": {
+            "type": "string"
+          },
+          "temperature": {
+            "type": "string"
+          },
+          "bgl": {
+            "type": "string"
+          },
+          "pain_score": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "treatments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "timestamp": {
+            "type": "string"
+          },
+          "intervention": {
+            "type": "string"
+          },
+          "result": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "medications": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "timestamp": {
+            "type": "string"
+          },
+          "medication": {
+            "type": "string"
+          },
+          "dose": {
+            "type": "string"
+          },
+          "route": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "narrative": {
+      "type": "string"
+    },
+    "disposition": {
+      "type": "string",
+      "enum": [
+        "Transported",
+        "Treated/Released",
+        "Refused AMA",
+        "Deceased",
+        "Transferred",
+        "No Treatment"
+      ],
+      "default": "Transported"
+    },
+    "destination": {
+      "type": "string"
+    },
+    "transport_method": {
+      "type": "string"
+    },
+    "filed_by_name": {
+      "type": "string"
+    },
+    "filed_by_id": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Draft",
+        "Filed",
+        "Reviewed"
+      ],
+      "default": "Filed"
+    },
+    "linked_call_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "patient_name",
+    "department_id"
+  ]
+}

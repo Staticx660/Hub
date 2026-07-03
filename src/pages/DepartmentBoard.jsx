@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import Taskbar from "@/components/cad/mdt/Taskbar";
 import ClockInDialog from "@/components/cad/mdt/ClockInDialog";
 import { useCommunityBranding } from "@/hooks/useCommunityBranding";
-import { Clock, Siren, Users, PhoneCall, Activity, Flame, Ambulance, Radio, Plus, X, MapPin, AlertTriangle, CheckCircle, Building2, Stethoscope } from "lucide-react";
+import { Clock, Siren, Users, PhoneCall, Activity, Flame, Ambulance, Radio, Plus, X, MapPin, AlertTriangle, CheckCircle, Building2, Stethoscope, ChevronLeft } from "lucide-react";
 
 export default function DepartmentBoard() {
   const { deptId } = useParams();
@@ -53,7 +53,7 @@ export default function DepartmentBoard() {
       const [c, u, p] = await Promise.all([
         base44.entities.ActiveCall.filter({ status: { $ne: "Closed" } }),
         base44.entities.CADUnit.list(),
-        base44.entities.CADPersonnel.filter({ status: { $ne: "Off Duty" } }),
+        base44.entities.CADSession.filter({ is_active: true }),
       ]);
       setCalls(c); setUnits(u); setPersonnel(p);
     } catch (e) { /* silent */ }
@@ -92,7 +92,7 @@ export default function DepartmentBoard() {
   useEffect(() => {
     const handler = () => performClockOut(sessionRef.current);
     window.addEventListener('beforeunload', handler);
-    return () => { window.removeEventListener('beforeunload', handler); performClockOut(sessionRef.current); };
+    return () => { window.removeEventListener('beforeunload', handler); };
   }, []);
 
   const handleClockOut = async () => {
@@ -133,7 +133,10 @@ export default function DepartmentBoard() {
           <p className="text-slate-400">{department.category} · Command Board</p>
           <p className="text-slate-500 text-sm mt-2">You are not currently on duty</p>
         </div>
-        <Button onClick={() => setClockInOpen(true)} style={{ backgroundColor: department.color || "#3b82f6" }} className="gap-2 px-8"><Clock className="w-4 h-4" /> Clock In & Start Board</Button>
+        <div className="flex gap-3">
+          <Button onClick={() => navigate("/cad")} variant="outline" className="border-slate-700 text-slate-300 hover:bg-slate-800 gap-2 px-6"><ChevronLeft className="w-4 h-4" /> Back to Departments</Button>
+          <Button onClick={() => setClockInOpen(true)} style={{ backgroundColor: department.color || "#3b82f6" }} className="gap-2 px-8"><Clock className="w-4 h-4" /> Clock In & Start Board</Button>
+        </div>
         <ClockInDialog open={clockInOpen} onOpenChange={setClockInOpen} department={department} user={user} onClockIn={handleClockIn} />
       </div>
     );
@@ -269,7 +272,7 @@ export default function DepartmentBoard() {
               (isDispatch ? personnel : deptPersonnel).map(p => (
                 <div key={p.id} className="bg-slate-900 border border-slate-800 rounded-lg p-2.5">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-white font-medium">{p.name}</span>
+                    <span className="text-sm text-white font-medium">{p.user_name}</span>
                     <span className={`w-2 h-2 rounded-full ${p.status === "Available" ? "bg-green-400" : p.status === "On Duty" || p.status === "On Call" ? "bg-red-400" : "bg-gray-400"}`} />
                   </div>
                   <div className="flex items-center gap-2 mt-1">
@@ -335,7 +338,7 @@ function DispatchContent({ calls, units, personnel, accent, onAssign, session })
           {personnel.map(p => (
             <div key={p.id} className="bg-slate-950 rounded-lg p-2">
               <div className="flex items-center justify-between">
-                <span className="text-xs text-white font-medium truncate">{p.name}</span>
+                <span className="text-xs text-white font-medium truncate">{p.user_name}</span>
                 <span className={`w-1.5 h-1.5 rounded-full ${p.status === "Available" ? "bg-green-400" : p.status === "On Duty" || p.status === "On Call" ? "bg-red-400" : "bg-gray-400"}`} />
               </div>
               {p.callsign && <span className="text-[10px] font-mono text-slate-500">{p.callsign}</span>}
@@ -385,7 +388,7 @@ function FireContent({ calls, units, personnel, accent, deptId }) {
           <div className="space-y-1.5">
             {personnel.length === 0 ? <p className="text-xs text-slate-600 text-center py-4">No personnel on duty</p> : personnel.map(p => (
               <div key={p.id} className="bg-slate-950 rounded-lg p-2 flex items-center justify-between">
-                <div><span className="text-xs text-white">{p.name}</span>{p.rank && <span className="text-[10px] text-slate-500 ml-2">{p.rank}</span>}</div>
+                <div><span className="text-xs text-white">{p.user_name}</span>{p.rank && <span className="text-[10px] text-slate-500 ml-2">{p.rank}</span>}</div>
                 <span className={`w-1.5 h-1.5 rounded-full ${p.status === "Available" ? "bg-green-400" : "bg-red-400"}`} />
               </div>
             ))}
@@ -431,7 +434,7 @@ function EMSContent({ calls, units, personnel, accent, deptId }) {
           <div className="space-y-1.5">
             {personnel.length === 0 ? <p className="text-xs text-slate-600 text-center py-4">No medics on duty</p> : personnel.map(p => (
               <div key={p.id} className="bg-slate-950 rounded-lg p-2 flex items-center justify-between">
-                <div><span className="text-xs text-white">{p.name}</span>{p.rank && <span className="text-[10px] text-slate-500 ml-2">{p.rank}</span>}</div>
+                <div><span className="text-xs text-white">{p.user_name}</span>{p.rank && <span className="text-[10px] text-slate-500 ml-2">{p.rank}</span>}</div>
                 <span className={`w-1.5 h-1.5 rounded-full ${p.status === "Available" ? "bg-green-400" : "bg-red-400"}`} />
               </div>
             ))}

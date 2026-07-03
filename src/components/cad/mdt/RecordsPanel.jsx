@@ -17,12 +17,14 @@ const REPORT_TYPES_BY_CATEGORY = {
   Other: ALL_REPORT_TYPES,
 };
 
-const FILTER_CHECKBOXES = [
-  { key: "warrant", label: "Warrant" },
-  { key: "bolo", label: "BOLO" },
-  { key: "license", label: "License" },
-  { key: "vehicle", label: "Vehicle Registration" },
-];
+const FILTER_CHECKBOXES_BY_CATEGORY = {
+  Police: [{ key: "warrant", label: "Warrant" }, { key: "bolo", label: "BOLO" }, { key: "license", label: "License" }, { key: "vehicle", label: "Vehicle Registration" }],
+  "Private Security": [{ key: "warrant", label: "Warrant" }, { key: "bolo", label: "BOLO" }, { key: "license", label: "License" }, { key: "vehicle", label: "Vehicle Registration" }],
+  Fire: [{ key: "fire", label: "Fire Incident" }, { key: "pcr", label: "Patient Care Report" }],
+  EMS: [{ key: "medical", label: "Medical Call" }, { key: "pcr", label: "Patient Care Report" }],
+  Dispatch: [{ key: "incident", label: "Incident" }],
+  Other: [{ key: "warrant", label: "Warrant" }, { key: "bolo", label: "BOLO" }, { key: "license", label: "License" }, { key: "vehicle", label: "Vehicle Registration" }],
+};
 
 export default function RecordsPanel({ department, session }) {
   const [tab, setTab] = useState("myfiles");
@@ -64,12 +66,16 @@ export default function RecordsPanel({ department, session }) {
   const myDrafts = myReports.filter((r) => r.status === "Draft");
   const isSupervisor = session.rank?.toLowerCase().match(/sergeant|lieutenant|captain|chief|supervisor|commander|sheriff/);
   const reportTypes = REPORT_TYPES_BY_CATEGORY[department.category] || ALL_REPORT_TYPES;
+  const isPoliceType = ["Police", "Private Security", "Other"].includes(department.category);
+  const filterCheckboxes = FILTER_CHECKBOXES_BY_CATEGORY[department.category] || [];
 
   const fileItems = [
     { id: "myfiles", label: "My Files", icon: FolderOpen, count: myReports.length },
     { id: "drafts", label: "My Drafts", icon: Pencil, count: myDrafts.length },
-    { id: "warrants", label: "Warrants", icon: Gavel, count: warrants.filter(w => w.status === "Active").length },
-    { id: "bolos", label: "BOLOs", icon: Eye, count: bolos.filter(b => b.status === "Active").length },
+    ...(isPoliceType ? [
+      { id: "warrants", label: "Warrants", icon: Gavel, count: warrants.filter(w => w.status === "Active").length },
+      { id: "bolos", label: "BOLOs", icon: Eye, count: bolos.filter(b => b.status === "Active").length },
+    ] : []),
     { id: "supervisor", label: "Supervisor Panel", icon: Shield, count: reports.length, supervisorOnly: true },
   ].filter(t => !t.supervisorOnly || isSupervisor);
 
@@ -172,7 +178,7 @@ export default function RecordsPanel({ department, session }) {
         <div className="p-2 border-t border-[#2c2f36] mt-auto">
           <h3 className="text-[10px] font-bold uppercase tracking-wider text-slate-500 px-2 py-1.5">Filter Types</h3>
           <div className="space-y-1 px-2">
-            {FILTER_CHECKBOXES.map(f => (
+            {filterCheckboxes.map(f => (
               <label key={f.key} className="flex items-center gap-2 cursor-pointer text-xs text-slate-400">
                 <input type="checkbox" checked={filters[f.key] || false} onChange={e => setFilters({ ...filters, [f.key]: e.target.checked })} className="w-3.5 h-3.5 rounded border-2 border-red-500 bg-transparent accent-red-500" />
                 {f.label}

@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
-import { Shield, Search, FileText, Radio, Layers, Maximize, Home, UserCog, Keyboard, LogOut, ChevronUp, AlertTriangle, Users, Archive, Camera, ChevronDown } from "lucide-react";
+import { Shield, Search, FileText, Radio, Layers, Maximize, Home, UserCog, Keyboard, LogOut, ChevronUp, AlertTriangle, Users, Archive, Camera, ChevronDown, ClipboardList } from "lucide-react";
 
 const statusOptions = [
   { value: "Available", color: "text-green-400", bg: "bg-green-500/15", dot: "bg-green-400" },
@@ -10,7 +10,10 @@ const statusOptions = [
   { value: "Unavailable", color: "text-gray-400", bg: "bg-gray-500/15", dot: "bg-gray-400" },
 ];
 
-export default function Taskbar({ activeView, setActiveView, session, onStatusChange, onPanic, onClockOut, onOpenKeybinds }) {
+export default function Taskbar({ activeView, setActiveView, session, departmentCategory, onStatusChange, onPanic, onClockOut, onOpenKeybinds }) {
+  const category = departmentCategory || "Police";
+  const isMedical = category === "EMS" || category === "Fire";
+  const isDispatch = category === "Dispatch";
   const [logoMenu, setLogoMenu] = useState(false);
   const [statusMenu, setStatusMenu] = useState(false);
   const logoRef = useRef(null);
@@ -34,19 +37,32 @@ export default function Taskbar({ activeView, setActiveView, session, onStatusCh
     setLogoMenu(false);
     switch (action) {
       case "fullscreen": document.documentElement.requestFullscreen?.(); break;
-      case "home": navigate("/"); break;
+      case "home": navigate("/cad"); break;
       case "account": navigate("/settings"); break;
       case "keybinds": onOpenKeybinds?.(); break;
       case "logout": base44.auth.logout("/login"); break;
     }
   };
 
-  const navButtons = [
-    { id: "lookups", label: "Lookup", icon: Search, hasDropdown: true },
-    { id: "records", label: "Records", icon: FileText, hasDropdown: true },
-    { id: "mycall", label: "My Call", icon: Shield, hasDropdown: false },
-    { id: "groups", label: "Groups", icon: Layers, hasDropdown: false },
-  ];
+  const navButtons = isDispatch
+    ? [
+        { id: "dispatch", label: "Self Dispatch", icon: Radio, hasDropdown: false },
+        { id: "groups", label: "Groups", icon: Layers, hasDropdown: false },
+      ]
+    : isMedical
+    ? [
+        { id: "pcr", label: "PCR", icon: ClipboardList, hasDropdown: false },
+        { id: "records", label: "Records", icon: FileText, hasDropdown: false },
+        { id: "mycall", label: "My Call", icon: Shield, hasDropdown: false },
+        { id: "dispatch", label: "Self Dispatch", icon: Radio, hasDropdown: false },
+      ]
+    : [
+        { id: "lookups", label: "Lookup", icon: Search, hasDropdown: true },
+        { id: "records", label: "Records", icon: FileText, hasDropdown: true },
+        { id: "mycall", label: "My Call", icon: Shield, hasDropdown: false },
+        { id: "groups", label: "Groups", icon: Layers, hasDropdown: false },
+        { id: "dispatch", label: "Self Dispatch", icon: Radio, hasDropdown: false },
+      ];
 
   const lookupTypes = [
     { label: "Person", icon: Users },
@@ -64,7 +80,7 @@ export default function Taskbar({ activeView, setActiveView, session, onStatusCh
         {logoMenu && (
           <div className="absolute bottom-11 left-0 w-48 bg-slate-800 border border-slate-700 rounded-lg shadow-xl py-1 z-50">
             <button onClick={() => handleLogoAction("fullscreen")} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:bg-slate-700"><Maximize className="w-4 h-4" /> Full Screen</button>
-            <button onClick={() => handleLogoAction("home")} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:bg-slate-700"><Home className="w-4 h-4" /> Community Home</button>
+            <button onClick={() => handleLogoAction("home")} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:bg-slate-700"><Home className="w-4 h-4" /> Back to Departments</button>
             <button onClick={() => handleLogoAction("account")} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:bg-slate-700"><UserCog className="w-4 h-4" /> My Account</button>
             <button onClick={() => handleLogoAction("keybinds")} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:bg-slate-700"><Keyboard className="w-4 h-4" /> Keybinds</button>
             <button onClick={() => navigate("/my-records")} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:bg-slate-700"><FileText className="w-4 h-4" /> My Records</button>
@@ -95,11 +111,6 @@ export default function Taskbar({ activeView, setActiveView, session, onStatusCh
           </div>
         ))}
 
-        {/* Self Dispatch */}
-        <button onClick={() => setActiveView("dispatch")} className={`flex items-center gap-1.5 px-3 h-9 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${activeView === "dispatch" ? `bg-slate-800 text-white ${activeGlow}` : "text-slate-400 hover:bg-slate-800 hover:text-white"}`}>
-          <Radio className="w-4 h-4" />
-          <span className="hidden sm:block">Self Dispatch</span>
-        </button>
       </div>
 
       <div className="w-px h-7 bg-[#2c2f36] mx-1" />

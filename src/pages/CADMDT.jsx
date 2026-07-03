@@ -4,13 +4,14 @@ import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
-import { Clock, Lock } from "lucide-react";
+import { Clock, Lock, ChevronLeft } from "lucide-react";
 import Taskbar from "@/components/cad/mdt/Taskbar";
 import LookupPanel from "@/components/cad/mdt/LookupPanel";
 import RecordsPanel from "@/components/cad/mdt/RecordsPanel";
 import DispatchView from "@/components/cad/mdt/DispatchView";
 import MyCallView from "@/components/cad/mdt/MyCallView";
 import GroupsView from "@/components/cad/mdt/GroupsView";
+import PCRForm from "@/components/cad/mdt/PCRForm";
 import ClockInDialog from "@/components/cad/mdt/ClockInDialog";
 import KeybindsDialog from "@/components/cad/mdt/KeybindsDialog";
 import { useKeybinds, loadKeybinds } from "@/hooks/useKeybinds";
@@ -118,7 +119,6 @@ export default function CADMDT() {
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
-      performClockOut(sessionRef.current);
     };
   }, []);
 
@@ -198,7 +198,10 @@ export default function CADMDT() {
           <p className="text-slate-400">{department.category} · MDT System</p>
           <p className="text-slate-500 text-sm mt-2">You are not currently on duty</p>
         </div>
-        <Button onClick={() => setClockInOpen(true)} className="bg-blue-600 hover:bg-blue-700 gap-2 px-8"><Clock className="w-4 h-4" /> Clock In & Start MDT</Button>
+        <div className="flex gap-3">
+          <Button onClick={() => navigate("/cad")} variant="outline" className="border-slate-700 text-slate-300 hover:bg-slate-800 gap-2 px-6"><ChevronLeft className="w-4 h-4" /> Back to Departments</Button>
+          <Button onClick={() => setClockInOpen(true)} className="bg-blue-600 hover:bg-blue-700 gap-2 px-8"><Clock className="w-4 h-4" /> Clock In & Start MDT</Button>
+        </div>
         <ClockInDialog open={clockInOpen} onOpenChange={setClockInOpen} department={department} user={user} onClockIn={handleClockIn} />
       </div>
     );
@@ -210,11 +213,12 @@ export default function CADMDT() {
       <div className="flex-1 overflow-hidden">
         {activeView === "dispatch" && <DispatchView department={department} session={session} setSession={setSession} setActiveView={setActiveView} setSelectedCallId={setSelectedCallId} />}
         {activeView === "lookups" && <LookupPanel department={department} session={session} />}
+        {activeView === "pcr" && <PCRForm department={department} session={session} />}
         {activeView === "records" && <RecordsPanel department={department} session={session} />}
         {activeView === "mycall" && <MyCallView department={department} session={session} setSession={setSession} selectedCallId={selectedCallId} setSelectedCallId={setSelectedCallId} setActiveView={setActiveView} />}
         {activeView === "groups" && <GroupsView department={department} session={session} />}
       </div>
-      <Taskbar activeView={activeView} setActiveView={setActiveView} session={session} onStatusChange={handleStatusChange} onPanic={handlePanic} onClockOut={handleClockOut} onOpenKeybinds={() => setKeybindsOpen(true)} />
+      <Taskbar activeView={activeView} setActiveView={setActiveView} session={session} departmentCategory={department.category} onStatusChange={handleStatusChange} onPanic={handlePanic} onClockOut={handleClockOut} onOpenKeybinds={() => setKeybindsOpen(true)} />
       <KeybindsDialog open={keybindsOpen} onOpenChange={setKeybindsOpen} keybinds={keybinds} setKeybinds={setKeybinds} />
     </div>
   );

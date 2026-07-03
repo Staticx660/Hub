@@ -3,12 +3,13 @@ import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/lib/AuthContext";
 import {
   Radio, ChevronLeft, ChevronRight, LogOut, Menu, X, Home, Building2, Shield,
-  Settings
+  Settings, Keyboard
 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 
 const navItems = [
   { label: "Departments", path: "/cad", icon: Building2 },
+  { label: "Keybinds", path: "/keybinds", icon: Keyboard },
   { label: "CAD Settings", path: "/cad-settings", icon: Settings, adminOnly: true },
   { label: "Admin Panel", path: "/cad/admin", icon: Shield, adminOnly: true },
 ];

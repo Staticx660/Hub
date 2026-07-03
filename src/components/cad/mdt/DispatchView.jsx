@@ -20,7 +20,9 @@ export default function DispatchView({ department, session, setSession, setActiv
       const allDepts = await base44.entities.CADDepartment.list();
       const dispatchDeptIds = allDepts.filter(d => d.category === "Dispatch").map(d => d.id);
       const allCalls = await base44.entities.ActiveCall.list('-created_date', 500);
-      const s = await base44.entities.CADSession.filter({ department_id: department.id, is_active: true });
+      const s = department.category === "Dispatch"
+        ? await base44.entities.CADSession.filter({ is_active: true })
+        : await base44.entities.CADSession.filter({ department_id: department.id, is_active: true });
       const visibleCalls = allCalls.filter(c =>
         c.status !== "Closed" &&
         (c.department_id === department.id || dispatchDeptIds.includes(c.department_id))
