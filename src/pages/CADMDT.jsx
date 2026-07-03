@@ -218,7 +218,7 @@ export default function CADMDT() {
         {activeView === "mycall" && <MyCallView department={department} session={session} setSession={setSession} selectedCallId={selectedCallId} setSelectedCallId={setSelectedCallId} setActiveView={setActiveView} />}
         {activeView === "groups" && <GroupsView department={department} session={session} />}
       </div>
-      <Taskbar activeView={activeView} setActiveView={setActiveView} session={session} departmentCategory={department.category} onStatusChange={handleStatusChange} onPanic={handlePanic} onClockOut={handleClockOut} onOpenKeybinds={() => setKeybindsOpen(true)} />
+      <Taskbar activeView={activeView} setActiveView={(v) => { if (v === "dispatch" && ["Fire", "EMS", "Dispatch"].includes(department.category)) { navigate(`/cad/board/${deptId}`); } else { setActiveView(v); } }} session={session} departmentCategory={department.category} onStatusChange={handleStatusChange} onPanic={handlePanic} onClockOut={handleClockOut} onOpenKeybinds={() => setKeybindsOpen(true)} />
       <KeybindsDialog open={keybindsOpen} onOpenChange={setKeybindsOpen} keybinds={keybinds} setKeybinds={setKeybinds} />
     </div>
   );

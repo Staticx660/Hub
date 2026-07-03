@@ -44,8 +44,9 @@ export default function DepartmentBoard() {
   }, [deptId]);
 
   useEffect(() => {
-    const unsub = base44.entities.ActiveCall.subscribe(() => loadData());
-    return unsub;
+    const unsub1 = base44.entities.ActiveCall.subscribe(() => loadData());
+    const unsub2 = base44.entities.CADSession.subscribe(() => loadData());
+    return () => { unsub1(); unsub2(); };
   }, []);
 
   const loadData = async () => {
@@ -150,6 +151,13 @@ export default function DepartmentBoard() {
   const isFire = department.category === "Fire";
   const isEMS = department.category === "EMS";
   const accent = department.color || "#3b82f6";
+  const statusColor = (s) => s === "Available" ? "bg-green-400" : s === "On Duty" || s === "On Call" ? "bg-red-400" : s === "Panic" ? "bg-red-500 animate-pulse" : "bg-gray-400";
+  const dispatchGroups = isDispatch ? Object.entries(personnel.reduce((acc, p) => {
+    const dept = p.department_name || "Unassigned";
+    if (!acc[dept]) acc[dept] = [];
+    acc[dept].push(p);
+    return acc;
+  }, {})) : [];
 
   return (
     <div className="flex flex-col h-screen bg-slate-950 overflow-hidden">
@@ -265,20 +273,45 @@ export default function DepartmentBoard() {
           <div className="p-3 border-b border-slate-800">
             <h2 className="text-sm font-bold text-white flex items-center gap-2"><Siren className="w-4 h-4 text-yellow-400" /> Active Units</h2>
           </div>
-          <div className="flex-1 overflow-y-auto p-2 space-y-1.5">
-            {(isDispatch ? personnel : deptPersonnel).length === 0 ? (
+          <div className="flex-1 overflow-y-auto p-2 space-y-3">
+            {isDispatch ? (
+              dispatchGroups.length === 0 ? <p className="text-xs text-slate-600 text-center py-8">No units on duty</p> : dispatchGroups.map(([deptName, members]) => (
+                <div key={deptName}>
+                  <p className="text-[10px] font-bold uppercase tracking-wide text-cyan-400 px-1 mb-1.5">{deptName} ({members.length})</p>
+                  <div className="space-y-1.5">
+                    {members.map(p => (
+                      <div key={p.id} className="bg-slate-900 border border-slate-800 rounded-lg p-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            {p.callsign && <span className="text-[10px] font-mono font-bold text-blue-400 bg-blue-500/10 px-1 rounded">{p.callsign}</span>}
+                            <span className="text-xs text-white font-medium truncate">{p.user_name}</span>
+                          </div>
+                          <div className="flex items-center gap-1 flex-shrink-0">
+                            <span className={`w-1.5 h-1.5 rounded-full ${statusColor(p.status)}`} />
+                            <span className="text-[10px] text-slate-500">{p.status}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))
+            ) : deptPersonnel.length === 0 ? (
               <p className="text-xs text-slate-600 text-center py-8">No units on duty</p>
             ) : (
-              (isDispatch ? personnel : deptPersonnel).map(p => (
+              deptPersonnel.map(p => (
                 <div key={p.id} className="bg-slate-900 border border-slate-800 rounded-lg p-2.5">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-white font-medium">{p.user_name}</span>
-                    <span className={`w-2 h-2 rounded-full ${p.status === "Available" ? "bg-green-400" : p.status === "On Duty" || p.status === "On Call" ? "bg-red-400" : "bg-gray-400"}`} />
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      {p.callsign && <span className="text-[10px] font-mono font-bold text-blue-400 bg-blue-500/10 px-1 rounded">{p.callsign}</span>}
+                      <span className="text-sm text-white font-medium truncate">{p.user_name}</span>
+                    </div>
+                    <div className="flex items-center gap-1 flex-shrink-0">
+                      <span className={`w-1.5 h-1.5 rounded-full ${statusColor(p.status)}`} />
+                      <span className="text-[10px] text-slate-500">{p.status}</span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 mt-1">
-                    {p.callsign && <span className="text-[10px] font-mono text-slate-500">{p.callsign}</span>}
-                    {p.rank && <span className="text-[10px] text-slate-600">{p.rank}</span>}
-                  </div>
+                  {p.rank && <p className="text-[10px] text-slate-600 mt-0.5">{p.rank}</p>}
                 </div>
               ))
             )}
@@ -334,14 +367,26 @@ function DispatchContent({ calls, units, personnel, accent, onAssign, session })
       </div>
       <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
         <h3 className="text-sm font-bold text-white mb-3 flex items-center gap-2"><Users className="w-4 h-4 text-cyan-400" /> All Active Personnel ({personnel.length})</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-          {personnel.map(p => (
-            <div key={p.id} className="bg-slate-950 rounded-lg p-2">
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-white font-medium truncate">{p.user_name}</span>
-                <span className={`w-1.5 h-1.5 rounded-full ${p.status === "Available" ? "bg-green-400" : p.status === "On Duty" || p.status === "On Call" ? "bg-red-400" : "bg-gray-400"}`} />
+        <div className="space-y-3">
+          {Object.entries(personnel.reduce((acc, p) => {
+            const dept = p.department_name || "Unassigned";
+            if (!acc[dept]) acc[dept] = [];
+            acc[dept].push(p);
+            return acc;
+          }, {})).map(([deptName, members]) => (
+            <div key={deptName}>
+              <p className="text-[10px] font-bold uppercase tracking-wide text-cyan-400 mb-1.5">{deptName} ({members.length})</p>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                {members.map(p => (
+                  <div key={p.id} className="bg-slate-950 rounded-lg p-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-white font-medium truncate">{p.user_name}</span>
+                      <span className={`w-1.5 h-1.5 rounded-full ${p.status === "Available" ? "bg-green-400" : p.status === "On Duty" || p.status === "On Call" ? "bg-red-400" : "bg-gray-400"}`} />
+                    </div>
+                    {p.callsign && <span className="text-[10px] font-mono text-slate-500">{p.callsign}</span>}
+                  </div>
+                ))}
               </div>
-              {p.callsign && <span className="text-[10px] font-mono text-slate-500">{p.callsign}</span>}
             </div>
           ))}
         </div>
