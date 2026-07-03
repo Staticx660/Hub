@@ -7,7 +7,7 @@ Deno.serve(async (req) => {
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
     const body = await req.json();
-    const { searchType, firstName, lastName, dob, plate, serial, personId, personName, exact } = body;
+    const { searchType, firstName, lastName, dob, plate, serial, personId, personName, vehicleId, vehiclePlate, exact } = body;
 
     const matchField = (field, query) => {
       if (!query) return true;
@@ -24,21 +24,56 @@ Deno.serve(async (req) => {
       );
 
       if (personId) {
-        const name = personName || (all.find(c => c.id === personId) ? `${all.find(c => c.id === personId).first_name} ${all.find(c => c.id === personId).last_name}` : "");
-        const [allWarrants, vehicles] = await Promise.all([
+        const person = all.find(c => c.id === personId);
+        const name = personName || (person ? `${person.first_name} ${person.last_name}` : "");
+
+        const [allWarrants, vehicles, firearms, allReports, allBolos] = await Promise.all([
           base44.asServiceRole.entities.Warrant.filter({ status: "Active" }),
           base44.asServiceRole.entities.CivilianVehicle.filter({ owner_id: personId }),
+          base44.asServiceRole.entities.Firearm.filter({ owner_id: personId }),
+          base44.asServiceRole.entities.CADReport.list('-created_date', 500),
+          base44.asServiceRole.entities.BOLO.list('-created_date', 500),
         ]);
+
         const matchingWarrants = allWarrants.filter(w =>
           w.person_id === personId || (name && w.person_name === name)
         );
-        return Response.json({ results, warrants: matchingWarrants, vehicles });
+        const matchingReports = allReports.filter(r =>
+          r.linked_civilian_id === personId ||
+          (name && (r.description?.toLowerCase().includes(name.toLowerCase()) || r.title?.toLowerCase().includes(name.toLowerCase())))
+        );
+        const matchingBolos = allBolos.filter(b =>
+          (name && b.person_name === name) ||
+          (name && b.description?.toLowerCase().includes(name.toLowerCase()))
+        );
+
+        return Response.json({ results, warrants: matchingWarrants, vehicles, firearms, reports: matchingReports, bolos: matchingBolos });
       }
 
       return Response.json({ results });
     } else if (searchType === 'vehicle') {
       const all = await base44.asServiceRole.entities.CivilianVehicle.list('-created_date', 500);
       const results = all.filter(v => matchField(v.plate, plate));
+
+      if (vehicleId || vehiclePlate) {
+        const searchPlate = vehiclePlate || (results.find(v => v.id === vehicleId)?.plate) || "";
+        const [allReports, allBolos] = await Promise.all([
+          base44.asServiceRole.entities.CADReport.list('-created_date', 500),
+          base44.asServiceRole.entities.BOLO.list('-created_date', 500),
+        ]);
+
+        const matchingReports = allReports.filter(r =>
+          r.linked_vehicle_plate === searchPlate ||
+          (searchPlate && (r.description?.toLowerCase().includes(searchPlate.toLowerCase()) || r.location?.toLowerCase().includes(searchPlate.toLowerCase())))
+        );
+        const matchingBolos = allBolos.filter(b =>
+          b.vehicle_plate === searchPlate ||
+          (searchPlate && b.description?.toLowerCase().includes(searchPlate.toLowerCase()))
+        );
+
+        return Response.json({ results, reports: matchingReports, bolos: matchingBolos });
+      }
+
       return Response.json({ results });
     } else if (searchType === 'firearm') {
       const all = await base44.asServiceRole.entities.Firearm.list('-created_date', 500);

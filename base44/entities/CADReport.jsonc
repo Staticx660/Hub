@@ -57,6 +57,15 @@
     "field_data": {
       "type": "object",
       "additionalProperties": true
+    },
+    "linked_civilian_id": {
+      "type": "string"
+    },
+    "linked_civilian_name": {
+      "type": "string"
+    },
+    "linked_vehicle_plate": {
+      "type": "string"
     }
   },
   "required": [

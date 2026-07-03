@@ -1,0 +1,53 @@
+{
+  "name": "SystemLog",
+  "type": "object",
+  "properties": {
+    "action": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "Roster",
+        "CAD",
+        "Auth",
+        "System",
+        "Discord"
+      ],
+      "default": "System"
+    },
+    "description": {
+      "type": "string"
+    },
+    "user_id": {
+      "type": "string"
+    },
+    "user_name": {
+      "type": "string"
+    },
+    "entity_type": {
+      "type": "string"
+    },
+    "entity_id": {
+      "type": "string"
+    },
+    "severity": {
+      "type": "string",
+      "enum": [
+        "Info",
+        "Warning",
+        "Error",
+        "Critical"
+      ],
+      "default": "Info"
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "required": [
+    "action",
+    "category"
+  ]
+}

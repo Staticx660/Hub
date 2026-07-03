@@ -40,6 +40,10 @@ import Vehicles from '@/pages/Vehicles';
 import Uniforms from '@/pages/Uniforms';
 import DiscordSync from '@/pages/DiscordSync';
 import Settings from '@/pages/Settings';
+import CivilianDashboard from '@/pages/CivilianDashboard';
+import DispatchCenter from '@/pages/DispatchCenter';
+import MyRecords from '@/pages/MyRecords';
+import SystemLogs from '@/pages/SystemLogs';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -97,13 +101,17 @@ const AuthenticatedApp = () => {
           <Route path="/cad/mdt/:deptId" element={<CADMDT />} />
           <Route path="/cad/civilian/:deptId" element={<CADCivilian />} />
           <Route path="/cad/reports" element={<CADReports />} />
-          <Route path="/dispatch-dashboard" element={<DispatchDashboard />} />
+          <Route path="/civilian-dashboard" element={<CivilianDashboard />} />
+          <Route path="/my-records" element={<MyRecords />} />
           <Route path="/keybinds" element={<KeybindConfig />} />
           <Route path="/department-archive" element={<DepartmentArchive />} />
           <Route element={<AdminRoute />}>
             <Route path="/cad/admin" element={<CADAdmin />} />
             <Route path="/cad-settings" element={<CADSettings />} />
             <Route path="/cad-personnel" element={<CADPersonnel />} />
+            <Route path="/dispatch-dashboard" element={<DispatchDashboard />} />
+            <Route path="/dispatch-center" element={<DispatchCenter />} />
+            <Route path="/system-logs" element={<SystemLogs />} />
           </Route>
         </Route>
 

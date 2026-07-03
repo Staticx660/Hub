@@ -7,7 +7,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
-import { FileText, FolderOpen, Pencil, AlertTriangle, Eye, Plus, Shield, ClipboardList, Siren, Clock } from "lucide-react";
+import { FileText, FolderOpen, Pencil, AlertTriangle, Eye, Plus, Shield, ClipboardList, Siren, Clock, Gavel } from "lucide-react";
+import BoloForm from "@/components/cad/mdt/BoloForm";
+import WarrantForm from "@/components/cad/mdt/WarrantForm";
+import CivilianSearch from "@/components/cad/mdt/CivilianSearch";
+import { logSystemEvent } from "@/lib/logSystemEvent";
 
 const ALL_REPORT_TYPES = ["Incident", "Traffic Stop", "Field Contact", "Arrest", "Medical", "Fire", "Vehicle Accident", "Use of Force", "Evidence", "Other"];
 const REPORT_TYPES_BY_CATEGORY = {
@@ -30,9 +34,12 @@ export default function RecordsPanel({ department, session }) {
   const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [reportForm, setReportForm] = useState({ title: "", report_type: "Incident", description: "", location: "" });
+  const [reportForm, setReportForm] = useState({ title: "", report_type: "Incident", description: "", location: "", linked_civilian_id: "", linked_civilian_name: "", linked_vehicle_plate: "" });
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [fieldData, setFieldData] = useState({});
+  const [boloOpen, setBoloOpen] = useState(false);
+  const [warrantOpen, setWarrantOpen] = useState(false);
+  const [selectedCivilian, setSelectedCivilian] = useState(null);
   const { toast } = useToast();
 
   const load = async () => {
@@ -57,9 +64,7 @@ export default function RecordsPanel({ department, session }) {
   const reportTypes = REPORT_TYPES_BY_CATEGORY[department.category] || ALL_REPORT_TYPES;
   const deptCategoryTypes = REPORT_TYPES_BY_CATEGORY[department.category] || ALL_REPORT_TYPES;
   const availableTemplates = templates.filter(t => {
-    // Must be assigned to this department or global (no department_id)
     if (t.department_id && t.department_id !== department.id) return false;
-    // Category must be relevant to this department's category
     if (!deptCategoryTypes.includes(t.category)) return false;
     return true;
   });
@@ -68,7 +73,7 @@ export default function RecordsPanel({ department, session }) {
     { id: "myfiles", label: "My Files", icon: FolderOpen, count: myReports.length },
     { id: "drafts", label: "My Drafts", icon: Pencil, count: myDrafts.length },
     { id: "closedcalls", label: "Closed Calls", icon: Siren, count: closedCalls.length },
-    { id: "warrants", label: "Warrants", icon: AlertTriangle, count: warrants.filter((w) => w.status === "Active").length },
+    { id: "warrants", label: "Warrants", icon: Gavel, count: warrants.filter((w) => w.status === "Active").length },
     { id: "bolos", label: "BOLOs", icon: Eye, count: bolos.filter((b) => b.status === "Active").length },
     { id: "supervisor", label: "Supervisor", icon: Shield, count: reports.length, supervisorOnly: true },
     { id: "new", label: "New File", icon: Plus },
@@ -76,12 +81,37 @@ export default function RecordsPanel({ department, session }) {
 
   const visibleTabs = tabs.filter((t) => !t.supervisorOnly || isSupervisor);
 
+  const handleCivilianSelected = (civilian) => {
+    if (civilian) {
+      setSelectedCivilian(civilian);
+      setReportForm(prev => ({ ...prev, linked_civilian_id: civilian.id, linked_civilian_name: `${civilian.first_name} ${civilian.last_name}` }));
+      setFieldData(prev => ({ ...prev,
+        "Civilian Name": `${civilian.first_name} ${civilian.last_name}`,
+        "DOB": civilian.dob || "",
+        "Phone": civilian.phone || "",
+        "Gender": civilian.gender || "",
+        "Address": [civilian.address, civilian.zip_code].filter(Boolean).join(", "),
+      }));
+    } else {
+      setSelectedCivilian(null);
+      setReportForm(prev => ({ ...prev, linked_civilian_id: "", linked_civilian_name: "" }));
+    }
+  };
+
   const handleSaveReport = async (asDraft) => {
     try {
       const runNum = `RUN-${Date.now().toString().slice(-6)}`;
-      await base44.entities.CADReport.create({ ...reportForm, department_id: department.id, filed_by_name: session.callsign || session.user_name, filed_by_id: session.user_id, status: asDraft ? "Draft" : "Filed", run_number: runNum, template_id: selectedTemplate?.id || "", field_data: Object.keys(fieldData).length > 0 ? fieldData : undefined });
+      await base44.entities.CADReport.create({
+        ...reportForm, department_id: department.id, filed_by_name: session.callsign || session.user_name, filed_by_id: session.user_id,
+        status: asDraft ? "Draft" : "Filed", run_number: runNum, template_id: selectedTemplate?.id || "",
+        field_data: Object.keys(fieldData).length > 0 ? fieldData : undefined,
+      });
+      logSystemEvent("Report Filed", "CAD", `Report "${reportForm.title}" filed by ${session.callsign || session.user_name}`, { entity_type: "CADReport" });
       toast({ title: asDraft ? "Draft saved" : "Report filed" });
-      setDialogOpen(false); setReportForm({ title: "", report_type: "Incident", description: "", location: "" }); setSelectedTemplate(null); setFieldData({}); load();
+      setDialogOpen(false);
+      setReportForm({ title: "", report_type: "Incident", description: "", location: "", linked_civilian_id: "", linked_civilian_name: "", linked_vehicle_plate: "" });
+      setSelectedCivilian(null); setSelectedTemplate(null); setFieldData({});
+      load();
     } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
   };
 
@@ -103,7 +133,10 @@ export default function RecordsPanel({ department, session }) {
         <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 px-2">Records</h3>
         <div className="space-y-1">
           {visibleTabs.map((t) => (
-            <button key={t.id} onClick={() => { setTab(t.id); setSelected(null);             if (t.id === "new") { const types = REPORT_TYPES_BY_CATEGORY[department.category] || ALL_REPORT_TYPES; setReportForm({ title: "", report_type: types[0], description: "", location: "" }); setSelectedTemplate(null); setFieldData({}); setDialogOpen(true); } }} className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${tab === t.id ? "bg-blue-500/15 text-blue-400" : "text-slate-400 hover:bg-slate-800"}`}>
+            <button key={t.id} onClick={() => {
+              setTab(t.id); setSelected(null);
+              if (t.id === "new") { const types = REPORT_TYPES_BY_CATEGORY[department.category] || ALL_REPORT_TYPES; setReportForm({ title: "", report_type: types[0], description: "", location: "", linked_civilian_id: "", linked_civilian_name: "", linked_vehicle_plate: "" }); setSelectedCivilian(null); setSelectedTemplate(null); setFieldData({}); setDialogOpen(true); }
+            }} className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${tab === t.id ? "bg-blue-500/15 text-blue-400" : "text-slate-400 hover:bg-slate-800"}`}>
               <span className="flex items-center gap-2"><t.icon className="w-4 h-4" /> {t.label}</span>
               {t.count !== undefined && <span className="text-xs text-slate-500">{t.count}</span>}
             </button>
@@ -120,6 +153,12 @@ export default function RecordsPanel({ department, session }) {
           <div className="flex flex-col items-center justify-center h-full text-slate-600"><Plus className="w-12 h-12 mb-3 opacity-30" /><p>Click "New File" to create a report</p></div>
         ) : !selected ? (
           <div className="space-y-2">
+            {tab === "bolos" && (
+              <div className="mb-3"><Button onClick={() => setBoloOpen(true)} size="sm" className="bg-yellow-600 hover:bg-yellow-700 gap-1.5"><Plus className="w-3.5 h-3.5" /> New BOLO</Button></div>
+            )}
+            {tab === "warrants" && (
+              <div className="mb-3"><Button onClick={() => setWarrantOpen(true)} size="sm" className="bg-red-600 hover:bg-red-700 gap-1.5"><Plus className="w-3.5 h-3.5" /> New Warrant</Button></div>
+            )}
             {currentList.length === 0 ? <div className="flex flex-col items-center justify-center h-full text-slate-600"><FileText className="w-12 h-12 mb-3 opacity-30" /><p>No records found</p></div> : (
               currentList.map((item) => {
                 const title = item.title || item.call_type || item.reason || `${item.person_name || "Unknown"} — Warrant`;
@@ -171,6 +210,8 @@ export default function RecordsPanel({ department, session }) {
                 </div>
                 {selected.report_type && <p className="text-sm text-slate-400 mb-2">Type: {selected.report_type}</p>}
                 {selected.location && <p className="text-sm text-slate-400 mb-2">Location: {selected.location}</p>}
+                {selected.linked_civilian_name && <p className="text-sm text-slate-400 mb-2">Linked Civilian: {selected.linked_civilian_name}</p>}
+                {selected.linked_vehicle_plate && <p className="text-sm text-slate-400 mb-2">Linked Vehicle: <span className="font-mono">{selected.linked_vehicle_plate}</span></p>}
                 <p className="text-sm text-slate-300 whitespace-pre-wrap mt-3">{selected.description || selected.notes || ""}</p>
                 {selected.field_data && Object.keys(selected.field_data).length > 0 && (
                   <div className="mt-3 pt-3 border-t border-slate-800">
@@ -191,9 +232,11 @@ export default function RecordsPanel({ department, session }) {
       </div>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="bg-slate-900 border-slate-700">
+        <DialogContent className="bg-slate-900 border-slate-700 max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle className="text-white">New Report</DialogTitle></DialogHeader>
           <div className="space-y-3">
+            <CivilianSearch selected={selectedCivilian} onSelected={handleCivilianSelected} />
+            <div><Label className="text-slate-300">Linked Vehicle Plate</Label><Input value={reportForm.linked_vehicle_plate || ""} onChange={(e) => setReportForm({ ...reportForm, linked_vehicle_plate: e.target.value.toUpperCase() })} className="bg-slate-800 border-slate-700 text-white font-mono" placeholder="Optional..." /></div>
             <div><Label className="text-slate-300">Title</Label><Input value={reportForm.title} onChange={(e) => setReportForm({ ...reportForm, title: e.target.value })} className="bg-slate-800 border-slate-700 text-white" /></div>
             <div><Label className="text-slate-300">Report Type</Label><Select value={reportForm.report_type} onValueChange={(v) => setReportForm({ ...reportForm, report_type: v })}><SelectTrigger className="bg-slate-800 border-slate-700 text-white"><SelectValue /></SelectTrigger><SelectContent className="bg-slate-800 border-slate-700">{reportTypes.map((t) => <SelectItem key={t} value={t} className="text-white">{t}</SelectItem>)}</SelectContent></Select></div>
             <div><Label className="text-slate-300">Location</Label><Input value={reportForm.location} onChange={(e) => setReportForm({ ...reportForm, location: e.target.value })} className="bg-slate-800 border-slate-700 text-white" /></div>
@@ -235,6 +278,9 @@ export default function RecordsPanel({ department, session }) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <BoloForm open={boloOpen} onOpenChange={setBoloOpen} department={department} session={session} onSaved={load} />
+      <WarrantForm open={warrantOpen} onOpenChange={setWarrantOpen} department={department} session={session} onSaved={load} />
     </div>
   );
 }
