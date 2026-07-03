@@ -55,7 +55,14 @@ export default function RecordsPanel({ department, session }) {
   const myDrafts = myReports.filter((r) => r.status === "Draft");
   const isSupervisor = session.rank?.toLowerCase().match(/sergeant|lieutenant|captain|chief|supervisor|commander|sheriff/);
   const reportTypes = REPORT_TYPES_BY_CATEGORY[department.category] || ALL_REPORT_TYPES;
-  const availableTemplates = templates.filter(t => !t.department_id || t.department_id === department.id);
+  const deptCategoryTypes = REPORT_TYPES_BY_CATEGORY[department.category] || ALL_REPORT_TYPES;
+  const availableTemplates = templates.filter(t => {
+    // Must be assigned to this department or global (no department_id)
+    if (t.department_id && t.department_id !== department.id) return false;
+    // Category must be relevant to this department's category
+    if (!deptCategoryTypes.includes(t.category)) return false;
+    return true;
+  });
 
   const tabs = [
     { id: "myfiles", label: "My Files", icon: FolderOpen, count: myReports.length },

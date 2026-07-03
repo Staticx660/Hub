@@ -23,6 +23,11 @@ import CADMDT from '@/pages/CADMDT';
 import CADCivilian from '@/pages/CADCivilian';
 import CADReports from '@/pages/CADReports';
 import CADAdmin from '@/pages/CADAdmin';
+import CADSettings from '@/pages/CADSettings';
+import DispatchDashboard from '@/pages/DispatchDashboard';
+import CADPersonnel from '@/pages/CADPersonnel';
+import KeybindConfig from '@/pages/KeybindConfig';
+import DepartmentArchive from '@/pages/DepartmentArchive';
 import Departments from '@/pages/Departments';
 import DepartmentDetail from '@/pages/DepartmentDetail';
 import Roster from '@/pages/Roster';
@@ -92,8 +97,13 @@ const AuthenticatedApp = () => {
           <Route path="/cad/mdt/:deptId" element={<CADMDT />} />
           <Route path="/cad/civilian/:deptId" element={<CADCivilian />} />
           <Route path="/cad/reports" element={<CADReports />} />
+          <Route path="/dispatch-dashboard" element={<DispatchDashboard />} />
+          <Route path="/keybinds" element={<KeybindConfig />} />
+          <Route path="/department-archive" element={<DepartmentArchive />} />
           <Route element={<AdminRoute />}>
             <Route path="/cad/admin" element={<CADAdmin />} />
+            <Route path="/cad-settings" element={<CADSettings />} />
+            <Route path="/cad-personnel" element={<CADPersonnel />} />
           </Route>
         </Route>
 

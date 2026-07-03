@@ -1,5 +1,6 @@
 let audioContext = null;
 let panicIntervalId = null;
+let voiceTimeoutId = null;
 
 function getAudioContext() {
   if (!audioContext) {
@@ -26,8 +27,8 @@ export function playStatusBeep() {
   } catch (e) { /* silent */ }
 }
 
-// Emergency siren wail — slow rise/fall, professional tone
-export function startPanicSound() {
+// Emergency siren wail — plays for 10 seconds, then voice announces the unit
+export function startPanicSound(unitName) {
   stopPanicSound();
   try {
     const ctx = getAudioContext();
@@ -38,7 +39,6 @@ export function startPanicSound() {
       osc.connect(gain);
       gain.connect(ctx.destination);
       osc.type = 'sine';
-      // Slow rise and fall like a real emergency siren
       osc.frequency.setValueAtTime(700, ctx.currentTime);
       osc.frequency.linearRampToValueAtTime(1000, ctx.currentTime + 0.7);
       osc.frequency.linearRampToValueAtTime(700, ctx.currentTime + 1.4);
@@ -52,11 +52,19 @@ export function startPanicSound() {
 
     playWail();
     panicIntervalId = setInterval(playWail, 1400);
+
+    // After 10 seconds, stop the siren and play the voice announcement
+    voiceTimeoutId = setTimeout(() => {
+      stopPanicSound();
+      if (unitName) speakPanicAlert(unitName);
+    }, 10000);
   } catch (e) { /* silent */ }
 }
 
 export function stopPanicSound() {
   if (panicIntervalId) { clearInterval(panicIntervalId); panicIntervalId = null; }
+  if (voiceTimeoutId) { clearTimeout(voiceTimeoutId); voiceTimeoutId = null; }
+  stopPanicVoice();
 }
 
 // Voice announcement via browser TTS

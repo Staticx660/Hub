@@ -5,8 +5,17 @@
     "name": {
       "type": "string"
     },
+    "discord_id": {
+      "type": "string"
+    },
     "department_id": {
       "type": "string"
+    },
+    "additional_department_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
     },
     "rank": {
       "type": "string"

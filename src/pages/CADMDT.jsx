@@ -14,7 +14,7 @@ import GroupsView from "@/components/cad/mdt/GroupsView";
 import ClockInDialog from "@/components/cad/mdt/ClockInDialog";
 import KeybindsDialog from "@/components/cad/mdt/KeybindsDialog";
 import { useKeybinds, loadKeybinds } from "@/hooks/useKeybinds";
-import { startPanicSound, stopPanicSound, playStatusBeep, speakPanicAlert, stopPanicVoice } from "@/components/cad/mdt/panicSound";
+import { startPanicSound, stopPanicSound, playStatusBeep, stopPanicVoice } from "@/components/cad/mdt/panicSound";
 
 const OCRP_LOGO = "https://media.base44.com/images/public/6a441f279b9d3cd678958799/5a43a1b46_OCRP20.png";
 
@@ -59,8 +59,7 @@ export default function CADMDT() {
       if (event.type === "update" && event.data?.department_id === department.id && event.data?.user_id !== user.id) {
         if (event.data?.panic_active) {
           toast({ title: "🚨 PANIC BUTTON ACTIVATED", description: `${event.data.callsign || event.data.user_name} has triggered a panic alert!`, variant: "destructive" });
-          startPanicSound();
-          speakPanicAlert(event.data.callsign || event.data.user_name);
+          startPanicSound(event.data.callsign || event.data.user_name);
         } else {
           stopPanicSound();
           stopPanicVoice();
@@ -148,8 +147,7 @@ export default function CADMDT() {
       await base44.entities.CADSession.update(session.id, { panic_active: newPanic, status: newPanic ? "Panic" : "Available" });
       setSession({ ...session, panic_active: newPanic, status: newPanic ? "Panic" : "Available" });
       if (newPanic) {
-        startPanicSound();
-        speakPanicAlert(session.callsign || session.user_name);
+        startPanicSound(session.callsign || session.user_name);
         toast({ title: "🚨 PANIC ACTIVATED", description: "All units have been alerted", variant: "destructive" });
       } else {
         stopPanicSound();

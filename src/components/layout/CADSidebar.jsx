@@ -2,12 +2,18 @@ import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/lib/AuthContext";
 import {
-  Radio, ChevronLeft, ChevronRight, LogOut, Menu, X, Home, Building2, Shield
+  Radio, ChevronLeft, ChevronRight, LogOut, Menu, X, Home, Building2, Shield,
+  Activity, Users, Keyboard, Archive, Settings
 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 
 const navItems = [
   { label: "Departments", path: "/cad", icon: Building2 },
+  { label: "Dispatch Dashboard", path: "/dispatch-dashboard", icon: Activity },
+  { label: "Department Archive", path: "/department-archive", icon: Archive },
+  { label: "Keybinds", path: "/keybinds", icon: Keyboard },
+  { label: "Personnel", path: "/cad-personnel", icon: Users, adminOnly: true },
+  { label: "CAD Settings", path: "/cad-settings", icon: Settings, adminOnly: true },
   { label: "Admin Panel", path: "/cad/admin", icon: Shield, adminOnly: true },
 ];
 
@@ -26,6 +32,9 @@ export default function CADSidebar() {
 
   const isActive = (path) => {
     if (path === "/cad") return location.pathname === "/cad" || location.pathname.startsWith("/cad/departments") || location.pathname === "/cad/dispatch";
+    if (path === "/dispatch-dashboard") return location.pathname === "/dispatch-dashboard";
+    if (path === "/department-archive") return location.pathname === "/department-archive";
+    if (path === "/keybinds") return location.pathname === "/keybinds";
     return location.pathname.startsWith(path);
   };
 
