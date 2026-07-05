@@ -7,20 +7,28 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
 import { logSystemEvent } from "@/lib/logSystemEvent";
+import CivilianSearch from "@/components/cad/mdt/CivilianSearch";
 
 export default function WarrantForm({ open, onOpenChange, department, session, onSaved, prefillPerson }) {
   const [form, setForm] = useState({ person_name: "", person_id: "", reason: "", charges: [], bail_amount: 0, notes: "" });
   const [chargeInput, setChargeInput] = useState("");
+  const [selectedCivilian, setSelectedCivilian] = useState(null);
   const { toast } = useToast();
 
   useEffect(() => {
     if (open) {
       setForm({ person_name: prefillPerson?.name || "", person_id: prefillPerson?.id || "", reason: "", charges: [], bail_amount: 0, notes: "" });
       setChargeInput("");
+      setSelectedCivilian(null);
     }
   }, [open, prefillPerson]);
 
   const set = (key, val) => setForm(prev => ({ ...prev, [key]: val }));
+
+  const handleCivilianSelected = (c) => {
+    if (c) { setSelectedCivilian(c); set("person_name", `${c.first_name} ${c.last_name}`); set("person_id", c.id || ""); }
+    else { setSelectedCivilian(null); }
+  };
 
   const addCharge = () => {
     if (chargeInput.trim()) {
@@ -52,7 +60,11 @@ export default function WarrantForm({ open, onOpenChange, department, session, o
       <DialogContent className="bg-slate-900 border-slate-700 max-w-lg">
         <DialogHeader><DialogTitle className="text-white">New Warrant</DialogTitle></DialogHeader>
         <div className="space-y-3">
-          <div><Label className="text-slate-300">Person Name *</Label><Input value={form.person_name} onChange={e => set("person_name", e.target.value)} className="bg-slate-800 border-slate-700 text-white" /></div>
+          <div>
+            <div className="mb-2"><CivilianSearch selected={selectedCivilian} onSelected={handleCivilianSelected} /></div>
+            <Label className="text-slate-300">Person Name *</Label>
+            <Input value={form.person_name} onChange={e => set("person_name", e.target.value)} className="bg-slate-800 border-slate-700 text-white" />
+          </div>
           <div><Label className="text-slate-300">Reason *</Label><Textarea value={form.reason} onChange={e => set("reason", e.target.value)} className="bg-slate-800 border-slate-700 text-white" rows={2} /></div>
           <div>
             <Label className="text-slate-300">Charges</Label>

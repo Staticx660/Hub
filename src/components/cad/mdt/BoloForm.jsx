@@ -8,16 +8,34 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
 import { logSystemEvent } from "@/lib/logSystemEvent";
+import CivilianSearch from "@/components/cad/mdt/CivilianSearch";
+import VehicleSearch from "@/components/cad/mdt/VehicleSearch";
 
 export default function BoloForm({ open, onOpenChange, department, session, onSaved }) {
   const [form, setForm] = useState({ title: "", description: "", bolo_type: "Person", person_name: "", vehicle_plate: "", vehicle_description: "", last_seen_location: "", priority: "Medium" });
+  const [selectedCivilian, setSelectedCivilian] = useState(null);
+  const [selectedVehicle, setSelectedVehicle] = useState(null);
   const { toast } = useToast();
 
   useEffect(() => {
-    if (open) setForm({ title: "", description: "", bolo_type: "Person", person_name: "", vehicle_plate: "", vehicle_description: "", last_seen_location: "", priority: "Medium" });
+    if (open) {
+      setForm({ title: "", description: "", bolo_type: "Person", person_name: "", vehicle_plate: "", vehicle_description: "", last_seen_location: "", priority: "Medium" });
+      setSelectedCivilian(null);
+      setSelectedVehicle(null);
+    }
   }, [open]);
 
   const set = (key, val) => setForm(prev => ({ ...prev, [key]: val }));
+
+  const handleCivilianSelected = (c) => {
+    if (c) { setSelectedCivilian(c); set("person_name", `${c.first_name} ${c.last_name}`); }
+    else { setSelectedCivilian(null); }
+  };
+
+  const handleVehicleSelected = (v) => {
+    if (v) { setSelectedVehicle(v); set("vehicle_plate", v.plate || ""); set("vehicle_description", [v.model, v.color].filter(Boolean).join(" ")); }
+    else { setSelectedVehicle(null); }
+  };
 
   const handleSave = async () => {
     if (!form.title || !form.description) {
@@ -55,11 +73,20 @@ export default function BoloForm({ open, onOpenChange, department, session, onSa
               </Select>
             </div>
           </div>
-          {form.bolo_type === "Person" && <div><Label className="text-slate-300">Person Name</Label><Input value={form.person_name} onChange={e => set("person_name", e.target.value)} className="bg-slate-800 border-slate-700 text-white" /></div>}
+          {form.bolo_type === "Person" && (
+            <div>
+              <div className="mb-2"><CivilianSearch selected={selectedCivilian} onSelected={handleCivilianSelected} /></div>
+              <Label className="text-slate-300">Person Name</Label>
+              <Input value={form.person_name} onChange={e => set("person_name", e.target.value)} className="bg-slate-800 border-slate-700 text-white" />
+            </div>
+          )}
           {form.bolo_type === "Vehicle" && (
-            <div className="grid grid-cols-2 gap-3">
-              <div><Label className="text-slate-300">Plate</Label><Input value={form.vehicle_plate} onChange={e => set("vehicle_plate", e.target.value.toUpperCase())} className="bg-slate-800 border-slate-700 text-white font-mono" /></div>
-              <div><Label className="text-slate-300">Description</Label><Input value={form.vehicle_description} onChange={e => set("vehicle_description", e.target.value)} className="bg-slate-800 border-slate-700 text-white" /></div>
+            <div>
+              <div className="mb-2"><VehicleSearch selected={selectedVehicle} onSelected={handleVehicleSelected} /></div>
+              <div className="grid grid-cols-2 gap-3">
+                <div><Label className="text-slate-300">Plate</Label><Input value={form.vehicle_plate} onChange={e => set("vehicle_plate", e.target.value.toUpperCase())} className="bg-slate-800 border-slate-700 text-white font-mono" /></div>
+                <div><Label className="text-slate-300">Description</Label><Input value={form.vehicle_description} onChange={e => set("vehicle_description", e.target.value)} className="bg-slate-800 border-slate-700 text-white" /></div>
+              </div>
             </div>
           )}
           <div><Label className="text-slate-300">Last Seen Location</Label><Input value={form.last_seen_location} onChange={e => set("last_seen_location", e.target.value)} className="bg-slate-800 border-slate-700 text-white" /></div>

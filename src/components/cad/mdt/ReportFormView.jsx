@@ -187,11 +187,18 @@ export default function ReportFormView({ department, session, initialType, templ
       logSystemEvent("Report Filed", "CAD", `Report "${title}" filed by ${session.callsign || session.user_name}`, { entity_type: "CADReport" });
       toast({ title: asDraft ? "Draft saved" : "Report filed" });
       onSaved?.();
-    } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
-    setSaving(false);
-  };
+      } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
+      setSaving(false);
+      };
 
-  const availableTemplates = (templates || []).filter(t => {
+      const handleClose = async () => {
+      if (title.trim() && !saving) {
+      await handleSave(true);
+      }
+      onClose();
+      };
+
+      const availableTemplates = (templates || []).filter(t => {
     if (t.department_id && t.department_id !== department.id) return false;
     return reportTypes.includes(t.category);
   });
@@ -200,7 +207,7 @@ export default function ReportFormView({ department, session, initialType, templ
     <div className="h-full overflow-y-auto bg-[#1a1d21]">
       {/* Header */}
       <div className="flex items-center gap-3 px-4 py-3 border-b border-[#2c2f36] sticky top-0 bg-[#1a1d21] z-10">
-        <button onClick={onClose} className="text-slate-400 hover:text-white"><ArrowLeft className="w-5 h-5" /></button>
+        <button onClick={handleClose} className="text-slate-400 hover:text-white"><ArrowLeft className="w-5 h-5" /></button>
         <h2 className="text-lg font-bold text-white">New {reportType}</h2>
         <div className="ml-auto flex items-center gap-2">
           <Select value={reportType} onValueChange={setReportType}>
@@ -444,7 +451,7 @@ export default function ReportFormView({ department, session, initialType, templ
       {/* Footer */}
       <div className="sticky bottom-0 bg-[#1a1d21] border-t border-[#2c2f36] p-3 flex items-center justify-center gap-4">
         <button onClick={() => handleSave(false)} disabled={saving || !title.trim()} className="w-12 h-12 rounded-full bg-green-500 hover:bg-green-600 disabled:opacity-40 flex items-center justify-center"><Plus className="w-6 h-6 text-white" /></button>
-        <button onClick={onClose} className="w-12 h-12 rounded-full bg-red-500/10 hover:bg-red-500/20 flex items-center justify-center"><Trash2 className="w-6 h-6 text-red-500" /></button>
+        <button onClick={handleClose} disabled={saving} className="w-12 h-12 rounded-full bg-slate-700 hover:bg-slate-600 disabled:opacity-40 flex items-center justify-center"><X className="w-6 h-6 text-slate-300" /></button>
       </div>
 
       <LinkedRecordsDialog
