@@ -10,7 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, Pencil, Trash2, Layers } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
-const emptyForm = { name: "", department_id: "", description: "", unit_ids: [] };
+const emptyForm = { name: "", department_id: "", description: "", unit_ids: [], min_seats: 1, max_seats: 4 };
 
 export default function UnitGroupsManager() {
   const [groups, setGroups] = useState([]);
@@ -80,7 +80,7 @@ export default function UnitGroupsManager() {
                   <div className="w-2 h-8 rounded-full" style={{ background: deptColor(g.department_id) }} />
                   <div>
                     <h3 className="font-semibold text-white">{g.name}</h3>
-                    <p className="text-xs text-slate-500">{deptName(g.department_id)} · {g.unit_ids?.length || 0} units</p>
+                    <p className="text-xs text-slate-500">{deptName(g.department_id)} · {g.unit_ids?.length || 0} units · Seats: {g.min_seats ?? 1}–{g.max_seats ?? 4}</p>
                   </div>
                 </div>
                 <div className="flex gap-1">
@@ -111,6 +111,10 @@ export default function UnitGroupsManager() {
               </Select>
             </div>
             <div><Label className="text-slate-300">Description</Label><Textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} className="bg-slate-800 border-slate-700 text-white" rows={2} /></div>
+            <div className="grid grid-cols-2 gap-3">
+              <div><Label className="text-slate-300">Min Seats</Label><Input type="number" min={0} value={form.min_seats} onChange={e => setForm({ ...form, min_seats: parseInt(e.target.value) || 0 })} className="bg-slate-800 border-slate-700 text-white" /></div>
+              <div><Label className="text-slate-300">Max Seats</Label><Input type="number" min={1} value={form.max_seats} onChange={e => setForm({ ...form, max_seats: parseInt(e.target.value) || 1 })} className="bg-slate-800 border-slate-700 text-white" /></div>
+            </div>
             <div>
               <Label className="text-slate-300 mb-2 block">Select Units</Label>
               <div className="space-y-2 max-h-48 overflow-y-auto bg-slate-800/50 rounded-lg p-3 border border-slate-700">

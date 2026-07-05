@@ -3,11 +3,12 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
-import { Users, Phone, Plus, Layers, Star, ChevronRight, Trash2 } from "lucide-react";
+import { Users, Phone, Plus, Layers, Star, Trash2 } from "lucide-react";
 import { useAuth } from "@/lib/AuthContext";
 
-const statusColors = { Available: "text-green-400 bg-green-500/15", Busy: "text-yellow-400 bg-yellow-500/15", "On Call": "text-red-400 bg-red-500/15", Unavailable: "text-gray-400 bg-gray-500/15", Panic: "text-white bg-red-500 animate-pulse" };
+const statusColors = { Available: "text-green-400 bg-green-500/15", Busy: "text-yellow-400 bg-yellow-500/15", "On Call": "text-red-400 bg-red-500/15", Unavailable: "text-gray-400 bg-gray-500/15", Panic: "text-white bg-red-500 animate-pulse", "Off Duty": "text-slate-500 bg-slate-700/50" };
 const STATUS_OPTS = ["Available", "Busy", "On Call", "Unavailable"];
+const GROUP_STATUS_OPTS = ["Available", "Busy", "On Call", "Unavailable", "Off Duty"];
 
 export default function DispatchView({ department, session, setSession, setActiveView, setSelectedCallId }) {
   const [calls, setCalls] = useState([]);
@@ -40,7 +41,8 @@ export default function DispatchView({ department, session, setSession, setActiv
     load();
     const u1 = base44.entities.ActiveCall.subscribe(() => load());
     const u2 = base44.entities.CADSession.subscribe(() => load());
-    return () => { u1(); u2(); };
+    const u3 = base44.entities.CADUnitGroup.subscribe(() => load());
+    return () => { u1(); u2(); u3(); };
   }, []);
 
   const activeCalls = calls.filter(c => c.status === "Active");
@@ -62,6 +64,13 @@ export default function DispatchView({ department, session, setSession, setActiv
     try {
       await base44.entities.CADSession.update(sessionId, { is_active: false, logout_time: new Date().toISOString(), status: "Unavailable" });
       toast({ title: "Unit removed" });
+    } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
+  };
+
+  const setGroupStatus = async (groupId, newStatus) => {
+    try {
+      await base44.entities.CADUnitGroup.update(groupId, { status: newStatus });
+      toast({ title: "Group status updated", description: newStatus });
     } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
   };
 
@@ -181,16 +190,23 @@ export default function DispatchView({ department, session, setSession, setActiv
           </div>
           <div className="flex-1 overflow-auto p-2 space-y-1.5">
             {groups.length === 0 ? <p className="text-xs text-slate-600 text-center py-6">No active groups</p> :
-              groups.map(g => (
-                <div key={g.id} className="bg-[#121418] rounded-lg p-2 flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Layers className="w-3 h-3 text-slate-500" />
-                    <span className="text-xs text-white font-medium">{g.name || "Group"}</span>
-                    <span className="text-[10px] text-slate-500">{g.unit_ids?.length || 0} units</span>
+              groups.map(g => {
+                const crewCount = sessions.filter(s => s.group_id === g.id).length;
+                const maxSeats = g.max_seats || 0;
+                return (
+                  <div key={g.id} className="bg-[#121418] rounded-lg p-2 flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <Layers className="w-3 h-3 text-slate-500 shrink-0" />
+                      <span className="text-xs text-white font-medium truncate">{g.name || "Group"}</span>
+                      <span className="text-[10px] text-slate-500 shrink-0">{crewCount}{maxSeats ? `/${maxSeats}` : ""}</span>
+                    </div>
+                    <Select value={g.status || "Off Duty"} onValueChange={(v) => setGroupStatus(g.id, v)}>
+                      <SelectTrigger className="h-6 w-28 text-[10px] bg-transparent border-0 p-0 focus:ring-0 shadow-none shrink-0"><span className={`px-1.5 py-0.5 rounded ${statusColors[g.status] || statusColors["Off Duty"]}`}>{g.status || "Off Duty"}</span></SelectTrigger>
+                      <SelectContent className="bg-[#1a1e23] border-[#272d35]">{GROUP_STATUS_OPTS.map(st => <SelectItem key={st} value={st} className="text-white text-xs">{st}</SelectItem>)}</SelectContent>
+                    </Select>
                   </div>
-                  <ChevronRight className="w-3 h-3 text-slate-600" />
-                </div>
-              ))
+                );
+              })
             }
           </div>
           <div className="p-2 border-t border-[#272d35]">

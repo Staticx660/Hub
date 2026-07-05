@@ -15,6 +15,7 @@ export default function ClockInDialog({ open, onOpenChange, department, user, on
   const [discordQuery, setDiscordQuery] = useState("");
   const [searching, setSearching] = useState(false);
   const [groups, setGroups] = useState([]);
+  const [sessions, setSessions] = useState([]);
   const { toast } = useToast();
 
   const isFireEMS = department?.category === "Fire" || department?.category === "EMS";
@@ -33,9 +34,12 @@ export default function ClockInDialog({ open, onOpenChange, department, user, on
 
   const loadGroups = async () => {
     try {
-      const g = await base44.entities.CADUnitGroup.filter({ department_id: department.id });
-      setGroups(g);
-    } catch (e) { setGroups([]); }
+      const [g, s] = await Promise.all([
+        base44.entities.CADUnitGroup.filter({ department_id: department.id }),
+        base44.entities.CADSession.filter({ department_id: department.id, is_active: true }),
+      ]);
+      setGroups(g); setSessions(s);
+    } catch (e) { setGroups([]); setSessions([]); }
   };
 
   const selectGroup = (groupId) => {
@@ -147,7 +151,12 @@ export default function ClockInDialog({ open, onOpenChange, department, user, on
               <p className="text-xs text-slate-500 mb-2">Select which apparatus you are riding on — this is required for Fire & EMS</p>
               <Select value={form.group_id} onValueChange={selectGroup}>
                 <SelectTrigger className="bg-slate-800 border-slate-700 text-white"><SelectValue placeholder={groups.length === 0 ? "No apparatus available — ask admin to create groups" : "Select apparatus..."} /></SelectTrigger>
-                <SelectContent className="bg-slate-800 border-slate-700">{groups.map(g => <SelectItem key={g.id} value={g.id} className="text-white">{g.name}</SelectItem>)}</SelectContent>
+                <SelectContent className="bg-slate-800 border-slate-700">{groups.map(g => {
+                  const crewCount = sessions.filter(s => s.group_id === g.id).length;
+                  const maxSeats = g.max_seats || 0;
+                  const isFull = maxSeats > 0 && crewCount >= maxSeats;
+                  return <SelectItem key={g.id} value={g.id} className="text-white" disabled={isFull}>{g.name} ({crewCount}{maxSeats ? `/${maxSeats}` : ""} seats){isFull ? " — Full" : ""}</SelectItem>;
+                })}</SelectContent>
               </Select>
             </div>
           )}

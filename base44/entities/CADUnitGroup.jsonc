@@ -16,6 +16,25 @@
       "items": {
         "type": "string"
       }
+    },
+    "min_seats": {
+      "type": "number",
+      "default": 1
+    },
+    "max_seats": {
+      "type": "number",
+      "default": 4
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Available",
+        "Busy",
+        "On Call",
+        "Unavailable",
+        "Off Duty"
+      ],
+      "default": "Off Duty"
     }
   },
   "required": [

@@ -51,14 +51,15 @@ export default function FireDashboard({ department, session, setSession, onOpenC
 
   const apparatusWithCrew = groups.map(g => {
     const crew = sessions.filter(s => s.group_id === g.id);
-    return { ...g, crewCount: crew.length, crewStatus: crew.length > 0 ? crew[0].status : "Off Duty" };
+    return { ...g, crewCount: crew.length };
   });
 
   useEffect(() => {
     load();
     const u1 = base44.entities.ActiveCall.subscribe(() => load());
     const u2 = base44.entities.CADSession.subscribe(() => load());
-    return () => { u1(); u2(); };
+    const u3 = base44.entities.CADUnitGroup.subscribe(() => load());
+    return () => { u1(); u2(); u3(); };
   }, []);
 
   const setUnitStatus = async (sessionId, newStatus) => {
@@ -188,16 +189,21 @@ export default function FireDashboard({ department, session, setSession, onOpenC
                 <AlertCircle className="w-8 h-8 mb-2" />
                 <p className="text-xs text-slate-600">No apparatus assigned</p>
               </div>
-            ) : apparatusWithCrew.map(g => (
-              <div key={g.id} className="bg-[#141011] rounded-lg p-2 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Truck className="w-3 h-3 text-amber-500" />
-                  <span className="text-xs text-white font-medium">{g.name || "Apparatus"}</span>
-                  <span className="text-[10px] text-slate-500">{g.crewCount} crew</span>
+            ) : apparatusWithCrew.map(g => {
+              const maxSeats = g.max_seats || 0;
+              const minSeats = g.min_seats || 0;
+              const understaffed = minSeats > 0 && g.crewCount < minSeats;
+              return (
+                <div key={g.id} className="bg-[#141011] rounded-lg p-2 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Truck className="w-3 h-3 text-amber-500" />
+                    <span className="text-xs text-white font-medium">{g.name || "Apparatus"}</span>
+                    <span className={`text-[10px] ${understaffed ? "text-red-400 font-bold" : "text-slate-500"}`}>{g.crewCount}{maxSeats ? `/${maxSeats}` : ""} crew{understaffed ? " ⚠" : ""}</span>
+                  </div>
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded ${statusBadge(g.status || "Off Duty")}`}>{g.status || "Off Duty"}</span>
                 </div>
-                <span className={`text-[10px] px-1.5 py-0.5 rounded ${g.crewCount > 0 ? statusBadge(g.crewStatus) : "bg-slate-700 text-slate-500 border border-slate-600"}`}>{g.crewCount > 0 ? g.crewStatus : "Off Duty"}</span>
-              </div>
-            ))}
+              );
+            })}
           </div>
           <div className="p-2 border-t border-red-950/40">
             <Button onClick={onManageGroups} size="sm" variant="outline" className="w-full h-7 text-xs border-slate-700 text-slate-400 hover:text-white">Manage Apparatus</Button>
