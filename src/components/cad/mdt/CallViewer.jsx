@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
 import { ArrowLeft, Plus, Ban, Save, X, FileText, MapPin } from "lucide-react";
+import { playDispatchAnnouncement } from "@/components/cad/mdt/panicSound";
 
 const CALL_TITLES = ["Structure Fire", "Medical Emergency", "Traffic Accident", "Domestic Dispute", "Burglary", "Robbery", "Assault", "Theft", "Vandalism", "Noise Complaint", "Suspicious Person", "Welfare Check", "Traffic Stop", "DUI", "Shots Fired", "Pursuit", "Other"];
 const CALL_ORIGINS = ["911", "Non-Emergency", "Walk-In", "Officer Initiated", "Self-Dispatch"];
@@ -94,6 +95,9 @@ export default function CallViewer({ department, session, selectedCallId, onSele
       const log = [...(call.assignment_log || []), { unit_name: unit?.callsign || "unit", action: "attached", timestamp: new Date().toISOString() }];
       await base44.entities.ActiveCall.update(call.id, { assigned_unit_ids: newIds, assignment_log: log, status: "Active" });
       await base44.entities.CADSession.update(unitId, { active_call_id: call.id, status: "On Call" });
+      const unitLabel = unit?.group_name || unit?.callsign || unit?.user_name || "unit";
+      const announceText = `Dispatching ${unitLabel} to ${call.call_type || "call"}${call.location ? " at " + call.location : ""}.`;
+      playDispatchAnnouncement(announceText);
       toast({ title: "Unit assigned", description: unit?.callsign || unit?.user_name });
       loadCall();
     } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }

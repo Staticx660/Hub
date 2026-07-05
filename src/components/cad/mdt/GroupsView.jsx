@@ -34,8 +34,12 @@ export default function GroupsView({ department, session }) {
   const createGroup = async () => {
     if (!groupName) return;
     try {
-      await base44.entities.CADUnitGroup.create({ name: groupName, department_id: department.id, unit_ids: [session.id] });
-      toast({ title: "Custom group created" });
+      const isFireEMS = department?.category === "Fire" || department?.category === "EMS";
+      const groupData = isFireEMS
+        ? { name: groupName, department_id: department.id, unit_ids: [] }
+        : { name: groupName, department_id: department.id, unit_ids: session?.id ? [session.id] : [] };
+      await base44.entities.CADUnitGroup.create(groupData);
+      toast({ title: isFireEMS ? "Apparatus created" : "Custom group created" });
       setGroupName(""); setDialogOpen(false); load();
     } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
   };
@@ -47,18 +51,21 @@ export default function GroupsView({ department, session }) {
     load();
   };
 
+  const isFireEMS = department?.category === "Fire" || department?.category === "EMS";
+  const groupLabel = isFireEMS ? "Apparatus" : "Group";
+
   if (loading) return <div className="flex justify-center py-16"><div className="w-8 h-8 border-2 border-slate-700 border-t-blue-500 rounded-full animate-spin" /></div>;
 
   return (
     <div className="h-full overflow-y-auto p-4">
       <div className="max-w-4xl mx-auto">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-2"><Layers className="w-4 h-4" /> Active Groups</h2>
-          {isAdmin && <Button onClick={() => setDialogOpen(true)} size="sm" className="bg-blue-600 hover:bg-blue-700 gap-1.5"><Plus className="w-3.5 h-3.5" /> Create Group</Button>}
+          <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-2"><Layers className="w-4 h-4" /> Active {isFireEMS ? "Apparatus" : "Groups"}</h2>
+          {isAdmin && <Button onClick={() => setDialogOpen(true)} size="sm" className="bg-blue-600 hover:bg-blue-700 gap-1.5"><Plus className="w-3.5 h-3.5" /> Create {groupLabel}</Button>}
         </div>
 
         {groups.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-slate-600"><Layers className="w-12 h-12 mb-3 opacity-30" /><p>No active groups</p></div>
+          <div className="flex flex-col items-center justify-center py-16 text-slate-600"><Layers className="w-12 h-12 mb-3 opacity-30" /><p>No active {isFireEMS ? "apparatus" : "groups"}</p></div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {groups.map((g) => {
@@ -88,8 +95,8 @@ export default function GroupsView({ department, session }) {
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="bg-slate-900 border-slate-700">
-          <DialogHeader><DialogTitle className="text-white">Create Custom Group</DialogTitle></DialogHeader>
-          <div><Label className="text-slate-300">Group Name</Label><Input value={groupName} onChange={(e) => setGroupName(e.target.value)} className="bg-slate-800 border-slate-700 text-white" placeholder="e.g. Traffic Unit, Air Support" /></div>
+          <DialogHeader><DialogTitle className="text-white">Create {isFireEMS ? "Apparatus" : "Custom Group"}</DialogTitle></DialogHeader>
+          <div><Label className="text-slate-300">{isFireEMS ? "Apparatus" : "Group"} Name</Label><Input value={groupName} onChange={(e) => setGroupName(e.target.value)} className="bg-slate-800 border-slate-700 text-white" placeholder={isFireEMS ? "e.g. Engine 1, Truck 2, Rescue 3" : "e.g. Traffic Unit, Air Support"} /></div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)} className="border-slate-700 text-slate-300">Cancel</Button>
             <Button onClick={createGroup} disabled={!groupName} className="bg-blue-600 hover:bg-blue-700">Create</Button>

@@ -91,6 +91,7 @@ export default function CADMDT() {
         user_id: user.id, user_name: formData.name, department_id: deptId, department_name: department.name,
         roster_member_id: member?.id || "", callsign: formData.callsign, rank: formData.rank,
         status: "Available", login_time: now, is_active: true, panic_active: false, shift_id: shift.id,
+        group_id: formData.group_id || "", group_name: formData.group_name || "",
       });
       setSession(newSession);
       setClockInOpen(false);

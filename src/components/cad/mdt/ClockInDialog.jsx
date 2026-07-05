@@ -3,26 +3,45 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
-import { Search, Loader2 } from "lucide-react";
+import { Search, Loader2, Truck } from "lucide-react";
 
 const OCRP_LOGO = "https://media.base44.com/images/public/6a441f279b9d3cd678958799/5a43a1b46_OCRP20.png";
 
 export default function ClockInDialog({ open, onOpenChange, department, user, onClockIn }) {
-  const [form, setForm] = useState({ name: "", callsign: "", rank: "" });
+  const [form, setForm] = useState({ name: "", callsign: "", rank: "", group_id: "", group_name: "" });
   const [discordQuery, setDiscordQuery] = useState("");
   const [searching, setSearching] = useState(false);
+  const [groups, setGroups] = useState([]);
   const { toast } = useToast();
+
+  const isFireEMS = department?.category === "Fire" || department?.category === "EMS";
 
   useEffect(() => {
     if (open) {
-      setForm({ name: "", callsign: "", rank: "" });
+      setForm({ name: "", callsign: "", rank: "", group_id: "", group_name: "" });
       setDiscordQuery("");
+      setGroups([]);
       // Auto-pull from roster by matching user's name
       autoLookupRoster();
+      // Load apparatus groups for Fire/EMS
+      if (isFireEMS && department?.id) loadGroups();
     }
   }, [open]);
+
+  const loadGroups = async () => {
+    try {
+      const g = await base44.entities.CADUnitGroup.filter({ department_id: department.id });
+      setGroups(g);
+    } catch (e) { setGroups([]); }
+  };
+
+  const selectGroup = (groupId) => {
+    const g = groups.find(x => x.id === groupId);
+    setForm(prev => ({ ...prev, group_id: groupId, group_name: g?.name || "" }));
+  };
 
   const autoLookupRoster = async () => {
     // First: use the linked Discord ID to find the roster member
@@ -31,7 +50,7 @@ export default function ClockInDialog({ open, onOpenChange, department, user, on
         const members = await base44.entities.RosterMember.filter({ discord_id: user.discord_id });
         if (members.length > 0) {
           const match = members[0];
-          setForm({ name: match.name || "", callsign: match.callsign || "", rank: match.rank || "" });
+          setForm(prev => ({ ...prev, name: match.name || "", callsign: match.callsign || "", rank: match.rank || "" }));
           setDiscordQuery(match.discord_username || match.discord_id || "");
           return;
         }
@@ -45,7 +64,7 @@ export default function ClockInDialog({ open, onOpenChange, department, user, on
         (m) => m.name?.toLowerCase().trim() === user.full_name?.toLowerCase().trim()
       );
       if (match) {
-        setForm({ name: match.name || "", callsign: match.callsign || "", rank: match.rank || "" });
+        setForm(prev => ({ ...prev, name: match.name || "", callsign: match.callsign || "", rank: match.rank || "" }));
         setDiscordQuery(match.discord_username || match.discord_id || "");
       }
     } catch (e) { /* silent fail — user can manually enter */ }
@@ -63,11 +82,12 @@ export default function ClockInDialog({ open, onOpenChange, department, user, on
           m.name?.toLowerCase().trim() === discordQuery.toLowerCase().trim()
       );
       if (match) {
-        setForm({
+        setForm(prev => ({
+          ...prev,
           name: match.name || "",
           callsign: match.callsign || "",
           rank: match.rank || "",
-        });
+        }));
         toast({ title: "Roster match found", description: `Linked to ${match.name}` });
       } else {
         toast({ title: "No match found", description: "No roster member with that info", variant: "destructive" });
@@ -121,10 +141,20 @@ export default function ClockInDialog({ open, onOpenChange, department, user, on
               <Input value={form.rank} onChange={(e) => setForm({ ...form, rank: e.target.value })} className="bg-slate-800 border-slate-700 text-white" placeholder="e.g. Officer" />
             </div>
           </div>
+          {isFireEMS && (
+            <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-4">
+              <Label className="text-slate-300 text-sm font-semibold flex items-center gap-2"><Truck className="w-4 h-4" /> Assigned Apparatus</Label>
+              <p className="text-xs text-slate-500 mb-2">Select which apparatus you are riding on — this is required for Fire & EMS</p>
+              <Select value={form.group_id} onValueChange={selectGroup}>
+                <SelectTrigger className="bg-slate-800 border-slate-700 text-white"><SelectValue placeholder={groups.length === 0 ? "No apparatus available — ask admin to create groups" : "Select apparatus..."} /></SelectTrigger>
+                <SelectContent className="bg-slate-800 border-slate-700">{groups.map(g => <SelectItem key={g.id} value={g.id} className="text-white">{g.name}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+          )}
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} className="border-slate-700 text-slate-300">Cancel</Button>
-          <Button onClick={() => onClockIn(form)} disabled={!form.name} className="bg-blue-600 hover:bg-blue-700">Clock In & Start MDT</Button>
+          <Button onClick={() => onClockIn(form)} disabled={!form.name || (isFireEMS && !form.group_id)} className="bg-blue-600 hover:bg-blue-700">Clock In & Start MDT</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

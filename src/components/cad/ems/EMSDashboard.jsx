@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
-import { Plus, Layers, Siren, Phone, ChevronRight, Stethoscope, AlertCircle } from "lucide-react";
+import { Plus, Layers, Siren, Phone, ChevronRight, Stethoscope, AlertCircle, Truck, User } from "lucide-react";
 
 const STATUS_OPTS = ["Available", "Busy", "On Call", "Unavailable"];
 const statusBadge = (s) => {
@@ -39,6 +39,11 @@ export default function EMSDashboard({ department, session, setSession, onOpenCa
     setLoading(false);
   };
 
+  const apparatusWithCrew = groups.map(g => {
+    const crew = sessions.filter(s => s.group_id === g.id);
+    return { ...g, crewCount: crew.length, crewStatus: crew.length > 0 ? crew[0].status : "Off Duty" };
+  });
+
   useEffect(() => {
     load();
     const u1 = base44.entities.ActiveCall.subscribe(() => load());
@@ -59,6 +64,7 @@ export default function EMSDashboard({ department, session, setSession, onOpenCa
   const activeCalls = calls.filter(c => c.status === "Active");
   const emergencyCalls = calls.filter(c => c.status === "Pending");
   const availableCount = sessions.filter(s => s.status === "Available").length;
+  const onCallCount = sessions.filter(s => s.status === "On Call").length;
 
   const th = "text-left px-3 py-2 font-semibold text-slate-500 text-[10px] uppercase tracking-wider whitespace-nowrap";
   const td = "px-3 py-2 border-t border-slate-800";
@@ -96,21 +102,29 @@ export default function EMSDashboard({ department, session, setSession, onOpenCa
           </div>
         </div>
 
-        {/* Top Right: Active Units */}
+        {/* Top Right: Personnel */}
         <div className={cardShell}>
           <div className="flex items-center justify-between px-3 py-2 border-b border-slate-800">
-            <h3 className="text-xs font-bold text-white flex items-center gap-2"><Stethoscope className="w-3.5 h-3.5 text-green-400" /> ACTIVE UNITS</h3>
-            <span className="text-xs text-slate-500">AVAILABLE: <span className="text-green-400 font-bold">{availableCount}</span></span>
+            <h3 className="text-xs font-bold text-white flex items-center gap-2"><User className="w-3.5 h-3.5 text-green-400" /> PERSONNEL</h3>
+            <div className="flex items-center gap-3 text-xs">
+              <span className="text-slate-500">AVAIL: <span className="text-green-400 font-bold">{availableCount}</span></span>
+              <span className="text-slate-500">ON CALL: <span className="text-red-400 font-bold">{onCallCount}</span></span>
+            </div>
           </div>
           <div className="flex-1 overflow-auto">
             <table className="w-full text-xs">
-              <thead className="bg-[#121418] sticky top-0 z-10"><tr><th className={th}>Unit</th><th className={th}>Name</th><th className={th}>Dept</th><th className={th}>Status</th></tr></thead>
+              <thead className="bg-[#121418] sticky top-0 z-10"><tr><th className={th}>Person</th><th className={th}>Apparatus</th><th className={th}>Dept</th><th className={th}>Status</th></tr></thead>
               <tbody>
-                {sessions.length === 0 ? <tr><td colSpan="4" className="text-center text-slate-600 py-6">No active units</td></tr> :
+                {sessions.length === 0 ? <tr><td colSpan="4" className="text-center text-slate-600 py-6">No active personnel</td></tr> :
                   sessions.map(s => (
                     <tr key={s.id} className="hover:bg-slate-800/50 transition-colors">
-                      <td className={td}><span className="font-mono font-bold text-green-400 bg-green-500/10 px-1.5 py-0.5 rounded">{s.callsign || "—"}</span></td>
-                      <td className={td + " text-white font-medium truncate max-w-[100px]"}>{s.user_name}</td>
+                      <td className={td}>
+                        <div className="flex flex-col">
+                          <span className="text-white font-medium truncate max-w-[100px]">{s.user_name}</span>
+                          <span className="font-mono text-[10px] text-green-400">{s.callsign || "—"}</span>
+                        </div>
+                      </td>
+                      <td className={td}><span className="text-[10px] font-bold text-green-400 bg-green-500/10 px-1.5 py-0.5 rounded">{s.group_name || "—"}</span></td>
                       <td className={td + " text-slate-400 truncate max-w-[80px]"}>{s.department_name || "—"}</td>
                       <td className={td}>
                         <Select value={s.status} onValueChange={(v) => setUnitStatus(s.id, v)}>
@@ -152,31 +166,31 @@ export default function EMSDashboard({ department, session, setSession, onOpenCa
           </div>
         </div>
 
-        {/* Bottom Right: Active Groups */}
+        {/* Bottom Right: Apparatus */}
         <div className={cardShell}>
           <div className="flex items-center justify-between px-3 py-2 border-b border-slate-800">
-            <h3 className="text-xs font-bold text-white flex items-center gap-2"><Layers className="w-3.5 h-3.5 text-green-400" /> ACTIVE GROUPS</h3>
+            <h3 className="text-xs font-bold text-white flex items-center gap-2"><Truck className="w-3.5 h-3.5 text-green-400" /> APPARATUS</h3>
             <span className="text-xs text-slate-500">{groups.length}</span>
           </div>
           <div className="flex-1 overflow-auto p-2 space-y-1.5">
             {groups.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-slate-700 py-8">
                 <AlertCircle className="w-8 h-8 mb-2" />
-                <p className="text-xs text-slate-600">No active groups</p>
+                <p className="text-xs text-slate-600">No apparatus assigned</p>
               </div>
-            ) : groups.map(g => (
+            ) : apparatusWithCrew.map(g => (
               <div key={g.id} className="bg-[#121418] rounded-lg p-2 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Layers className="w-3 h-3 text-slate-500" />
-                  <span className="text-xs text-white font-medium">{g.name || "Group"}</span>
-                  <span className="text-[10px] text-slate-500">{g.unit_ids?.length || 0} units</span>
+                  <Truck className="w-3 h-3 text-green-500" />
+                  <span className="text-xs text-white font-medium">{g.name || "Apparatus"}</span>
+                  <span className="text-[10px] text-slate-500">{g.crewCount} crew</span>
                 </div>
-                <ChevronRight className="w-3 h-3 text-slate-600" />
+                <span className={`text-[10px] px-1.5 py-0.5 rounded ${g.crewCount > 0 ? statusBadge(g.crewStatus) : "bg-slate-700 text-slate-500 border border-slate-600"}`}>{g.crewCount > 0 ? g.crewStatus : "Off Duty"}</span>
               </div>
             ))}
           </div>
           <div className="p-2 border-t border-slate-800">
-            <Button onClick={onManageGroups} size="sm" variant="outline" className="w-full h-7 text-xs border-slate-700 text-slate-400 hover:text-white">Manage Groups</Button>
+            <Button onClick={onManageGroups} size="sm" variant="outline" className="w-full h-7 text-xs border-slate-700 text-slate-400 hover:text-white">Manage Apparatus</Button>
           </div>
         </div>
       </div>

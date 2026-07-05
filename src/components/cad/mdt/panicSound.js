@@ -90,3 +90,40 @@ export function stopPanicVoice() {
     }
   } catch (e) { /* silent */ }
 }
+
+// Quick two-tone dispatch beep
+export function playDispatchTone() {
+  try {
+    const ctx = getAudioContext();
+    [0, 0.15].forEach(delay => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(1000, ctx.currentTime + delay);
+      gain.gain.setValueAtTime(0, ctx.currentTime + delay);
+      gain.gain.linearRampToValueAtTime(0.15, ctx.currentTime + delay + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + 0.12);
+      osc.start(ctx.currentTime + delay);
+      osc.stop(ctx.currentTime + delay + 0.12);
+    });
+  } catch (e) { /* silent */ }
+}
+
+// Dispatch announcement — tone then voice
+export function playDispatchAnnouncement(text) {
+  try {
+    playDispatchTone();
+    setTimeout(() => {
+      if ('speechSynthesis' in window && text) {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.rate = 1.0;
+        utterance.pitch = 0.9;
+        utterance.volume = 1;
+        window.speechSynthesis.speak(utterance);
+      }
+    }, 400);
+  } catch (e) { /* silent */ }
+}
