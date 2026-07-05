@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
 import { Users, Phone, Plus, Layers, Star, Trash2, ChevronRight } from "lucide-react";
-import SelfDispatchDialog from "@/components/cad/mdt/SelfDispatchDialog";
 
 const statusColors = { Available: "text-green-400 bg-green-500/15", Busy: "text-yellow-400 bg-yellow-500/15", "On Call": "text-red-400 bg-red-500/15", Unavailable: "text-gray-400 bg-gray-500/15", Panic: "text-white bg-red-500 animate-pulse" };
 const STATUS_OPTS = ["Available", "Busy", "On Call", "Unavailable"];
@@ -14,7 +13,6 @@ export default function DispatchView({ department, session, setSession, setActiv
   const [sessions, setSessions] = useState([]);
   const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selfDispatchOpen, setSelfDispatchOpen] = useState(false);
   const { toast } = useToast();
 
   const load = async () => {
@@ -63,12 +61,17 @@ export default function DispatchView({ department, session, setSession, setActiv
     } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
   };
 
-  const createSelfCall = async (formData) => {
+  const newCall = async () => {
     try {
       const runNum = `911-${Date.now().toString().slice(-6)}`;
-      await base44.entities.ActiveCall.create({ ...formData, status: "Pending", department_id: department.id, run_number: runNum, assigned_unit_ids: [] });
-      setSelfDispatchOpen(false);
-      toast({ title: "Call created", description: runNum });
+      const c = await base44.entities.ActiveCall.create({
+        call_type: "New Call", priority: "2 - Medium", status: "Pending", location: "", description: "",
+        department_id: department.id, run_number: runNum, assigned_unit_ids: [], cad_notes: "",
+        call_origin: "911", postal: "", block: "",
+      });
+      toast({ title: "New call created", description: runNum });
+      setSelectedCallId(c.id);
+      setActiveView("callviewer");
     } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
   };
 
@@ -86,7 +89,7 @@ export default function DispatchView({ department, session, setSession, setActiv
             <h3 className="text-xs font-bold text-white flex items-center gap-2"><Star className="w-3.5 h-3.5 text-red-400" /> ACTIVE CALLS</h3>
             <div className="flex items-center gap-2">
               <span className="text-xs text-slate-500">{activeCalls.filter(c => c.assigned_unit_ids?.length > 0).length}/{activeCalls.length}</span>
-              <Button onClick={() => setSelfDispatchOpen(true)} size="sm" className="h-6 px-2 text-xs bg-green-600 hover:bg-green-700 gap-1"><Plus className="w-3 h-3" /> New</Button>
+              <Button onClick={newCall} size="sm" className="h-6 px-2 text-xs bg-green-600 hover:bg-green-700 gap-1"><Plus className="w-3 h-3" /> New</Button>
             </div>
           </div>
           <div className="flex-1 overflow-auto">
@@ -192,7 +195,6 @@ export default function DispatchView({ department, session, setSession, setActiv
         </div>
       </div>
 
-      <SelfDispatchDialog open={selfDispatchOpen} onOpenChange={setSelfDispatchOpen} onCreate={createSelfCall} />
     </div>
   );
 }
