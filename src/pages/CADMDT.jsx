@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
 import { useToast } from "@/components/ui/use-toast";
@@ -24,11 +24,12 @@ export default function CADMDT() {
   const { deptId } = useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
   const [department, setDepartment] = useState(null);
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [activeView, setActiveView] = useState("dispatch");
+  const [activeView, setActiveView] = useState(location.state?.initialView || "dispatch");
   const [selectedCallId, setSelectedCallId] = useState(null);
   const [clockInOpen, setClockInOpen] = useState(false);
   const [accessDenied, setAccessDenied] = useState(false);
