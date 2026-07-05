@@ -29,6 +29,7 @@ import KeybindConfig from '@/pages/KeybindConfig';
 import DepartmentArchive from '@/pages/DepartmentArchive';
 import DepartmentBoard from '@/pages/DepartmentBoard';
 import EMSBoard from '@/pages/EMSBoard';
+import FireBoard from '@/pages/FireBoard';
 import Departments from '@/pages/Departments';
 import DepartmentDetail from '@/pages/DepartmentDetail';
 import Roster from '@/pages/Roster';
@@ -115,6 +116,7 @@ const AuthenticatedApp = () => {
         <Route path="/cad/mdt/:deptId" element={<CADMDT />} />
         <Route path="/cad/board/:deptId" element={<DepartmentBoard />} />
         <Route path="/cad/ems/:deptId" element={<EMSBoard />} />
+        <Route path="/cad/fire/:deptId" element={<FireBoard />} />
         <Route path="/cad/civilian/:deptId" element={<CADCivilian />} />
 
         {/* Settings - accessible to all authenticated users */}

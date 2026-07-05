@@ -12,7 +12,8 @@ const statusOptions = [
 
 export default function Taskbar({ activeView, setActiveView, session, departmentCategory, onStatusChange, onPanic, onClockOut, onOpenKeybinds }) {
   const category = departmentCategory || "Police";
-  const isMedical = category === "EMS" || category === "Fire";
+  const isFire = category === "Fire";
+  const isMedical = category === "EMS" || isFire;
   const isDispatch = category === "Dispatch";
   const [logoMenu, setLogoMenu] = useState(false);
   const [statusMenu, setStatusMenu] = useState(false);
@@ -50,6 +51,13 @@ export default function Taskbar({ activeView, setActiveView, session, department
         { id: "records", label: "Records", icon: FileText, hasDropdown: true },
         { id: "dispatch", label: "Call Viewer", icon: Radio, hasDropdown: false },
         { id: "groups", label: "Groups", icon: Layers, hasDropdown: false },
+      ]
+    : isFire
+    ? [
+        { id: "pcr", label: "PCR", icon: ClipboardList, hasDropdown: false },
+        { id: "records", label: "Fire Reports", icon: FileText, hasDropdown: false },
+        { id: "mycall", label: "My Incident", icon: Shield, hasDropdown: false },
+        { id: "dispatch", label: "Fire Board", icon: Radio, hasDropdown: false },
       ]
     : isMedical
     ? [

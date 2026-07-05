@@ -20,7 +20,7 @@ const REPORT_TYPES_BY_CATEGORY = {
 const FILTER_CHECKBOXES_BY_CATEGORY = {
   Police: [{ key: "warrant", label: "Warrant" }, { key: "bolo", label: "BOLO" }, { key: "license", label: "License" }, { key: "vehicle", label: "Vehicle Registration" }],
   "Private Security": [{ key: "warrant", label: "Warrant" }, { key: "bolo", label: "BOLO" }, { key: "license", label: "License" }, { key: "vehicle", label: "Vehicle Registration" }],
-  Fire: [{ key: "fire", label: "Fire Incident" }, { key: "pcr", label: "Patient Care Report" }],
+  Fire: [{ key: "fire", label: "Fire Incident" }, { key: "mva", label: "MVA / Extrication" }, { key: "hazmat", label: "Hazmat" }, { key: "pcr", label: "Patient Care Report" }],
   EMS: [{ key: "medical", label: "Medical Call" }, { key: "pcr", label: "Patient Care Report" }],
   Dispatch: [{ key: "incident", label: "Incident" }],
   Other: [{ key: "warrant", label: "Warrant" }, { key: "bolo", label: "BOLO" }, { key: "license", label: "License" }, { key: "vehicle", label: "Vehicle Registration" }],
