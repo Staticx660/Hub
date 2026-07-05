@@ -37,7 +37,7 @@ export default function Taskbar({ activeView, setActiveView, session, department
     setLogoMenu(false);
     switch (action) {
       case "fullscreen": document.documentElement.requestFullscreen?.(); break;
-      case "home": navigate("/cad"); break;
+      case "home": onClockOut(); break;
       case "account": navigate("/settings"); break;
       case "keybinds": onOpenKeybinds?.(); break;
       case "logout": base44.auth.logout("/login"); break;

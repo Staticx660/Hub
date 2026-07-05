@@ -17,6 +17,7 @@ export default function CallViewer({ department, session, selectedCallId, onSele
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [noteInput, setNoteInput] = useState("");
   const { toast } = useToast();
 
   useEffect(() => {
@@ -121,6 +122,20 @@ export default function CallViewer({ department, session, selectedCallId, onSele
       </div>
     );
   }
+
+  const callNotes = (call.assignment_log || []).filter(e => e.action === "note");
+
+  const addNote = async () => {
+    const text = noteInput.trim();
+    if (!text || !call) return;
+    const entry = { unit_name: session?.callsign || session?.user_name || "Dispatch", action: "note", timestamp: new Date().toISOString(), message: text };
+    const newLog = [...(call.assignment_log || []), entry];
+    try {
+      await base44.entities.ActiveCall.update(call.id, { assignment_log: newLog });
+      setCall({ ...call, assignment_log: newLog });
+      setNoteInput("");
+    } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
+  };
 
   const assignedUnits = sessions.filter(s => call.assigned_unit_ids?.includes(s.id));
   const availableUnits = sessions.filter(s => !call.assigned_unit_ids?.includes(s.id) && s.status === "Available");
@@ -245,8 +260,25 @@ export default function CallViewer({ department, session, selectedCallId, onSele
           {/* Right Column */}
           <div className="flex flex-col">
             <label className={fieldLabel}>Call Notes</label>
-            <Textarea value={call.cad_notes || ""} onChange={(e) => update("cad_notes", e.target.value)} className={inputCls + " text-xs flex-1 min-h-[300px] resize-none"} placeholder="Dispatch notes..." />
-            <p className="text-[10px] text-slate-600 mt-1">NOTE</p>
+            <div className="flex gap-2 mb-2">
+              <Input value={noteInput} onChange={(e) => setNoteInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && noteInput.trim()) addNote(); }} className={inputCls + " h-8 text-xs flex-1"} placeholder="Type a note and press Enter..." />
+              <button onClick={addNote} className="px-3 h-8 rounded-lg bg-blue-500/15 text-blue-400 hover:bg-blue-500/25 text-xs font-medium flex items-center">Add</button>
+            </div>
+            <div className="bg-[#1a1e23] border border-[#272d35] rounded-lg p-2 flex-1 overflow-y-auto min-h-[260px]">
+              {callNotes.length === 0 ? <p className="text-xs text-slate-600 text-center py-4">No notes yet</p> : (
+                <div className="space-y-1.5">
+                  {callNotes.map((n, i) => (
+                    <div key={i} className="bg-[#121418] rounded p-2">
+                      <div className="flex items-center justify-between mb-0.5">
+                        <span className="text-[10px] text-blue-400 font-medium">{n.unit_name || "Dispatch"}</span>
+                        <span className="text-[10px] text-slate-600">{new Date(n.timestamp).toLocaleTimeString()}</span>
+                      </div>
+                      <p className="text-xs text-slate-300">{n.message}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>

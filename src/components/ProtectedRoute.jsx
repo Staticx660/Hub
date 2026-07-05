@@ -16,7 +16,8 @@ export default function ProtectedRoute({ fallback = <DefaultFallback />, unauthe
     if (!authChecked && !isLoadingAuth) {
       checkUserAuth();
     }
-  }, [authChecked, isLoadingAuth, checkUserAuth]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authChecked, isLoadingAuth]);
 
   if (isLoadingAuth || !authChecked) {
     return fallback;

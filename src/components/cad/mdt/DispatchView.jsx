@@ -3,7 +3,8 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
-import { Users, Phone, Plus, Layers, Star, ChevronRight } from "lucide-react";
+import { Users, Phone, Plus, Layers, Star, ChevronRight, Trash2 } from "lucide-react";
+import { useAuth } from "@/lib/AuthContext";
 
 const statusColors = { Available: "text-green-400 bg-green-500/15", Busy: "text-yellow-400 bg-yellow-500/15", "On Call": "text-red-400 bg-red-500/15", Unavailable: "text-gray-400 bg-gray-500/15", Panic: "text-white bg-red-500 animate-pulse" };
 const STATUS_OPTS = ["Available", "Busy", "On Call", "Unavailable"];
@@ -14,6 +15,8 @@ export default function DispatchView({ department, session, setSession, setActiv
   const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const { user } = useAuth();
+  const canLogoutUnits = user?.role === "admin" || department?.category === "Dispatch";
 
   const load = async () => {
     try {
@@ -51,6 +54,14 @@ export default function DispatchView({ department, session, setSession, setActiv
       await base44.entities.CADSession.update(sessionId, { status: newStatus });
       if (sessionId === session.id) setSession({ ...session, status: newStatus });
       toast({ title: "Status updated", description: newStatus });
+    } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
+  };
+
+  const removeUnit = async (sessionId) => {
+    if (!confirm("Remove this unit from active duty?")) return;
+    try {
+      await base44.entities.CADSession.update(sessionId, { is_active: false, logout_time: new Date().toISOString(), status: "Unavailable" });
+      toast({ title: "Unit removed" });
     } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
   };
 
@@ -113,9 +124,9 @@ export default function DispatchView({ department, session, setSession, setActiv
           </div>
           <div className="flex-1 overflow-auto">
             <table className="w-full text-xs">
-              <thead className="bg-[#121418] sticky top-0 z-10"><tr><th className={th}>Unit</th><th className={th}>Name</th><th className={th}>Dept</th><th className={th}>Status</th></tr></thead>
+              <thead className="bg-[#121418] sticky top-0 z-10"><tr><th className={th}>Unit</th><th className={th}>Name</th><th className={th}>Dept</th><th className={th}>Status</th>{canLogoutUnits && <th className={th}>Actions</th>}</tr></thead>
               <tbody>
-                {sessions.length === 0 ? <tr><td colSpan="4" className="text-center text-slate-600 py-6">No active units</td></tr> :
+                {sessions.length === 0 ? <tr><td colSpan={canLogoutUnits ? 5 : 4} className="text-center text-slate-600 py-6">No active units</td></tr> :
                   sessions.map(s => (
                     <tr key={s.id} className="hover:bg-[#1e2227]">
                       <td className={td}><span className="font-mono font-bold text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded">{s.callsign || "—"}</span></td>
@@ -127,6 +138,7 @@ export default function DispatchView({ department, session, setSession, setActiv
                           <SelectContent className="bg-[#1a1e23] border-[#272d35]">{STATUS_OPTS.map(st => <SelectItem key={st} value={st} className="text-white text-xs">{st}</SelectItem>)}</SelectContent>
                         </Select>
                       </td>
+                      {canLogoutUnits && <td className={td}><button onClick={() => removeUnit(s.id)} className="text-red-400 hover:text-red-300"><Trash2 className="w-3.5 h-3.5" /></button></td>}
                     </tr>
                   ))
                 }
