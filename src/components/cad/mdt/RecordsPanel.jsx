@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useToast } from "@/components/ui/use-toast";
-import { FileText, FolderOpen, Pencil, Eye, Plus, Shield, Clock, Gavel, ChevronDown, ChevronRight, List, LayoutGrid, X } from "lucide-react";
+import { FileText, FolderOpen, Pencil, Eye, Plus, Shield, Clock, Gavel, ChevronDown, ChevronRight, List, LayoutGrid, X, Link2 } from "lucide-react";
 import BoloForm from "@/components/cad/mdt/BoloForm";
 import WarrantForm from "@/components/cad/mdt/WarrantForm";
 import ReportFormView from "@/components/cad/mdt/ReportFormView";
@@ -310,6 +310,20 @@ export default function RecordsPanel({ department, session }) {
                       {selected.field_data.civilian.dob && <div><span className="text-slate-500">DOB: </span><span className="text-slate-300">{selected.field_data.civilian.dob}</span></div>}
                       {selected.field_data.civilian.phone && <div><span className="text-slate-500">Phone: </span><span className="text-slate-300">{selected.field_data.civilian.phone}</span></div>}
                       {selected.field_data.civilian.address && <div><span className="text-slate-500">Address: </span><span className="text-slate-300">{selected.field_data.civilian.address}</span></div>}
+                    </div>
+                  </div>
+                )}
+                {selected.field_data?.linked_records?.length > 0 && (
+                  <div className="mt-3 pt-3 border-t border-[#2c2f36]">
+                    <p className="text-xs text-slate-500 mb-2 flex items-center gap-1.5"><Link2 className="w-3 h-3" /> Linked Records:</p>
+                    <div className="space-y-1">
+                      {selected.field_data.linked_records.map((rec, i) => (
+                        <div key={i} className="flex items-center gap-2 text-sm bg-[#1a1d21] rounded-lg p-2">
+                          {rec.type === "warrant" ? <Gavel className="w-3.5 h-3.5 text-red-400" /> : rec.type === "bolo" ? <Eye className="w-3.5 h-3.5 text-yellow-400" /> : <FileText className="w-3.5 h-3.5 text-blue-400" />}
+                          <span className="text-slate-300">{rec.title}</span>
+                          <span className="text-xs text-slate-500 ml-auto">{rec.type}{rec.number ? ` · ${rec.number}` : ""}</span>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 )}

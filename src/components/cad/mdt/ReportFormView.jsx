@@ -6,9 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
-import { ArrowLeft, Plus, Trash2, Search, Car, User, Link2, ChevronDown, ChevronUp } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Search, Car, User, Link2, ChevronDown, ChevronUp, Eye, FileText, Gavel, X } from "lucide-react";
 import CivilianSearch from "@/components/cad/mdt/CivilianSearch";
 import VehicleSearch from "@/components/cad/mdt/VehicleSearch";
+import LinkedRecordsDialog from "@/components/cad/mdt/LinkedRecordsDialog";
 import { logSystemEvent } from "@/lib/logSystemEvent";
 
 const ALL_REPORT_TYPES = ["Incident", "Traffic Stop", "Field Contact", "Arrest", "Medical", "Fire", "Vehicle Accident", "Use of Force", "Evidence", "Other"];
@@ -44,6 +45,8 @@ export default function ReportFormView({ department, session, initialType, templ
   const [penalCodes, setPenalCodes] = useState([]);
   const [showCivilianSearch, setShowCivilianSearch] = useState(false);
   const [showVehicleSearch, setShowVehicleSearch] = useState(false);
+  const [showLinkedRecords, setShowLinkedRecords] = useState(false);
+  const [linkedRecords, setLinkedRecords] = useState([]);
   const [saving, setSaving] = useState(false);
   const [recordNumber, setRecordNumber] = useState("");
   const [officerName, setOfficerName] = useState("");
@@ -157,6 +160,7 @@ export default function ReportFormView({ department, session, initialType, templ
         vehicle: vehicleData,
         charges,
         narrative,
+        linked_records: linkedRecords,
         signatures: {
           officer_name: officerName,
           observing_unit: observingSignature,
@@ -245,9 +249,28 @@ export default function ReportFormView({ department, session, initialType, templ
         </div>
 
         {/* Linked Records */}
-        <div className="bg-[#262a30] rounded-lg p-3 flex items-center justify-between">
-          <span className="text-sm text-slate-300">Linked Records</span>
-          <Button size="sm" className="bg-teal-600 hover:bg-teal-700 text-white gap-1.5"><Link2 className="w-3.5 h-3.5" /> Paste Record Link</Button>
+        <div className="bg-[#262a30] rounded-lg p-3">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300">Linked Records ({linkedRecords.length})</h3>
+            <Button size="sm" onClick={() => setShowLinkedRecords(true)} className="bg-teal-600 hover:bg-teal-700 text-white gap-1.5"><Link2 className="w-3.5 h-3.5" /> Link Record</Button>
+          </div>
+          {linkedRecords.length > 0 && (
+            <div className="space-y-1.5">
+              {linkedRecords.map((rec, i) => (
+                <div key={i} className="flex items-center justify-between bg-[#1a1d21] rounded-lg p-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    {rec.type === "warrant" ? <Gavel className="w-3.5 h-3.5 text-red-400 flex-shrink-0" /> : rec.type === "bolo" ? <Eye className="w-3.5 h-3.5 text-yellow-400 flex-shrink-0" /> : <FileText className="w-3.5 h-3.5 text-blue-400 flex-shrink-0" />}
+                    <div className="min-w-0">
+                      <p className="text-sm text-white truncate">{rec.title}</p>
+                      <p className="text-[10px] text-slate-500">{rec.type}{rec.number ? ` · ${rec.number}` : ""}{rec.status ? ` · ${rec.status}` : ""}</p>
+                    </div>
+                  </div>
+                  <button onClick={() => setLinkedRecords(linkedRecords.filter((_, idx) => idx !== i))} className="text-slate-500 hover:text-red-400 flex-shrink-0"><X className="w-3.5 h-3.5" /></button>
+                </div>
+              ))}
+            </div>
+          )}
+          {linkedRecords.length === 0 && <p className="text-xs text-slate-500">No records linked yet</p>}
         </div>
 
         {/* Civilian Information */}
@@ -423,6 +446,14 @@ export default function ReportFormView({ department, session, initialType, templ
         <button onClick={() => handleSave(false)} disabled={saving || !title.trim()} className="w-12 h-12 rounded-full bg-green-500 hover:bg-green-600 disabled:opacity-40 flex items-center justify-center"><Plus className="w-6 h-6 text-white" /></button>
         <button onClick={onClose} className="w-12 h-12 rounded-full bg-red-500/10 hover:bg-red-500/20 flex items-center justify-center"><Trash2 className="w-6 h-6 text-red-500" /></button>
       </div>
+
+      <LinkedRecordsDialog
+        open={showLinkedRecords}
+        onOpenChange={setShowLinkedRecords}
+        department={department}
+        linkedRecords={linkedRecords}
+        onLink={(entry) => setLinkedRecords([...linkedRecords.filter(r => r.id !== entry.id), entry])}
+      />
     </div>
   );
 }
