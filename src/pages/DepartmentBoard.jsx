@@ -34,6 +34,7 @@ export default function DepartmentBoard() {
       try {
         const dept = await base44.entities.CADDepartment.get(deptId);
         if (dept.category === "Dispatch") { navigate(`/cad/mdt/${deptId}`); return; }
+        if (dept.category === "EMS") { navigate(`/cad/ems/${deptId}`); return; }
         setDepartment(dept);
         const sessions = await base44.entities.CADSession.filter({ user_id: user.id, department_id: deptId, is_active: true });
         if (sessions.length > 0) setSession(sessions[0]);

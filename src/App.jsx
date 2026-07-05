@@ -28,6 +28,7 @@ import CADPersonnel from '@/pages/CADPersonnel';
 import KeybindConfig from '@/pages/KeybindConfig';
 import DepartmentArchive from '@/pages/DepartmentArchive';
 import DepartmentBoard from '@/pages/DepartmentBoard';
+import EMSBoard from '@/pages/EMSBoard';
 import Departments from '@/pages/Departments';
 import DepartmentDetail from '@/pages/DepartmentDetail';
 import Roster from '@/pages/Roster';
@@ -113,6 +114,7 @@ const AuthenticatedApp = () => {
         {/* Full-screen CAD apps - no sidebar, fills viewport */}
         <Route path="/cad/mdt/:deptId" element={<CADMDT />} />
         <Route path="/cad/board/:deptId" element={<DepartmentBoard />} />
+        <Route path="/cad/ems/:deptId" element={<EMSBoard />} />
         <Route path="/cad/civilian/:deptId" element={<CADCivilian />} />
 
         {/* Settings - accessible to all authenticated users */}
