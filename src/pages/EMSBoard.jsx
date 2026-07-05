@@ -143,7 +143,7 @@ export default function EMSBoard() {
 
       <div className="flex-1 overflow-hidden">
         {activeView === "dashboard" && (
-          <EMSDashboard department={department} session={session} onOpenCall={openCall} onNewCall={newCall} onManageGroups={() => setActiveView("groups")} />
+          <EMSDashboard department={department} session={session} setSession={setSession} onOpenCall={openCall} onNewCall={newCall} onManageGroups={() => setActiveView("groups")} />
         )}
         {activeView === "callviewer" && (
           <CallViewer department={department} session={session} selectedCallId={selectedCallId} onSelectCall={setSelectedCallId} onBack={() => setActiveView("dashboard")} />

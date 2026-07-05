@@ -14,7 +14,7 @@ const statusBadge = (s) => {
   return "bg-slate-700 text-slate-400 border border-slate-600";
 };
 
-export default function EMSDashboard({ department, session, onOpenCall, onNewCall, onManageGroups }) {
+export default function EMSDashboard({ department, session, setSession, onOpenCall, onNewCall, onManageGroups }) {
   const [calls, setCalls] = useState([]);
   const [sessions, setSessions] = useState([]);
   const [groups, setGroups] = useState([]);
@@ -49,6 +49,7 @@ export default function EMSDashboard({ department, session, onOpenCall, onNewCal
   const setUnitStatus = async (sessionId, newStatus) => {
     try {
       await base44.entities.CADSession.update(sessionId, { status: newStatus });
+      if (sessionId === session.id && setSession) setSession({ ...session, status: newStatus });
       toast({ title: "Status updated", description: newStatus });
     } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
   };

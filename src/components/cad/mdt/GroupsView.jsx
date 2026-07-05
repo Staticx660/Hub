@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
+import { useAuth } from "@/lib/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,6 +9,8 @@ import { useToast } from "@/components/ui/use-toast";
 import { Layers, Plus, Trash2, Users } from "lucide-react";
 
 export default function GroupsView({ department, session }) {
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
   const [groups, setGroups] = useState([]);
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -51,7 +54,7 @@ export default function GroupsView({ department, session }) {
       <div className="max-w-4xl mx-auto">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-2"><Layers className="w-4 h-4" /> Active Groups</h2>
-          <Button onClick={() => setDialogOpen(true)} size="sm" className="bg-blue-600 hover:bg-blue-700 gap-1.5"><Plus className="w-3.5 h-3.5" /> Create Group</Button>
+          {isAdmin && <Button onClick={() => setDialogOpen(true)} size="sm" className="bg-blue-600 hover:bg-blue-700 gap-1.5"><Plus className="w-3.5 h-3.5" /> Create Group</Button>}
         </div>
 
         {groups.length === 0 ? (
