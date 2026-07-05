@@ -33,6 +33,7 @@ export default function DepartmentBoard() {
     const init = async () => {
       try {
         const dept = await base44.entities.CADDepartment.get(deptId);
+        if (dept.category === "Dispatch") { navigate(`/cad/mdt/${deptId}`); return; }
         setDepartment(dept);
         const sessions = await base44.entities.CADSession.filter({ user_id: user.id, department_id: deptId, is_active: true });
         if (sessions.length > 0) setSession(sessions[0]);
@@ -51,12 +52,14 @@ export default function DepartmentBoard() {
 
   const loadData = async () => {
     try {
-      const [c, u, p] = await Promise.all([
+      const [c, u, p, depts] = await Promise.all([
         base44.entities.ActiveCall.filter({ status: { $ne: "Closed" } }),
         base44.entities.CADUnit.list(),
         base44.entities.CADSession.filter({ is_active: true }),
+        base44.entities.CADDepartment.list(),
       ]);
-      setCalls(c); setUnits(u); setPersonnel(p);
+      const nonCivilianIds = depts.filter(d => d.category !== "Civilian").map(d => d.id);
+      setCalls(c); setUnits(u); setPersonnel(p.filter(s => nonCivilianIds.includes(s.department_id)));
     } catch (e) { /* silent */ }
   };
 
@@ -325,7 +328,7 @@ export default function DepartmentBoard() {
       {/* 911 Intake Dialog */}
       {showIntake && <CallIntakeDialog department={department} session={session} onClose={() => setShowIntake(false)} onSaved={() => { setShowIntake(false); loadData(); }} />}
 
-      <Taskbar activeView="dispatch" setActiveView={(v) => { if (v !== "dispatch") navigate(`/cad/mdt/${deptId}`); }} session={session} onStatusChange={handleStatusChange} onPanic={handlePanic} onClockOut={handleClockOut} onOpenKeybinds={() => {}} />
+      <Taskbar activeView="dispatch" setActiveView={(v) => { if (v !== "dispatch") navigate(`/cad/mdt/${deptId}`); }} session={session} departmentCategory={department.category} onStatusChange={handleStatusChange} onPanic={handlePanic} onClockOut={handleClockOut} onOpenKeybinds={() => {}} />
     </div>
   );
 }

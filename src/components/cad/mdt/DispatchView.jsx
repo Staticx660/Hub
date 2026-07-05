@@ -1,179 +1,194 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
-import { Siren, MapPin, Phone, Plus, Link2, Unlink, Users, AlertTriangle, ChevronRight, CheckCircle2 } from "lucide-react";
+import { Users, Phone, Plus, Layers, Star, Trash2, ChevronRight } from "lucide-react";
 import SelfDispatchDialog from "@/components/cad/mdt/SelfDispatchDialog";
 
-const priorityColors = { "1 - High": "bg-red-500/15 text-red-400 border-red-500/30", "2 - Medium": "bg-yellow-500/15 text-yellow-400 border-yellow-500/30", "3 - Low": "bg-blue-500/15 text-blue-400 border-blue-500/30" };
-const statusColors = { Available: "bg-green-500/15 text-green-400", Busy: "bg-yellow-500/15 text-yellow-400", "On Call": "bg-red-500/15 text-red-400", Unavailable: "bg-gray-500/15 text-gray-400", Panic: "bg-red-500 text-white animate-pulse" };
+const statusColors = { Available: "text-green-400 bg-green-500/15", Busy: "text-yellow-400 bg-yellow-500/15", "On Call": "text-red-400 bg-red-500/15", Unavailable: "text-gray-400 bg-gray-500/15", Panic: "text-white bg-red-500 animate-pulse" };
+const STATUS_OPTS = ["Available", "Busy", "On Call", "Unavailable"];
 
 export default function DispatchView({ department, session, setSession, setActiveView, setSelectedCallId }) {
   const [calls, setCalls] = useState([]);
   const [sessions, setSessions] = useState([]);
+  const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selfDispatchOpen, setSelfDispatchOpen] = useState(false);
   const { toast } = useToast();
 
   const load = async () => {
     try {
-      const allDepts = await base44.entities.CADDepartment.list();
-      const dispatchDeptIds = allDepts.filter(d => d.category === "Dispatch").map(d => d.id);
-      const allCalls = await base44.entities.ActiveCall.list('-created_date', 500);
-      const s = department.category === "Dispatch"
-        ? await base44.entities.CADSession.filter({ is_active: true })
-        : await base44.entities.CADSession.filter({ department_id: department.id, is_active: true });
-      const visibleCalls = allCalls.filter(c =>
-        c.status !== "Closed" &&
-        (c.department_id === department.id || dispatchDeptIds.includes(c.department_id))
-      );
-      setCalls(visibleCalls);
-      setSessions(s);
+      const [allCalls, allSessions, allDepts] = await Promise.all([
+        base44.entities.ActiveCall.list('-created_date', 500),
+        base44.entities.CADSession.filter({ is_active: true }),
+        base44.entities.CADDepartment.list(),
+      ]);
+      const nonCivilianIds = allDepts.filter(d => d.category !== "Civilian").map(d => d.id);
+      setCalls(allCalls.filter(c => c.status !== "Closed"));
+      setSessions(allSessions.filter(s => nonCivilianIds.includes(s.department_id)));
+      try {
+        const g = await base44.entities.CADUnitGroup.filter({});
+        setGroups(g);
+      } catch { setGroups([]); }
     } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
     setLoading(false);
   };
 
   useEffect(() => {
     load();
-    const unsub1 = base44.entities.ActiveCall.subscribe(() => load());
-    const unsub2 = base44.entities.CADSession.subscribe(() => load());
-    return () => { unsub1(); unsub2(); };
+    const u1 = base44.entities.ActiveCall.subscribe(() => load());
+    const u2 = base44.entities.CADSession.subscribe(() => load());
+    return () => { u1(); u2(); };
   }, []);
 
-  const isSupervisor = session.rank?.toLowerCase().match(/sergeant|lieutenant|captain|chief|supervisor|commander|sheriff/);
+  const activeCalls = calls.filter(c => c.status === "Active");
+  const emergencyCalls = calls.filter(c => c.status === "Pending");
+  const availableCount = sessions.filter(s => s.status === "Available").length;
 
-  const attachToCall = async (callId) => {
+  const openCall = (callId) => { setSelectedCallId(callId); setActiveView("callviewer"); };
+
+  const setUnitStatus = async (sessionId, newStatus) => {
     try {
-      const call = calls.find((c) => c.id === callId);
-      const newIds = [...new Set([...(call.assigned_unit_ids || []), session.id])];
-      const log = [...(call.assignment_log || []), { unit_name: session.callsign || session.user_name, action: "attached", timestamp: new Date().toISOString() }];
-      await base44.entities.ActiveCall.update(callId, { assigned_unit_ids: newIds, assignment_log: log, status: "Active" });
-      await base44.entities.CADSession.update(session.id, { active_call_id: callId, status: "On Call" });
-      setSession({ ...session, active_call_id: callId, status: "On Call" });
-      toast({ title: "Attached to call" });
-      load();
+      await base44.entities.CADSession.update(sessionId, { status: newStatus });
+      toast({ title: "Status updated", description: newStatus });
     } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
   };
 
-  const detachFromCall = async () => {
+  const removeUnit = async (sessionId) => {
+    if (!confirm("Remove this unit from active duty?")) return;
     try {
-      const call = calls.find((c) => c.id === session.active_call_id);
-      if (call) {
-        const newIds = (call.assigned_unit_ids || []).filter((id) => id !== session.id);
-        const log = [...(call.assignment_log || []), { unit_name: session.callsign || session.user_name, action: "detached", timestamp: new Date().toISOString() }];
-        await base44.entities.ActiveCall.update(call.id, { assigned_unit_ids: newIds, assignment_log: log });
-      }
-      await base44.entities.CADSession.update(session.id, { active_call_id: "", status: "Available" });
-      setSession({ ...session, active_call_id: "", status: "Available" });
-      toast({ title: "Detached from call" });
-      load();
+      await base44.entities.CADSession.update(sessionId, { is_active: false, logout_time: new Date().toISOString(), status: "Unavailable" });
+      toast({ title: "Unit removed" });
     } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
   };
 
   const createSelfCall = async (formData) => {
     try {
-      const runNum = `RUN-${Date.now().toString().slice(-6)}`;
-      const newCall = await base44.entities.ActiveCall.create({
-        ...formData, status: "Active", department_id: department.id, assigned_unit_ids: [session.id], run_number: runNum,
-        assignment_log: [{ unit_name: session.callsign || session.user_name, action: "attached", timestamp: new Date().toISOString() }],
-      });
-      await base44.entities.CADSession.update(session.id, { active_call_id: newCall.id, status: "On Call" });
-      setSession({ ...session, active_call_id: newCall.id, status: "On Call" });
+      const runNum = `911-${Date.now().toString().slice(-6)}`;
+      await base44.entities.ActiveCall.create({ ...formData, status: "Pending", department_id: department.id, run_number: runNum, assigned_unit_ids: [] });
       setSelfDispatchOpen(false);
       toast({ title: "Call created", description: runNum });
-      setActiveView("mycall");
-      load();
     } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
-  };
-
-  const clearCall = async (callId) => {
-    if (!confirm("Mark this call as cleared/closed?")) return;
-    try {
-      const call = calls.find((c) => c.id === callId);
-      const log = [...(call.assignment_log || []), { unit_name: session.callsign || session.user_name, action: "cleared", timestamp: new Date().toISOString() }];
-      await base44.entities.ActiveCall.update(callId, { status: "Closed", assignment_log: log });
-      toast({ title: "Call cleared" });
-      load();
-    } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
-  };
-
-  const openCall = (callId) => {
-    setSelectedCallId(callId);
-    setActiveView("mycall");
   };
 
   if (loading) return <div className="flex justify-center py-16"><div className="w-8 h-8 border-2 border-slate-700 border-t-blue-500 rounded-full animate-spin" /></div>;
 
-  const myCall = calls.find((c) => c.id === session.active_call_id);
+  const th = "text-left px-2 py-1.5 font-medium text-slate-500 text-[10px] uppercase whitespace-nowrap";
+  const td = "px-2 py-2 border-t border-[#272d35]";
 
   return (
-    <div className="flex h-full overflow-hidden">
-      <div className="flex-1 overflow-y-auto p-4">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-2"><Siren className="w-4 h-4" /> Active Calls ({calls.length})</h2>
-          <Button onClick={() => setSelfDispatchOpen(true)} size="sm" variant="outline" className="border-slate-700 text-slate-300 gap-1.5"><Plus className="w-3.5 h-3.5" /> Self-Dispatch</Button>
+    <div className="h-full overflow-hidden p-3 bg-[#10141a]">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 h-full">
+        {/* Top Left: Active Calls */}
+        <div className="bg-[#1a2026] rounded-lg border border-[#272d35] flex flex-col overflow-hidden min-h-0">
+          <div className="flex items-center justify-between px-3 py-2 border-b border-[#272d35]">
+            <h3 className="text-xs font-bold text-white flex items-center gap-2"><Star className="w-3.5 h-3.5 text-red-400" /> ACTIVE CALLS</h3>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-slate-500">{activeCalls.filter(c => c.assigned_unit_ids?.length > 0).length}/{activeCalls.length}</span>
+              <Button onClick={() => setSelfDispatchOpen(true)} size="sm" className="h-6 px-2 text-xs bg-green-600 hover:bg-green-700 gap-1"><Plus className="w-3 h-3" /> New</Button>
+            </div>
+          </div>
+          <div className="flex-1 overflow-auto">
+            <table className="w-full text-xs">
+              <thead className="bg-[#121418] sticky top-0 z-10"><tr><th className={th}>ID</th><th className={th}>Call Title</th><th className={th}>Address</th><th className={th}>Units</th><th className={th}>Status</th></tr></thead>
+              <tbody>
+                {activeCalls.length === 0 ? <tr><td colSpan="5" className="text-center text-slate-600 py-6">No active calls</td></tr> :
+                  activeCalls.map(call => (
+                    <tr key={call.id} onClick={() => openCall(call.id)} className="hover:bg-[#1e2227] cursor-pointer">
+                      <td className={td + " text-slate-400 font-mono"}>{call.run_number || "—"}</td>
+                      <td className={td + " text-white"}>{call.call_type}</td>
+                      <td className={td + " text-slate-400 truncate max-w-[120px]"}>{call.location}</td>
+                      <td className={td + " text-cyan-400"}>{call.assigned_unit_ids?.length || 0}</td>
+                      <td className={td}><span className="text-[10px] px-1.5 py-0.5 rounded bg-green-500/15 text-green-400">{call.status}</span></td>
+                    </tr>
+                  ))
+                }
+              </tbody>
+            </table>
+          </div>
         </div>
-        {myCall && (
-          <div className="bg-blue-500/5 border border-blue-500/30 rounded-xl p-4 mb-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2"><span className="text-xs font-bold text-blue-400 bg-blue-500/15 px-2 py-0.5 rounded">YOUR CALL</span><span className="font-mono text-sm text-blue-400">{myCall.run_number}</span></div>
-              <div className="flex gap-2">
-                <Button onClick={() => openCall(myCall.id)} size="sm" variant="ghost" className="h-7 text-blue-400 gap-1.5"><ChevronRight className="w-3 h-3" /> View</Button>
-                <Button onClick={detachFromCall} size="sm" variant="outline" className="border-red-500/30 text-red-400 gap-1.5 h-7"><Unlink className="w-3 h-3" /> Detach</Button>
-              </div>
-            </div>
-            <p className="text-white font-medium mt-2">{myCall.call_type}</p>
-            <p className="text-xs text-slate-400 flex items-center gap-1"><MapPin className="w-3 h-3" /> {myCall.location}</p>
-          </div>
-        )}
-        {calls.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-slate-600"><Siren className="w-12 h-12 mb-3 opacity-30" /><p>No active calls</p></div>
-        ) : (
-          <div className="space-y-2">
-            {calls.map((call) => (
-              <div key={call.id} className="bg-slate-900/60 border border-slate-800 rounded-xl p-4 hover:border-slate-700 transition-colors cursor-pointer" onClick={() => openCall(call.id)}>
-                <div className="flex items-start justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${priorityColors[call.priority]}`}>{call.priority}</span>
-                    <div><h3 className="font-semibold text-white text-sm">{call.call_type}</h3>{call.run_number && <span className="text-xs text-blue-400 font-mono">{call.run_number}</span>}</div>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    {call.status !== "Closed" && <button onClick={(e) => { e.stopPropagation(); clearCall(call.id); }} className="flex items-center gap-1 px-2 py-1 rounded-lg bg-green-500/10 text-green-400 hover:bg-green-500/20 text-xs font-medium"><CheckCircle2 className="w-3 h-3" /> Clear</button>}
-                    {call.id !== session.active_call_id && !myCall && <Button onClick={(e) => { e.stopPropagation(); attachToCall(call.id); }} size="sm" variant="ghost" className="h-7 text-blue-400 gap-1.5"><Link2 className="w-3 h-3" /> Attach</Button>}
-                    <ChevronRight className="w-4 h-4 text-slate-600" />
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 text-xs text-slate-500">
-                  <span className="flex items-center gap-1"><MapPin className="w-3 h-3" /> {call.location}</span>
-                  {call.caller_name && <span className="flex items-center gap-1"><Phone className="w-3 h-3" /> {call.caller_name}</span>}
-                  <span className="flex items-center gap-1"><Users className="w-3 h-3" /> {call.assigned_unit_ids?.length || 0} units</span>
-                </div>
-                {call.cad_notes && <p className="text-xs text-slate-400 mt-2 bg-slate-800/50 rounded p-2">{call.cad_notes}</p>}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
 
-      <div className="w-64 border-l border-slate-800 bg-slate-900/50 p-3 overflow-y-auto flex-shrink-0">
-        <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-2"><Users className="w-3.5 h-3.5" /> Active Units ({sessions.length})</h2>
-        <div className="space-y-1.5">
-          {sessions.map((s) => (
-            <div key={s.id} className={`flex items-center justify-between rounded-lg p-2.5 ${s.id === session.id ? "bg-blue-500/10 border border-blue-500/20" : "bg-slate-800/50"}`}>
-              <div className="min-w-0">
-                <div className="flex items-center gap-1.5">
-                  {s.callsign && <span className="text-xs font-mono font-bold text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded">{s.callsign}</span>}
-                  <p className="text-sm text-white font-medium truncate">{s.user_name}</p>
+        {/* Top Right: Active Units */}
+        <div className="bg-[#1a2026] rounded-lg border border-[#272d35] flex flex-col overflow-hidden min-h-0">
+          <div className="flex items-center justify-between px-3 py-2 border-b border-[#272d35]">
+            <h3 className="text-xs font-bold text-white flex items-center gap-2"><Users className="w-3.5 h-3.5 text-cyan-400" /> ACTIVE UNITS</h3>
+            <span className="text-xs text-slate-500">AVAILABLE: <span className="text-green-400 font-bold">{availableCount}</span></span>
+          </div>
+          <div className="flex-1 overflow-auto">
+            <table className="w-full text-xs">
+              <thead className="bg-[#121418] sticky top-0 z-10"><tr><th className={th}>Unit</th><th className={th}>Name</th><th className={th}>Dept</th><th className={th}>Status</th><th className={th}>Actions</th></tr></thead>
+              <tbody>
+                {sessions.length === 0 ? <tr><td colSpan="5" className="text-center text-slate-600 py-6">No active units</td></tr> :
+                  sessions.map(s => (
+                    <tr key={s.id} className="hover:bg-[#1e2227]">
+                      <td className={td}><span className="font-mono font-bold text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded">{s.callsign || "—"}</span></td>
+                      <td className={td + " text-white truncate max-w-[100px]"}>{s.user_name}</td>
+                      <td className={td + " text-slate-400 truncate max-w-[80px]"}>{s.department_name || "—"}</td>
+                      <td className={td}>
+                        <Select value={s.status} onValueChange={(v) => setUnitStatus(s.id, v)}>
+                          <SelectTrigger className="h-6 w-28 text-[10px] bg-transparent border-0 p-0 focus:ring-0"><span className={`px-1.5 py-0.5 rounded ${statusColors[s.status] || statusColors.Unavailable}`}>{s.status}</span></SelectTrigger>
+                          <SelectContent className="bg-[#1a1e23] border-[#272d35]">{STATUS_OPTS.map(st => <SelectItem key={st} value={st} className="text-white text-xs">{st}</SelectItem>)}</SelectContent>
+                        </Select>
+                      </td>
+                      <td className={td}><button onClick={() => removeUnit(s.id)} className="text-red-400 hover:text-red-300"><Trash2 className="w-3.5 h-3.5" /></button></td>
+                    </tr>
+                  ))
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Bottom Left: Emergency Calls */}
+        <div className="bg-[#1a2026] rounded-lg border border-[#272d35] flex flex-col overflow-hidden min-h-0">
+          <div className="flex items-center justify-between px-3 py-2 border-b border-[#272d35]">
+            <h3 className="text-xs font-bold text-white flex items-center gap-2"><Phone className="w-3.5 h-3.5 text-red-400" /> EMERGENCY CALLS</h3>
+            <span className="text-xs text-slate-500">{emergencyCalls.length}</span>
+          </div>
+          <div className="flex-1 overflow-auto">
+            <table className="w-full text-xs">
+              <thead className="bg-[#121418] sticky top-0 z-10"><tr><th className={th}>ID</th><th className={th}>Type</th><th className={th}>Caller</th><th className={th}>Location</th><th className={th}>Description</th></tr></thead>
+              <tbody>
+                {emergencyCalls.length === 0 ? <tr><td colSpan="5" className="text-center text-slate-600 py-6">No emergency calls</td></tr> :
+                  emergencyCalls.map(call => (
+                    <tr key={call.id} onClick={() => openCall(call.id)} className="hover:bg-[#1e2227] cursor-pointer">
+                      <td className={td + " text-slate-400 font-mono"}>{call.run_number || "—"}</td>
+                      <td className={td + " text-white"}>{call.call_type}</td>
+                      <td className={td + " text-slate-400 truncate max-w-[80px]"}>{call.caller_name || "—"}</td>
+                      <td className={td + " text-slate-400 truncate max-w-[100px]"}>{call.location}</td>
+                      <td className={td + " text-slate-500 truncate max-w-[120px]"}>{call.description}</td>
+                    </tr>
+                  ))
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Bottom Right: Active Groups */}
+        <div className="bg-[#1a2026] rounded-lg border border-[#272d35] flex flex-col overflow-hidden min-h-0">
+          <div className="flex items-center justify-between px-3 py-2 border-b border-[#272d35]">
+            <h3 className="text-xs font-bold text-white flex items-center gap-2"><Layers className="w-3.5 h-3.5 text-cyan-400" /> ACTIVE GROUPS</h3>
+            <span className="text-xs text-slate-500">{groups.length}</span>
+          </div>
+          <div className="flex-1 overflow-auto p-2 space-y-1.5">
+            {groups.length === 0 ? <p className="text-xs text-slate-600 text-center py-6">No active groups</p> :
+              groups.map(g => (
+                <div key={g.id} className="bg-[#121418] rounded-lg p-2 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Layers className="w-3 h-3 text-slate-500" />
+                    <span className="text-xs text-white font-medium">{g.name || "Group"}</span>
+                    <span className="text-[10px] text-slate-500">{g.unit_ids?.length || 0} units</span>
+                  </div>
+                  <ChevronRight className="w-3 h-3 text-slate-600" />
                 </div>
-                {s.rank && <p className="text-xs text-slate-500 truncate">{s.rank}</p>}
-              </div>
-              <div className="flex items-center gap-1.5">
-                {s.panic_active && <AlertTriangle className="w-3.5 h-3.5 text-red-500 animate-pulse" />}
-                <span className={`text-xs px-1.5 py-0.5 rounded ${statusColors[s.status] || statusColors.Unavailable}`}>{s.status}</span>
-              </div>
-            </div>
-          ))}
-          {sessions.length === 0 && <p className="text-xs text-slate-600 text-center py-4">No units on duty</p>}
+              ))
+            }
+          </div>
+          <div className="p-2 border-t border-[#272d35]">
+            <Button onClick={() => setActiveView("groups")} size="sm" variant="outline" className="w-full h-7 text-xs border-[#272d35] text-slate-400 hover:text-white">Manage Groups</Button>
+          </div>
         </div>
       </div>
 

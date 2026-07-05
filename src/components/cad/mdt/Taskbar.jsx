@@ -46,7 +46,9 @@ export default function Taskbar({ activeView, setActiveView, session, department
 
   const navButtons = isDispatch
     ? [
-        { id: "dispatch", label: "Board", icon: Radio, hasDropdown: false },
+        { id: "lookups", label: "Lookup", icon: Search, hasDropdown: true },
+        { id: "records", label: "Records", icon: FileText, hasDropdown: true },
+        { id: "dispatch", label: "Call Viewer", icon: Radio, hasDropdown: false },
         { id: "groups", label: "Groups", icon: Layers, hasDropdown: false },
       ]
     : isMedical

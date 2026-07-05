@@ -53,6 +53,15 @@
     "cad_notes": {
       "type": "string"
     },
+    "call_origin": {
+      "type": "string"
+    },
+    "postal": {
+      "type": "string"
+    },
+    "block": {
+      "type": "string"
+    },
     "assignment_log": {
       "type": "array",
       "items": {

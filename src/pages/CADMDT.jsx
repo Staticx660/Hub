@@ -12,6 +12,7 @@ import DispatchView from "@/components/cad/mdt/DispatchView";
 import MyCallView from "@/components/cad/mdt/MyCallView";
 import GroupsView from "@/components/cad/mdt/GroupsView";
 import PCRForm from "@/components/cad/mdt/PCRForm";
+import CallViewer from "@/components/cad/mdt/CallViewer";
 import ClockInDialog from "@/components/cad/mdt/ClockInDialog";
 import KeybindsDialog from "@/components/cad/mdt/KeybindsDialog";
 import { useKeybinds, loadKeybinds } from "@/hooks/useKeybinds";
@@ -212,13 +213,14 @@ export default function CADMDT() {
       {session.panic_active && <div className="bg-red-500/20 border-y border-red-500 text-red-400 text-center py-1.5 text-sm font-bold animate-pulse">🚨 PANIC ACTIVE — {session.callsign || session.user_name} — ALL UNITS RESPOND</div>}
       <div className="flex-1 overflow-hidden">
         {activeView === "dispatch" && <DispatchView department={department} session={session} setSession={setSession} setActiveView={setActiveView} setSelectedCallId={setSelectedCallId} />}
+        {activeView === "callviewer" && <CallViewer department={department} session={session} selectedCallId={selectedCallId} onSelectCall={setSelectedCallId} onBack={() => setActiveView("dispatch")} />}
         {activeView === "lookups" && <LookupPanel department={department} session={session} />}
         {activeView === "pcr" && <PCRForm department={department} session={session} />}
         {activeView === "records" && <RecordsPanel department={department} session={session} />}
         {activeView === "mycall" && <MyCallView department={department} session={session} setSession={setSession} selectedCallId={selectedCallId} setSelectedCallId={setSelectedCallId} setActiveView={setActiveView} />}
         {activeView === "groups" && <GroupsView department={department} session={session} />}
       </div>
-      <Taskbar activeView={activeView} setActiveView={(v) => { if (v === "dispatch" && ["Fire", "EMS", "Dispatch"].includes(department.category)) { navigate(`/cad/board/${deptId}`); } else { setActiveView(v); } }} session={session} departmentCategory={department.category} onStatusChange={handleStatusChange} onPanic={handlePanic} onClockOut={handleClockOut} onOpenKeybinds={() => setKeybindsOpen(true)} />
+      <Taskbar activeView={activeView} setActiveView={(v) => { if (v === "dispatch" && (department.category === "Fire" || department.category === "EMS")) { navigate(`/cad/board/${deptId}`); } else { setActiveView(v); } }} session={session} departmentCategory={department.category} onStatusChange={handleStatusChange} onPanic={handlePanic} onClockOut={handleClockOut} onOpenKeybinds={() => setKeybindsOpen(true)} />
       <KeybindsDialog open={keybindsOpen} onOpenChange={setKeybindsOpen} keybinds={keybinds} setKeybinds={setKeybinds} />
     </div>
   );
