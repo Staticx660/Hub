@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
@@ -53,9 +53,6 @@ export default function EMSBoard() {
     } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
   };
 
-  const sessionRef = useRef(null);
-  useEffect(() => { sessionRef.current = session; }, [session]);
-
   const performClockOut = async (s) => {
     if (!s) return;
     try {
@@ -68,11 +65,7 @@ export default function EMSBoard() {
     } catch (e) { /* silent */ }
   };
 
-  useEffect(() => {
-    const handler = () => performClockOut(sessionRef.current);
-    window.addEventListener('beforeunload', handler);
-    return () => { window.removeEventListener('beforeunload', handler); };
-  }, []);
+
 
   const handleClockOut = async () => {
     if (!confirm("Clock out and end your shift?")) return;
@@ -114,23 +107,23 @@ export default function EMSBoard() {
 
   const openCall = (callId) => { setSelectedCallId(callId); setActiveView("callviewer"); };
 
-  if (loading) return <div className="flex justify-center items-center h-screen bg-slate-50"><div className="w-8 h-8 border-4 border-emerald-200 border-t-emerald-500 rounded-full animate-spin" /></div>;
-  if (!department) return <div className="flex justify-center items-center h-screen bg-slate-50 text-slate-400">Department not found</div>;
+  if (loading) return <div className="flex justify-center items-center h-screen bg-slate-950"><div className="w-8 h-8 border-4 border-slate-700 border-t-green-500 rounded-full animate-spin" /></div>;
+  if (!department) return <div className="flex justify-center items-center h-screen bg-slate-950 text-slate-400">Department not found</div>;
 
   if (!session) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen bg-slate-50 gap-6">
-        <div className="w-20 h-20 rounded-2xl flex items-center justify-center bg-emerald-50 border border-emerald-100 shadow-sm">
-          <Ambulance className="w-10 h-10 text-emerald-600" />
+      <div className="flex flex-col items-center justify-center h-screen bg-slate-950 gap-6">
+        <div className="w-20 h-20 rounded-2xl flex items-center justify-center bg-green-500/10">
+          <Ambulance className="w-10 h-10 text-green-400" />
         </div>
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-slate-900 mb-1">{department.name}</h1>
-          <p className="text-slate-500">EMS Operations Board</p>
-          <p className="text-slate-400 text-sm mt-2">You are not currently on duty</p>
+          <h1 className="text-2xl font-bold text-white mb-1">{department.name}</h1>
+          <p className="text-slate-400">EMS Operations Board</p>
+          <p className="text-slate-500 text-sm mt-2">You are not currently on duty</p>
         </div>
         <div className="flex gap-3">
-          <Button onClick={() => navigate("/cad")} variant="outline" className="border-slate-200 text-slate-600 hover:bg-slate-100 gap-2 px-6"><ChevronLeft className="w-4 h-4" /> Back</Button>
-          <Button onClick={() => setClockInOpen(true)} className="bg-emerald-600 hover:bg-emerald-700 gap-2 px-8"><Clock className="w-4 h-4" /> Clock In</Button>
+          <Button onClick={() => navigate("/cad")} variant="outline" className="border-slate-700 text-slate-300 hover:bg-slate-800 gap-2 px-6"><ChevronLeft className="w-4 h-4" /> Back</Button>
+          <Button onClick={() => setClockInOpen(true)} className="bg-green-600 hover:bg-green-700 gap-2 px-8"><Clock className="w-4 h-4" /> Clock In</Button>
         </div>
         <ClockInDialog open={clockInOpen} onOpenChange={setClockInOpen} department={department} user={user} onClockIn={handleClockIn} />
       </div>
@@ -138,13 +131,13 @@ export default function EMSBoard() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-slate-50 overflow-hidden">
-      {session.panic_active && <div className="bg-red-500/20 border-y border-red-500 text-red-600 text-center py-1.5 text-sm font-bold animate-pulse">🚨 PANIC ACTIVE — {session.callsign || session.user_name}</div>}
+    <div className="flex flex-col h-screen bg-slate-950 overflow-hidden">
+      {session.panic_active && <div className="bg-red-500/20 border-y border-red-500 text-red-400 text-center py-1.5 text-sm font-bold animate-pulse">🚨 PANIC ACTIVE — {session.callsign || session.user_name}</div>}
 
       {activeView === "callviewer" && (
-        <div className="flex items-center gap-2 px-4 py-2 bg-white border-b border-slate-200">
-          <Button onClick={() => setActiveView("dashboard")} variant="ghost" size="sm" className="text-slate-600 hover:bg-slate-100 gap-1.5"><ArrowLeft className="w-4 h-4" /> Back to Dashboard</Button>
-          <Link to={`/cad/mdt/${deptId}`}><Button variant="ghost" size="sm" className="text-slate-600 hover:bg-slate-100 gap-1.5"><FileText className="w-4 h-4" /> PCR / MDT</Button></Link>
+        <div className="flex items-center gap-2 px-4 py-2 bg-slate-900 border-b border-slate-800">
+          <Button onClick={() => setActiveView("dashboard")} variant="ghost" size="sm" className="text-slate-300 hover:bg-slate-800 gap-1.5"><ArrowLeft className="w-4 h-4" /> Back to Dashboard</Button>
+          <Link to={`/cad/mdt/${deptId}`}><Button variant="ghost" size="sm" className="text-slate-300 hover:bg-slate-800 gap-1.5"><FileText className="w-4 h-4" /> PCR / MDT</Button></Link>
         </div>
       )}
 
@@ -157,8 +150,8 @@ export default function EMSBoard() {
         )}
         {activeView === "groups" && (
           <div className="flex flex-col h-full">
-            <div className="flex items-center gap-2 px-4 py-2 bg-white border-b border-slate-200">
-              <Button onClick={() => setActiveView("dashboard")} variant="ghost" size="sm" className="text-slate-600 hover:bg-slate-100 gap-1.5"><ArrowLeft className="w-4 h-4" /> Back to Dashboard</Button>
+            <div className="flex items-center gap-2 px-4 py-2 bg-slate-900 border-b border-slate-800">
+              <Button onClick={() => setActiveView("dashboard")} variant="ghost" size="sm" className="text-slate-300 hover:bg-slate-800 gap-1.5"><ArrowLeft className="w-4 h-4" /> Back to Dashboard</Button>
             </div>
             <div className="flex-1 overflow-hidden"><GroupsView department={department} session={session} /></div>
           </div>
