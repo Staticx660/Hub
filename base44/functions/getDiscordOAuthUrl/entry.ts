@@ -21,7 +21,18 @@ Deno.serve(async (req) => {
     const app = await appRes.json();
     const clientId = app.id;
 
-    const state = user.id;
+    // Generate cryptographically secure random state and store for verification
+    const state = crypto.randomUUID() + '.' + user.id;
+    await base44.asServiceRole.entities.DiscordVerification.create({
+      discord_id: 'oauth_state',
+      verification_code: state,
+      user_id: user.id,
+      user_email: user.email,
+      expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
+      status: 'pending',
+      method: 'oauth'
+    });
+
     const params = new URLSearchParams({
       client_id: clientId,
       response_type: 'code',

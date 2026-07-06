@@ -12,6 +12,17 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'No webhook URL provided' }, { status: 400 });
     }
 
+    // Validate webhook URL is a Discord URL (prevent SSRF)
+    let parsedUrl;
+    try {
+      parsedUrl = new URL(webhook_url);
+    } catch {
+      return Response.json({ error: 'Invalid webhook URL' }, { status: 400 });
+    }
+    if (parsedUrl.hostname !== 'discord.com' && parsedUrl.hostname !== 'discordapp.com') {
+      return Response.json({ error: 'Webhook URL must be a Discord URL' }, { status: 400 });
+    }
+
     const embed = {
       title: title || 'Roster Update',
       description: description || '',

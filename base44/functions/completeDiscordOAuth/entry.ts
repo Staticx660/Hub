@@ -12,10 +12,23 @@ Deno.serve(async (req) => {
     const state = body.state;
     if (!code || !redirectUri) return Response.json({ error: 'code and redirect_uri are required' }, { status: 400 });
 
-    // Verify the state matches this user (CSRF protection)
-    if (state && state !== user.id) {
-      return Response.json({ error: 'State mismatch. Please retry the Discord verification.' }, { status: 400 });
+    // Verify the state from our database (CSRF protection)
+    if (!state) return Response.json({ error: 'Missing state parameter.' }, { status: 400 });
+    const stateRecords = await base44.asServiceRole.entities.DiscordVerification.filter({
+      verification_code: state,
+      user_id: user.id,
+      status: 'pending'
+    });
+    if (stateRecords.length === 0) {
+      return Response.json({ error: 'Invalid or expired state. Please retry the Discord verification.' }, { status: 400 });
     }
+    const stateRecord = stateRecords[0];
+    if (new Date(stateRecord.expires_at) < new Date()) {
+      await base44.asServiceRole.entities.DiscordVerification.update(stateRecord.id, { status: 'expired' });
+      return Response.json({ error: 'State expired. Please retry the Discord verification.' }, { status: 400 });
+    }
+    // Consume the state so it can't be reused
+    await base44.asServiceRole.entities.DiscordVerification.update(stateRecord.id, { status: 'expired' });
 
     const botToken = Deno.env.get("DISCORD_BOT_TOKEN");
     const clientSecret = Deno.env.get("DISCORD_CLIENT_SECRET");

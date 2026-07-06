@@ -90,5 +90,43 @@
   "required": [
     "call_type",
     "location"
-  ]
+  ],
+  "rls": {
+    "create": null,
+    "read": null,
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "dispatcher"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "officer"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "ems"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "fire"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
 }
