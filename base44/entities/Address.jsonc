@@ -1,0 +1,12 @@
+{
+  "name": "Address",
+  "type": "object",
+  "properties": {
+    "street_name": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "street_name"
+  ]
+}

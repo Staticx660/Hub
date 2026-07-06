@@ -5,10 +5,16 @@
     "plate": {
       "type": "string"
     },
+    "make": {
+      "type": "string"
+    },
     "model": {
       "type": "string"
     },
     "color": {
+      "type": "string"
+    },
+    "year": {
       "type": "string"
     },
     "owner_name": {

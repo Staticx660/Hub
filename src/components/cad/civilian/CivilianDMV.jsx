@@ -24,7 +24,7 @@ export default function CivilianDMV({ character, department, user, onUpdate }) {
   const [vehicles, setVehicles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [vehForm, setVehForm] = useState({ plate: "", model: "", color: "", registration_status: "Valid", insurance_status: "Valid" });
+  const [vehForm, setVehForm] = useState({ plate: "", make: "", model: "", color: "", year: "", registration_status: "Valid", insurance_status: "Valid" });
   const [licenseTypesOpen, setLicenseTypesOpen] = useState(false);
   const { toast } = useToast();
 
@@ -71,7 +71,7 @@ export default function CivilianDMV({ character, department, user, onUpdate }) {
         owner_user_id: user.id, department_id: department.id, created_by_name: user.full_name,
       });
       toast({ title: "Vehicle registered" });
-      setVehForm({ plate: "", model: "", color: "", registration_status: "Valid", insurance_status: "Valid" });
+      setVehForm({ plate: "", make: "", model: "", color: "", year: "", registration_status: "Valid", insurance_status: "Valid" });
       setDialogOpen(false);
       load();
     } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
@@ -159,7 +159,7 @@ export default function CivilianDMV({ character, department, user, onUpdate }) {
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-slate-800 flex items-center justify-center"><Car className="w-5 h-5 text-slate-400" /></div>
                     <div>
-                      <p className="text-white font-medium text-sm">{v.model || "Unknown"}</p>
+                      <p className="text-white font-medium text-sm">{v.year} {v.make} {v.model || "Unknown"}</p>
                       <p className="text-xs text-slate-500">{v.color} · Plate: <span className="font-mono text-blue-400">{v.plate}</span></p>
                     </div>
                   </div>
@@ -197,8 +197,10 @@ export default function CivilianDMV({ character, department, user, onUpdate }) {
           <div className="space-y-3">
             <div><Label className="text-slate-300">Plate *</Label><Input value={vehForm.plate} onChange={e => setVehForm({ ...vehForm, plate: e.target.value.toUpperCase() })} className="bg-slate-800 border-slate-700 text-white font-mono" /></div>
             <div className="grid grid-cols-2 gap-3">
-              <div><Label className="text-slate-300">Model</Label><Input value={vehForm.model} onChange={e => setVehForm({ ...vehForm, model: e.target.value })} className="bg-slate-800 border-slate-700 text-white" /></div>
-              <div><Label className="text-slate-300">Color</Label><Input value={vehForm.color} onChange={e => setVehForm({ ...vehForm, color: e.target.value })} className="bg-slate-800 border-slate-700 text-white" /></div>
+              <div><Label className="text-slate-300">Make</Label><Input value={vehForm.make} onChange={e => setVehForm({ ...vehForm, make: e.target.value })} className="bg-slate-800 border-slate-700 text-white" placeholder="e.g. Toyota" /></div>
+              <div><Label className="text-slate-300">Model</Label><Input value={vehForm.model} onChange={e => setVehForm({ ...vehForm, model: e.target.value })} className="bg-slate-800 border-slate-700 text-white" placeholder="e.g. Camry" /></div>
+              <div><Label className="text-slate-300">Color</Label><Input value={vehForm.color} onChange={e => setVehForm({ ...vehForm, color: e.target.value })} className="bg-slate-800 border-slate-700 text-white" placeholder="e.g. Black" /></div>
+              <div><Label className="text-slate-300">Year</Label><Input value={vehForm.year} onChange={e => setVehForm({ ...vehForm, year: e.target.value })} className="bg-slate-800 border-slate-700 text-white" placeholder="e.g. 2023" /></div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div><Label className="text-slate-300">Registration</Label>

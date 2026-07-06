@@ -15,8 +15,22 @@
     "discord_invite_url": {
       "type": "string"
     },
+    "website_url": {
+      "type": "string"
+    },
+    "timezone": {
+      "type": "string"
+    },
     "description": {
       "type": "string"
+    },
+    "civilian_limit_per_user": {
+      "type": "number",
+      "default": 5
+    },
+    "notification_tones": {
+      "type": "object",
+      "additionalProperties": true
     },
     "is_setup": {
       "type": "boolean",

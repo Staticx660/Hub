@@ -34,7 +34,7 @@ export default function VehicleSearch({ onSelected, selected }) {
         <div className="flex items-center gap-2">
           <Car className="w-4 h-4 text-blue-400" />
           <span className="text-sm text-white font-mono font-medium">{selected.plate}</span>
-          <span className="text-xs text-slate-400">{selected.model || "Unknown"} · {selected.color || "N/A"}</span>
+          <span className="text-xs text-slate-400">{selected.year} {selected.make} {selected.model || "Unknown"} · {selected.color || "N/A"}</span>
         </div>
         <button onClick={() => onSelected(null)} className="text-slate-400 hover:text-white"><X className="w-4 h-4" /></button>
       </div>
@@ -54,7 +54,7 @@ export default function VehicleSearch({ onSelected, selected }) {
             <button key={v.id} onClick={() => select(v)} className="w-full flex items-center justify-between bg-slate-800 border border-slate-700 rounded-lg p-2 hover:border-blue-500/50 text-left">
               <div>
                 <p className="text-sm text-white font-mono">{v.plate}</p>
-                <p className="text-xs text-slate-500">{v.model || "Unknown"} · {v.color || "N/A"} · Owner: {v.owner_name || "N/A"}</p>
+                <p className="text-xs text-slate-500">{v.year} {v.make} {v.model || "Unknown"} · {v.color || "N/A"} · Owner: {v.owner_name || "N/A"}</p>
               </div>
             </button>
           ))}

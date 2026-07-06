@@ -350,7 +350,7 @@ function VehicleDetail({ vehicle, priors, onLookupOwner }) {
       <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-5">
         <div className="flex items-center gap-4 mb-4">
           <div className="w-16 h-16 rounded-lg bg-slate-800 flex items-center justify-center"><Car className="w-8 h-8 text-slate-600" /></div>
-          <div><h2 className="text-xl font-bold text-white font-mono">{vehicle.plate}</h2><p className="text-sm text-slate-400">{vehicle.model} · {vehicle.color}</p></div>
+          <div><h2 className="text-xl font-bold text-white font-mono">{vehicle.plate}</h2><p className="text-sm text-slate-400">{vehicle.year} {vehicle.make} {vehicle.model} · {vehicle.color}</p></div>
         </div>
         <div className="grid grid-cols-2 gap-4 text-sm">
           <div><span className="text-slate-500">Owner: </span><button onClick={() => onLookupOwner(vehicle.owner_name)} className="text-blue-400 hover:text-blue-300 hover:underline">{vehicle.owner_name || "Unknown"}</button></div>
