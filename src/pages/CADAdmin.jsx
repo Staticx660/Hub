@@ -8,11 +8,12 @@ import CommunityInfoManager from "@/components/cad/customizer/CommunityInfoManag
 import AddressesManager from "@/components/cad/customizer/AddressesManager";
 import UserRestrictionsManager from "@/components/cad/customizer/UserRestrictionsManager";
 import NotificationTonesManager from "@/components/cad/customizer/NotificationTonesManager";
+import DangerZoneManager from "@/components/cad/customizer/DangerZoneManager";
 import PenalCodesManager from "@/components/cad/PenalCodesManager";
 import DepartmentsGroupsManager from "@/components/cad/DepartmentsGroupsManager";
 import PermissionsManager from "@/components/cad/PermissionsManager";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
-import { Users, IdCard, Settings, Building2, MapPin, Gavel, ShieldCheck, Bell, Award, AlertTriangle, MessageCircle, ScrollText, ArrowLeft, KeyRound, Crown } from "lucide-react";
+import { Users, IdCard, Settings, Building2, MapPin, Gavel, ShieldCheck, Bell, Award, AlertTriangle, MessageCircle, ScrollText, ArrowLeft, KeyRound, Crown, Trash2 } from "lucide-react";
 import SystemLogs from "@/pages/SystemLogs";
 
 // access: "supervisor" = visible to supervisors+, "admin" = visible to CAD/platform admins only
@@ -35,6 +36,7 @@ const ALL_SECTIONS = [
   { title: "ADVANCED", items: [
     { id: "discord", label: "Discord", icon: MessageCircle, access: "admin" },
     { id: "logs", label: "Logs", icon: ScrollText, access: "admin" },
+    { id: "danger", label: "Danger Zone", icon: Trash2, access: "admin" },
   ]},
 ];
 
@@ -70,6 +72,7 @@ export default function CADAdmin() {
       case "incidents": return <SimpleListManager entityName="IncidentType" title="Incident Types" description="Customize incident types for reports" fields={[{ name: "name", label: "Type Name", type: "text", required: true }, { name: "category", label: "Category", type: "text" }, { name: "description", label: "Description", type: "text" }, { name: "color", label: "Color", type: "color" }]} />;
       case "discord": return <DiscordSettings />;
       case "logs": return <SystemLogs />;
+      case "danger": return <DangerZoneManager />;
       default: return null;
     }
   };
