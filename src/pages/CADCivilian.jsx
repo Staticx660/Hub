@@ -79,7 +79,7 @@ export default function CADCivilian() {
       ]);
       setWarrants(w);
       setBolos(b);
-      setReports(r.filter(rep => rep.description?.includes(name) || rep.title?.includes(name)));
+      setReports(r.filter(rep => rep.description?.includes(name) || rep.title?.includes(name) || rep.linked_civilian_name === name || rep.linked_civilian_id === selectedChar.id));
     } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
   };
 
@@ -289,6 +289,7 @@ export default function CADCivilian() {
             {selectedChar.height && <div><span className="text-slate-500 block text-xs">Height</span><span className="text-slate-300">{selectedChar.height}</span></div>}
             {selectedChar.weight && <div><span className="text-slate-500 block text-xs">Weight</span><span className="text-slate-300">{selectedChar.weight}</span></div>}
             {selectedChar.race && <div><span className="text-slate-500 block text-xs">Race</span><span className="text-slate-300">{selectedChar.race}</span></div>}
+            {selectedChar.skin_tone && <div><span className="text-slate-500 block text-xs">Skin Tone</span><span className="text-slate-300">{selectedChar.skin_tone}</span></div>}
             {selectedChar.zip_code && <div><span className="text-slate-500 block text-xs">Zip</span><span className="text-slate-300">{selectedChar.zip_code}</span></div>}
           </div>
           {(selectedChar.allergies?.length > 0 || selectedChar.medications?.length > 0 || selectedChar.medical_history?.length > 0 || selectedChar.food_allergies?.length > 0) && (

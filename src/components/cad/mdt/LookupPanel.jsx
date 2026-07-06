@@ -18,7 +18,7 @@ const licenseFields = [
   { field: "drivers_license_status", label: "Driver's License" },
   { field: "weapon_license_status", label: "Weapon License" },
   { field: "pilot_license_status", label: "Pilot License" },
-  { field: "hunting_license_status", label: "Hunting License" },
+  { field: "hunting_license_status", label: "DCNR / Fish & Game" },
 ];
 
 export default function LookupPanel({ department, session }) {
@@ -259,13 +259,49 @@ function PersonDetail({ person, warrants, vehicles, firearms, reports, bolos, on
                 <span className="text-sm text-slate-300">{l.label}</span>
                 <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${licenseBadge(person[l.field])}`}>{person[l.field] || "None"}</span>
               </div>
-              <Select value={person[l.field] || "None"} onValueChange={v => onSetLicense(l.field, v)}>
-                <SelectTrigger className="bg-slate-800 border-slate-700 text-white h-7 text-xs"><SelectValue /></SelectTrigger>
-                <SelectContent className="bg-slate-800 border-slate-700">{licenseStatuses.map(s => <SelectItem key={s} value={s} className="text-white">{s}</SelectItem>)}</SelectContent>
-              </Select>
+              {person[l.field] === "Valid" ? (
+                <button onClick={() => onSetLicense(l.field, "Suspended")} className="w-full text-xs py-1 rounded bg-red-500/10 text-red-400 hover:bg-red-500/20">Suspend</button>
+              ) : (
+                <div className="text-xs text-slate-500 text-center py-1">View only</div>
+              )}
             </div>
           ))}
         </div>
+
+        {(person.drivers_license_types?.length > 0 || person.pilot_license_endorsements?.length > 0 || person.weapon_license_types?.length > 0 || person.hunting_license_types?.length > 0 || person.hunting_license_stamps?.length > 0) && (
+          <div className="mt-3 space-y-2">
+            {person.drivers_license_types?.length > 0 && (
+              <div className="flex items-start gap-2 text-sm">
+                <span className="text-slate-500 min-w-[120px]">DL Types:</span>
+                <div className="flex flex-wrap gap-1">{person.drivers_license_types.map(t => <span key={t} className="text-xs px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400">{t}</span>)}</div>
+              </div>
+            )}
+            {person.pilot_license_endorsements?.length > 0 && (
+              <div className="flex items-start gap-2 text-sm">
+                <span className="text-slate-500 min-w-[120px]">Pilot Endorsements:</span>
+                <div className="flex flex-wrap gap-1">{person.pilot_license_endorsements.map(t => <span key={t} className="text-xs px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400">{t}</span>)}</div>
+              </div>
+            )}
+            {person.weapon_license_types?.length > 0 && (
+              <div className="flex items-start gap-2 text-sm">
+                <span className="text-slate-500 min-w-[120px]">Weapon Types:</span>
+                <div className="flex flex-wrap gap-1">{person.weapon_license_types.map(t => <span key={t} className="text-xs px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400">{t}</span>)}</div>
+              </div>
+            )}
+            {person.hunting_license_types?.length > 0 && (
+              <div className="flex items-start gap-2 text-sm">
+                <span className="text-slate-500 min-w-[120px]">DCNR Types:</span>
+                <div className="flex flex-wrap gap-1">{person.hunting_license_types.map(t => <span key={t} className="text-xs px-2 py-0.5 rounded-full bg-green-500/10 text-green-400">{t}</span>)}</div>
+              </div>
+            )}
+            {person.hunting_license_stamps?.length > 0 && (
+              <div className="flex items-start gap-2 text-sm">
+                <span className="text-slate-500 min-w-[120px]">DCNR Stamps:</span>
+                <div className="flex flex-wrap gap-1">{person.hunting_license_stamps.map(t => <span key={t} className="text-xs px-2 py-0.5 rounded-full bg-green-500/10 text-green-400">{t}</span>)}</div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {warrants.length > 0 && (

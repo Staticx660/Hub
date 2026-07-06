@@ -108,7 +108,8 @@ export default function ReportFormView({ department, session, initialType, templ
         occupation: civilian.occupation || "",
         height: civilian.height || "",
         weight: civilian.weight || "",
-        race: civilian.race || civilian.skin_color || "",
+        skin_tone: civilian.skin_tone || civilian.race || "",
+        race: civilian.race || "",
         hair_color: civilian.hair_color || "",
         eye_color: civilian.eye_color || "",
         emergency_contact: civilian.emergency_contact_name || "",
@@ -130,9 +131,9 @@ export default function ReportFormView({ department, session, initialType, templ
         plate: vehicle.plate || "",
         model: vehicle.model || "",
         color: vehicle.color || "",
-        make: "",
-        year: "",
-        type: "",
+        make: vehicle.make || "",
+        year: vehicle.year || "",
+        type: vehicle.type || "",
       });
       setShowVehicleSearch(false);
     } else {
@@ -326,7 +327,10 @@ export default function ReportFormView({ department, session, initialType, templ
         <div className="bg-[#262a30] rounded-lg p-3">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300">Civilian Information</h3>
-            <Button size="sm" onClick={() => setShowCivilianSearch(!showCivilianSearch)} className="bg-teal-600 hover:bg-teal-700 text-white gap-1.5"><Search className="w-3.5 h-3.5" /> Search</Button>
+            <div className="flex gap-2">
+              <Button size="sm" variant="outline" onClick={() => { setSelectedCivilian(null); setCivilianData({}); }} className="border-slate-600 text-slate-400 hover:text-white gap-1.5"><Trash2 className="w-3.5 h-3.5" /> Clear</Button>
+              <Button size="sm" onClick={() => setShowCivilianSearch(!showCivilianSearch)} className="bg-teal-600 hover:bg-teal-700 text-white gap-1.5"><Search className="w-3.5 h-3.5" /> Search</Button>
+            </div>
           </div>
           {showCivilianSearch && (
             <div className="mb-3"><CivilianSearch selected={selectedCivilian} onSelected={handleCivilianSelected} /></div>
@@ -353,7 +357,7 @@ export default function ReportFormView({ department, session, initialType, templ
             <GridField label="Phone"><Input value={civilianData.phone || ""} onChange={e => setCivilianData({ ...civilianData, phone: e.target.value })} className={darkInput} /></GridField>
             <GridField label="Height"><Input value={civilianData.height || ""} onChange={e => setCivilianData({ ...civilianData, height: e.target.value })} className={darkInput} /></GridField>
             <GridField label="Weight"><Input value={civilianData.weight || ""} onChange={e => setCivilianData({ ...civilianData, weight: e.target.value })} className={darkInput} /></GridField>
-            <GridField label="Skin Tone"><Input value={civilianData.race || ""} onChange={e => setCivilianData({ ...civilianData, race: e.target.value })} className={darkInput} /></GridField>
+            <GridField label="Skin Tone"><Input value={civilianData.skin_tone || ""} onChange={e => setCivilianData({ ...civilianData, skin_tone: e.target.value })} className={darkInput} /></GridField>
             <GridField label="Hair Color">
               <Select value={civilianData.hair_color || ""} onValueChange={v => setCivilianData({ ...civilianData, hair_color: v })}>
                 <SelectTrigger className={darkSelect}><SelectValue placeholder="Select..." /></SelectTrigger>
@@ -376,7 +380,10 @@ export default function ReportFormView({ department, session, initialType, templ
         <div className="bg-[#262a30] rounded-lg p-3">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300">Vehicle Information</h3>
-            <Button size="sm" onClick={() => setShowVehicleSearch(!showVehicleSearch)} className="bg-teal-600 hover:bg-teal-700 text-white gap-1.5"><Search className="w-3.5 h-3.5" /> Search</Button>
+            <div className="flex gap-2">
+              <Button size="sm" variant="outline" onClick={() => { setSelectedVehicle(null); setVehicleData({}); }} className="border-slate-600 text-slate-400 hover:text-white gap-1.5"><Trash2 className="w-3.5 h-3.5" /> Clear</Button>
+              <Button size="sm" onClick={() => setShowVehicleSearch(!showVehicleSearch)} className="bg-teal-600 hover:bg-teal-700 text-white gap-1.5"><Search className="w-3.5 h-3.5" /> Search</Button>
+            </div>
           </div>
           {showVehicleSearch && (
             <div className="mb-3"><VehicleSearch selected={selectedVehicle} onSelected={handleVehicleSelected} /></div>
@@ -412,7 +419,7 @@ export default function ReportFormView({ department, session, initialType, templ
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <GridField label="Charge">
                   {penalCodes.length > 0 ? (
-                    <Select value={charge.charge} onValueChange={v => { const pc = penalCodes.find(p => p.id === v); updateCharge(charge.id, "charge", pc ? `${pc.code} - ${pc.title}` : v); if (pc) { updateCharge(charge.id, "title_code", pc.code); updateCharge(charge.id, "bond_amount", pc.fine_amount || 0); updateCharge(charge.id, "jail_time", pc.jail_time_months ? `${pc.jail_time_months} month${pc.jail_time_months !== 1 ? 's' : ''}` : ""); } }}>
+                    <Select value={charge.charge} onValueChange={v => { const pc = penalCodes.find(p => p.id === v); updateCharge(charge.id, "charge", pc ? `${pc.code} - ${pc.title}` : v); if (pc) { updateCharge(charge.id, "title_code", pc.code); updateCharge(charge.id, "bond_amount", pc.fine_amount || 0); updateCharge(charge.id, "jail_time", pc.jail_time_months ? `${pc.jail_time_months} month${pc.jail_time_months !== 1 ? 's' : ''}` : ""); if (pc.charge_type) updateCharge(charge.id, "charge_type", pc.charge_type); if (pc.bond_type) updateCharge(charge.id, "bond_type", pc.bond_type); } }}>
                       <SelectTrigger className={darkSelect}><SelectValue placeholder="Select..." /></SelectTrigger>
                       <SelectContent className="bg-slate-800 border-slate-700">{penalCodes.map(pc => <SelectItem key={pc.id} value={pc.id} className="text-white">{pc.code} - {pc.title}</SelectItem>)}</SelectContent>
                     </Select>

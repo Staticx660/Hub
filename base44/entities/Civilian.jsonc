@@ -38,6 +38,9 @@
     "race": {
       "type": "string"
     },
+    "skin_tone": {
+      "type": "string"
+    },
     "occupation": {
       "type": "string"
     },
@@ -115,6 +118,12 @@
       ],
       "default": "None"
     },
+    "pilot_license_endorsements": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
     "weapon_license_status": {
       "type": "string",
       "enum": [
@@ -125,6 +134,12 @@
       ],
       "default": "None"
     },
+    "weapon_license_types": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
     "hunting_license_status": {
       "type": "string",
       "enum": [
@@ -134,6 +149,18 @@
         "None"
       ],
       "default": "None"
+    },
+    "hunting_license_types": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "hunting_license_stamps": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
     },
     "notes": {
       "type": "string"

@@ -17,6 +17,9 @@
     "year": {
       "type": "string"
     },
+    "type": {
+      "type": "string"
+    },
     "owner_name": {
       "type": "string"
     },

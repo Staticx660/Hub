@@ -6,25 +6,30 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
-import { Car, Plus, Trash2, Flag, X, ChevronDown, ChevronUp, IdCard } from "lucide-react";
+import { Car, Plus, Trash2, Flag, X, ChevronDown, ChevronUp, IdCard, Plane, Crosshair, Leaf } from "lucide-react";
+import LicenseMultiSelect from "@/components/cad/civilian/LicenseMultiSelect";
 
 const licenseFields = [
   { key: "drivers_license_status", label: "Driver's License" },
   { key: "pilot_license_status", label: "Pilot License" },
   { key: "weapon_license_status", label: "Weapon License" },
-  { key: "hunting_license_status", label: "Hunting License" },
+  { key: "hunting_license_status", label: "DCNR / Fish & Game" },
 ];
 const licenseStatuses = ["Valid", "Suspended", "Revoked", "None"];
 const statusColors = { Valid: "text-green-400 bg-green-500/10", Suspended: "text-yellow-400 bg-yellow-500/10", Revoked: "text-red-400 bg-red-500/10", None: "text-slate-400 bg-slate-700/50" };
 const LICENSE_TYPES = ["Standard", "CDL Class A", "CDL Class B", "CDL Class C", "Motorcycle", "Boat", "Commercial"];
 const regStatuses = ["Valid", "Expired", "Suspended", "None"];
 const insStatuses = ["Valid", "Expired", "None"];
+const PILOT_ENDORSEMENTS = ["Private Pilot", "Commercial Pilot", "Instrument Rating", "Multi-Engine", "Helicopter", "Seaplane", "Flight Instructor", "ATP"];
+const WEAPON_LICENSE_TYPES = ["Concealed Carry", "Open Carry", "Class 3/NFA", "FFL Dealer"];
+const HUNTING_TYPES = ["Hunting", "Fishing", "Trapping", "Commercial Fishing", "Archery"];
+const HUNTING_STAMPS = ["Deer", "Turkey", "Waterfowl", "Bear", "Elk", "Migratory Bird", "Archery", "Muzzleloader", "Small Game", "Big Game"];
 
 export default function CivilianDMV({ character, department, user, onUpdate }) {
   const [vehicles, setVehicles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [vehForm, setVehForm] = useState({ plate: "", make: "", model: "", color: "", year: "", registration_status: "Valid", insurance_status: "Valid" });
+  const [vehForm, setVehForm] = useState({ plate: "", make: "", model: "", color: "", year: "", type: "", registration_status: "Valid", insurance_status: "Valid" });
   const [licenseTypesOpen, setLicenseTypesOpen] = useState(false);
   const { toast } = useToast();
 
@@ -55,6 +60,15 @@ export default function CivilianDMV({ character, department, user, onUpdate }) {
     } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
   };
 
+  const toggleArrayField = async (field, value) => {
+    const current = character[field] || [];
+    const updated = current.includes(value) ? current.filter(t => t !== value) : [...current, value];
+    try {
+      await base44.entities.Civilian.update(character.id, { [field]: updated });
+      if (onUpdate) await onUpdate();
+    } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
+  };
+
   const setVehicleStatus = async (vehId, field, status) => {
     try {
       await base44.entities.CivilianVehicle.update(vehId, { [field]: status });
@@ -71,7 +85,7 @@ export default function CivilianDMV({ character, department, user, onUpdate }) {
         owner_user_id: user.id, department_id: department.id, created_by_name: user.full_name,
       });
       toast({ title: "Vehicle registered" });
-      setVehForm({ plate: "", make: "", model: "", color: "", year: "", registration_status: "Valid", insurance_status: "Valid" });
+      setVehForm({ plate: "", make: "", model: "", color: "", year: "", type: "", registration_status: "Valid", insurance_status: "Valid" });
       setDialogOpen(false);
       load();
     } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
@@ -142,6 +156,13 @@ export default function CivilianDMV({ character, department, user, onUpdate }) {
             </div>
           )}
         </div>
+
+        <div className="mt-3 space-y-3">
+          <LicenseMultiSelect label="Pilot License Endorsements" icon={Plane} options={PILOT_ENDORSEMENTS} selected={character.pilot_license_endorsements || []} onChange={(v) => toggleArrayField("pilot_license_endorsements", v)} />
+          <LicenseMultiSelect label="Weapon License Types" icon={Crosshair} options={WEAPON_LICENSE_TYPES} selected={character.weapon_license_types || []} onChange={(v) => toggleArrayField("weapon_license_types", v)} />
+          <LicenseMultiSelect label="DCNR / Fish & Game License Types" icon={Leaf} options={HUNTING_TYPES} selected={character.hunting_license_types || []} onChange={(v) => toggleArrayField("hunting_license_types", v)} />
+          <LicenseMultiSelect label="DCNR / Fish & Game Stamps" icon={Leaf} options={HUNTING_STAMPS} selected={character.hunting_license_stamps || []} onChange={(v) => toggleArrayField("hunting_license_stamps", v)} />
+        </div>
       </div>
 
       <div>
@@ -160,7 +181,7 @@ export default function CivilianDMV({ character, department, user, onUpdate }) {
                     <div className="w-10 h-10 rounded-lg bg-slate-800 flex items-center justify-center"><Car className="w-5 h-5 text-slate-400" /></div>
                     <div>
                       <p className="text-white font-medium text-sm">{v.year} {v.make} {v.model || "Unknown"}</p>
-                      <p className="text-xs text-slate-500">{v.color} · Plate: <span className="font-mono text-blue-400">{v.plate}</span></p>
+                      <p className="text-xs text-slate-500">{v.type ? `${v.type} · ` : ""}{v.color} · Plate: <span className="font-mono text-blue-400">{v.plate}</span></p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
@@ -196,6 +217,12 @@ export default function CivilianDMV({ character, department, user, onUpdate }) {
           <DialogHeader><DialogTitle className="text-white">Register Vehicle</DialogTitle></DialogHeader>
           <div className="space-y-3">
             <div><Label className="text-slate-300">Plate *</Label><Input value={vehForm.plate} onChange={e => setVehForm({ ...vehForm, plate: e.target.value.toUpperCase() })} className="bg-slate-800 border-slate-700 text-white font-mono" /></div>
+            <div><Label className="text-slate-300">Vehicle Type</Label>
+              <Select value={vehForm.type} onValueChange={v => setVehForm({ ...vehForm, type: v })}>
+                <SelectTrigger className="bg-slate-800 border-slate-700 text-white"><SelectValue placeholder="Select..." /></SelectTrigger>
+                <SelectContent className="bg-slate-800 border-slate-700">{["Sedan", "SUV", "Truck", "Motorcycle", "Van", "Sports", "Other"].map(s => <SelectItem key={s} value={s} className="text-white">{s}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
             <div className="grid grid-cols-2 gap-3">
               <div><Label className="text-slate-300">Make</Label><Input value={vehForm.make} onChange={e => setVehForm({ ...vehForm, make: e.target.value })} className="bg-slate-800 border-slate-700 text-white" placeholder="e.g. Toyota" /></div>
               <div><Label className="text-slate-300">Model</Label><Input value={vehForm.model} onChange={e => setVehForm({ ...vehForm, model: e.target.value })} className="bg-slate-800 border-slate-700 text-white" placeholder="e.g. Camry" /></div>

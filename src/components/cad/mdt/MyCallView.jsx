@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { MapPin, Phone, Siren, Unlink, Link2, Users, Clock, Save, Radio, CheckCircle2, ArrowLeft, Send } from "lucide-react";
-import LocationMap from "@/components/cad/mdt/LocationMap";
+import GTA5Map from "@/components/cad/mdt/GTA5Map";
 
 export default function MyCallView({ department, session, setSession, selectedCallId, setSelectedCallId, setActiveView }) {
   const [call, setCall] = useState(null);
@@ -151,8 +151,8 @@ export default function MyCallView({ department, session, setSession, selectedCa
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-4">
-            <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Location Map</h3>
-            <LocationMap location={call.location} height={280} />
+            <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">GTA V Location Map</h3>
+            <GTA5Map location={call.location} height={280} />
           </div>
           <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-4">
             <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">CAD Notes</h3>

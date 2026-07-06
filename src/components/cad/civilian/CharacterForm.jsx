@@ -69,7 +69,7 @@ function TagSelector({ label, options, selected, onChange }) {
 
 const emptyForm = {
   first_name: "", middle_name: "", last_name: "", dob: "", gender: "Male",
-  hair_color: "", eye_color: "", height: "", weight: "", race: "",
+  hair_color: "", eye_color: "", height: "", weight: "", race: "", skin_tone: "",
   occupation: "", address: "", zip_code: "", phone: "",
   emergency_contact_name: "", emergency_contact_phone: "", emergency_contact_relationship: "",
   photo_url: "", allergies: [], medications: [], medical_history: [], food_allergies: [],
@@ -171,6 +171,12 @@ export default function CharacterForm({ open, onOpenChange, editing, department,
               <Select value={form.race} onValueChange={v => set("race", v)}>
                 <SelectTrigger className="bg-slate-800 border-slate-700 text-white"><SelectValue placeholder="—" /></SelectTrigger>
                 <SelectContent className="bg-slate-800 border-slate-700">{RACES.map(c => <SelectItem key={c} value={c} className="text-white">{c}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div><Label className="text-slate-300">Skin Tone</Label>
+              <Select value={form.skin_tone} onValueChange={v => set("skin_tone", v)}>
+                <SelectTrigger className="bg-slate-800 border-slate-700 text-white"><SelectValue placeholder="—" /></SelectTrigger>
+                <SelectContent className="bg-slate-800 border-slate-700">{["Fair", "Light", "Medium", "Tan", "Olive", "Brown", "Dark Brown", "Deep"].map(c => <SelectItem key={c} value={c} className="text-white">{c}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div><Label className="text-slate-300">Height</Label><Input value={form.height} onChange={e => set("height", e.target.value)} className="bg-slate-800 border-slate-700 text-white" placeholder="5ft 10in" /></div>

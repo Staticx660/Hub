@@ -14,6 +14,12 @@
     "category": {
       "type": "string"
     },
+    "charge_type": {
+      "type": "string"
+    },
+    "bond_type": {
+      "type": "string"
+    },
     "fine_amount": {
       "type": "number",
       "default": 0

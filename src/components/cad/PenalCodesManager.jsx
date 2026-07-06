@@ -18,7 +18,7 @@ export default function PenalCodesManager() {
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState(null);
-  const [form, setForm] = useState({ code: "", title: "", category: "", description: "", fine_amount: 0, jail_time_months: 0, is_active: true });
+  const [form, setForm] = useState({ code: "", title: "", category: "", charge_type: "", bond_type: "", description: "", fine_amount: 0, jail_time_months: 0, is_active: true });
   const [importing, setImporting] = useState(false);
   const { toast } = useToast();
 
@@ -36,8 +36,8 @@ export default function PenalCodesManager() {
 
   useEffect(() => { load(); }, []);
 
-  const openCreate = () => { setEditing(null); setForm({ code: "", title: "", category: "", description: "", fine_amount: 0, jail_time_months: 0, is_active: true }); setDialogOpen(true); };
-  const openEdit = (item) => { setEditing(item); setForm({ code: item.code || "", title: item.title || "", category: item.category || "", description: item.description || "", fine_amount: item.fine_amount || 0, jail_time_months: item.jail_time_months || 0, is_active: item.is_active !== false }); setDialogOpen(true); };
+  const openCreate = () => { setEditing(null); setForm({ code: "", title: "", category: "", charge_type: "", bond_type: "", description: "", fine_amount: 0, jail_time_months: 0, is_active: true }); setDialogOpen(true); };
+  const openEdit = (item) => { setEditing(item); setForm({ code: item.code || "", title: item.title || "", category: item.category || "", charge_type: item.charge_type || "", bond_type: item.bond_type || "", description: item.description || "", fine_amount: item.fine_amount || 0, jail_time_months: item.jail_time_months || 0, is_active: item.is_active !== false }); setDialogOpen(true); };
 
   const handleSave = async () => {
     if (!form.code?.trim() || !form.title?.trim()) { toast({ title: "Code and Title are required", variant: "destructive" }); return; }
@@ -71,6 +71,8 @@ export default function PenalCodesManager() {
           code,
           title,
           category: row["category"] || "",
+          charge_type: row["charge type"] || row["charge_type"] || "",
+          bond_type: row["bond type"] || row["bond_type"] || "",
           description: row["description"] || "",
           fine_amount: parseFloat(row["fine amount ($)"] || row["fine amount"] || row["fine"] || "0") || 0,
           jail_time_months: parseFloat(row["jail time (months)"] || row["jail time"] || row["jail"] || "0") || 0,
@@ -176,6 +178,26 @@ export default function PenalCodesManager() {
             <div className="grid grid-cols-2 gap-3">
               <div><Label className="text-slate-300">Code *</Label><Input value={form.code} onChange={e => setForm({ ...form, code: e.target.value })} className="bg-slate-800 border-slate-700 text-white font-mono" placeholder="e.g. A0.0.0.1" /></div>
               <div><Label className="text-slate-300">Category</Label><Input value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} className="bg-slate-800 border-slate-700 text-white" placeholder="e.g. Felony" /></div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div><Label className="text-slate-300">Charge Type</Label>
+                <Select value={form.charge_type || "_none"} onValueChange={v => setForm({ ...form, charge_type: v === "_none" ? "" : v })}>
+                  <SelectTrigger className="bg-slate-800 border-slate-700 text-white"><SelectValue placeholder="None" /></SelectTrigger>
+                  <SelectContent className="bg-slate-800 border-slate-700">
+                    <SelectItem value="_none" className="text-white">— None —</SelectItem>
+                    {chargeTypes.map(ct => <SelectItem key={ct.id} value={ct.name} className="text-white">{ct.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div><Label className="text-slate-300">Bond Type</Label>
+                <Select value={form.bond_type || "_none"} onValueChange={v => setForm({ ...form, bond_type: v === "_none" ? "" : v })}>
+                  <SelectTrigger className="bg-slate-800 border-slate-700 text-white"><SelectValue placeholder="None" /></SelectTrigger>
+                  <SelectContent className="bg-slate-800 border-slate-700">
+                    <SelectItem value="_none" className="text-white">— None —</SelectItem>
+                    {bondTypes.map(bt => <SelectItem key={bt.id} value={bt.name} className="text-white">{bt.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <div><Label className="text-slate-300">Title *</Label><Input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} className="bg-slate-800 border-slate-700 text-white" placeholder="e.g. Murder" /></div>
             <div><Label className="text-slate-300">Description</Label><Textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} className="bg-slate-800 border-slate-700 text-white" rows={3} /></div>
