@@ -1,42 +1,115 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "@/lib/AuthContext";
 import { base44 } from "@/api/base44Client";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, Link2, Unlink, CheckCircle2, MessageCircle, AlertCircle } from "lucide-react";
+import { Loader2, Unlink, CheckCircle2, MessageCircle, AlertCircle, Send, ArrowLeft, ShieldCheck } from "lucide-react";
 
 export default function DiscordLinker() {
   const { user, checkUserAuth } = useAuth();
+  const [step, setStep] = useState("enter-id");
   const [discordId, setDiscordId] = useState("");
-  const [linking, setLinking] = useState(false);
+  const [code, setCode] = useState("");
+  const [dmDisplayName, setDmDisplayName] = useState(null);
+  const [sending, setSending] = useState(false);
+  const [verifying, setVerifying] = useState(false);
+  const [oauthLoading, setOauthLoading] = useState(false);
   const [unlinking, setUnlinking] = useState(false);
   const [linkedInfo, setLinkedInfo] = useState(null);
   const { toast } = useToast();
 
   const isLinked = !!user?.discord_id;
 
-  const handleLink = async () => {
+  const handleSendCode = async () => {
     if (!discordId.trim()) return;
-    setLinking(true);
-    setLinkedInfo(null);
+    setSending(true);
     try {
-      const res = await base44.functions.invoke("linkDiscordAccount", { discord_id: discordId.trim() });
-      const data = res.data;
-      if (data.error) {
-        toast({ title: "Linking failed", description: data.error, variant: "destructive" });
+      const res = await base44.functions.invoke("sendDiscordVerification", { discord_id: discordId.trim() });
+      if (res.data?.error) {
+        toast({ title: "Failed to send", description: res.data.error, variant: "destructive" });
       } else {
-        setLinkedInfo(data);
-        setDiscordId("");
-        await checkUserAuth();
-        toast({ title: "Discord linked", description: `Connected as ${data.displayName}`, duration: 3000 });
+        setDmDisplayName(res.data?.displayName);
+        setStep("enter-code");
+        toast({ title: "Code sent", description: "Check your Discord DMs for the 6-digit code.", duration: 4000 });
       }
     } catch (e) {
-      toast({ title: "Linking failed", description: e.response?.data?.error || e.message, variant: "destructive" });
+      toast({ title: "Failed", description: e.response?.data?.error || e.message, variant: "destructive" });
     } finally {
-      setLinking(false);
+      setSending(false);
     }
   };
+
+  const handleVerify = async () => {
+    if (!code.trim()) return;
+    setVerifying(true);
+    try {
+      const res = await base44.functions.invoke("verifyDiscordCode", { code: code.trim(), discord_id: discordId.trim() });
+      if (res.data?.error) {
+        toast({ title: "Verification failed", description: res.data.error, variant: "destructive" });
+      } else {
+        setLinkedInfo(res.data);
+        setCode("");
+        setDiscordId("");
+        setStep("enter-id");
+        await checkUserAuth();
+        toast({ title: "Discord verified", description: `Connected as ${res.data.displayName}`, duration: 3000 });
+      }
+    } catch (e) {
+      toast({ title: "Verification failed", description: e.response?.data?.error || e.message, variant: "destructive" });
+    } finally {
+      setVerifying(false);
+    }
+  };
+
+  const handleOAuth = async () => {
+    setOauthLoading(true);
+    try {
+      const redirectUri = window.location.origin + "/cad-settings";
+      const res = await base44.functions.invoke("getDiscordOAuthUrl", { redirect_uri: redirectUri });
+      if (res.data?.error) {
+        toast({ title: "Failed", description: res.data.error, variant: "destructive" });
+        setOauthLoading(false);
+      } else {
+        window.location.href = res.data.authUrl;
+      }
+    } catch (e) {
+      toast({ title: "Failed", description: e.message, variant: "destructive" });
+      setOauthLoading(false);
+    }
+  };
+
+  // Handle OAuth callback: detect ?code= returning from Discord
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const oauthCode = params.get("code");
+    const oauthState = params.get("state");
+    if (oauthCode && !isLinked) {
+      (async () => {
+        setOauthLoading(true);
+        try {
+          const redirectUri = window.location.origin + "/cad-settings";
+          const res = await base44.functions.invoke("completeDiscordOAuth", {
+            code: oauthCode,
+            redirect_uri: redirectUri,
+            state: oauthState
+          });
+          if (res.data?.error) {
+            toast({ title: "OAuth failed", description: res.data.error, variant: "destructive" });
+          } else {
+            setLinkedInfo(res.data);
+            await checkUserAuth();
+            toast({ title: "Discord verified", description: `Connected as ${res.data.displayName}`, duration: 3000 });
+          }
+        } catch (e) {
+          toast({ title: "OAuth failed", description: e.response?.data?.error || e.message, variant: "destructive" });
+        } finally {
+          setOauthLoading(false);
+          window.history.replaceState({}, "", window.location.pathname);
+        }
+      })();
+    }
+  }, [isLinked]);
 
   const handleUnlink = async () => {
     setUnlinking(true);
@@ -61,20 +134,25 @@ export default function DiscordLinker() {
         <div>
           <h3 className="font-semibold text-cad-text">Discord Account</h3>
           <p className="text-xs text-cad-muted mt-0.5">
-            Link your Discord to sync your rank, callsign, and department automatically.
+            Verify your Discord to link securely — this prevents anyone from using your Discord ID to gain access.
           </p>
         </div>
       </div>
 
-      {isLinked ? (
+      {oauthLoading && (
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="w-6 h-6 text-[#5865F2] animate-spin" />
+          <span className="ml-3 text-sm text-cad-muted">Completing Discord verification…</span>
+        </div>
+      )}
+
+      {!oauthLoading && isLinked && (
         <div className="space-y-4">
           <div className="flex items-center gap-3 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
-            <CheckCircle2 className="w-5 h-5 text-emerald-400 flex-shrink-0" />
+            <ShieldCheck className="w-5 h-5 text-emerald-400 flex-shrink-0" />
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-emerald-400">Account Linked</p>
-              <p className="text-xs text-cad-muted font-mono truncate">
-                ID: {user.discord_id}
-              </p>
+              <p className="text-sm font-medium text-emerald-400">Verified & Linked</p>
+              <p className="text-xs text-cad-muted font-mono truncate">ID: {user.discord_id}</p>
             </div>
             {user.avatar_url && (
               <img src={user.avatar_url} alt="Discord avatar" className="w-10 h-10 rounded-full ring-2 ring-emerald-500/30" />
@@ -90,39 +168,72 @@ export default function DiscordLinker() {
             </div>
           )}
 
-          <Button
-            onClick={handleUnlink}
-            disabled={unlinking}
-            variant="outline"
-            className="w-full border-red-500/30 text-red-400 hover:bg-red-500/10 hover:text-red-300"
-          >
+          <Button onClick={handleUnlink} disabled={unlinking} variant="outline" className="w-full border-red-500/30 text-red-400 hover:bg-red-500/10 hover:text-red-300">
             {unlinking ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Unlink className="w-4 h-4 mr-2" />}
             Unlink Discord
           </Button>
         </div>
-      ) : (
-        <div className="space-y-3">
+      )}
+
+      {!oauthLoading && !isLinked && step === "enter-id" && (
+        <div className="space-y-4">
           <div className="flex items-start gap-2 text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded-lg p-2.5">
             <AlertCircle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
-            <p>Enable <span className="font-medium">Developer Mode</span> in Discord (Settings → Advanced), then right-click your name → <span className="font-medium">Copy User ID</span>.</p>
+            <p>Enable <span className="font-medium">Developer Mode</span> in Discord (Settings → Advanced), then right-click your name → <span className="font-medium">Copy User ID</span>. We'll DM a code to verify you own the account.</p>
           </div>
           <div className="flex gap-2">
             <Input
               value={discordId}
               onChange={(e) => setDiscordId(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && !linking && discordId.trim() && handleLink()}
+              onKeyDown={(e) => e.key === "Enter" && !sending && discordId.trim() && handleSendCode()}
               placeholder="Paste your Discord ID..."
               className="flex-1 bg-cad-surface-2/50 border-cad-border/50 text-cad-text placeholder:text-cad-dim font-mono text-sm"
             />
-            <Button
-              onClick={handleLink}
-              disabled={linking || !discordId.trim()}
-              className="bg-[#5865F2] hover:bg-[#4752c4] text-white"
-            >
-              {linking ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Link2 className="w-4 h-4 mr-2" />}
-              Link
+            <Button onClick={handleSendCode} disabled={sending || !discordId.trim()} className="bg-[#5865F2] hover:bg-[#4752c4] text-white">
+              {sending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Send className="w-4 h-4 mr-2" />}
+              Send Code
             </Button>
           </div>
+
+          <div className="relative flex items-center my-1">
+            <div className="flex-grow border-t border-cad-border/40"></div>
+            <span className="mx-3 text-xs text-cad-dim uppercase tracking-wide">or</span>
+            <div className="flex-grow border-t border-cad-border/40"></div>
+          </div>
+
+          <Button onClick={handleOAuth} disabled={oauthLoading} variant="outline" className="w-full border-[#5865F2]/40 text-[#5865F2] hover:bg-[#5865F2]/10">
+            {oauthLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <ShieldCheck className="w-4 h-4 mr-2" />}
+            Verify with Discord Login
+          </Button>
+        </div>
+      )}
+
+      {!oauthLoading && !isLinked && step === "enter-code" && (
+        <div className="space-y-4">
+          <div className="flex items-start gap-2 text-xs text-cad-muted bg-cad-surface-2/40 rounded-lg p-2.5">
+            <MessageCircle className="w-3.5 h-3.5 text-[#5865F2] flex-shrink-0 mt-0.5" />
+            <p>Enter the 6-digit code sent to <span className="font-medium text-cad-text">{dmDisplayName || "your Discord DMs"}</span>. It expires in 10 minutes.</p>
+          </div>
+          <Input
+            value={code}
+            onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+            onKeyDown={(e) => e.key === "Enter" && !verifying && code.trim() && handleVerify()}
+            placeholder="000000"
+            inputMode="numeric"
+            className="bg-cad-surface-2/50 border-cad-border/50 text-cad-text placeholder:text-cad-dim font-mono text-lg tracking-[0.5em] text-center"
+          />
+          <div className="flex gap-2">
+            <Button onClick={() => setStep("enter-id")} variant="outline" className="flex-1 border-cad-border/50 text-cad-muted">
+              <ArrowLeft className="w-4 h-4 mr-2" /> Back
+            </Button>
+            <Button onClick={handleVerify} disabled={verifying || !code.trim()} className="flex-1 bg-[#5865F2] hover:bg-[#4752c4] text-white">
+              {verifying ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <ShieldCheck className="w-4 h-4 mr-2" />}
+              Verify
+            </Button>
+          </div>
+          <button onClick={handleSendCode} disabled={sending} className="w-full text-xs text-cad-dim hover:text-cad-muted underline">
+            Didn't get a code? Resend
+          </button>
         </div>
       )}
     </div>

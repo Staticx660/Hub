@@ -1,0 +1,44 @@
+{
+  "name": "DiscordVerification",
+  "type": "object",
+  "properties": {
+    "discord_id": {
+      "type": "string"
+    },
+    "verification_code": {
+      "type": "string"
+    },
+    "user_id": {
+      "type": "string"
+    },
+    "user_email": {
+      "type": "string"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "verified",
+        "expired"
+      ],
+      "default": "pending"
+    },
+    "method": {
+      "type": "string",
+      "enum": [
+        "bot_dm",
+        "oauth"
+      ],
+      "default": "bot_dm"
+    }
+  },
+  "required": [
+    "discord_id",
+    "verification_code",
+    "user_id"
+  ]
+}
