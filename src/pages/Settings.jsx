@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Shield, Plus, UserPlus, ArrowLeft,
-  MessageCircle, Check, Unlink, Upload, Loader2, User, Lock, Mail
+  Upload, Loader2, User, Lock, Mail
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,12 +12,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/lib/AuthContext";
 import ThemeSelector from "@/components/cad/ThemeSelector";
+import DiscordLinker from "@/components/cad/DiscordLinker";
 
 export default function Settings() {
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [discordIdInput, setDiscordIdInput] = useState("");
-  const [linking, setLinking] = useState(false);
   const [displayName, setDisplayName] = useState("");
   const [savingName, setSavingName] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
@@ -37,38 +36,6 @@ export default function Settings() {
     };
     load();
   }, []);
-
-  const handleLinkDiscord = async () => {
-    if (!discordIdInput.trim()) return;
-    setLinking(true);
-    try {
-      const res = await base44.functions.invoke('linkDiscordAccount', { discord_id: discordIdInput.trim() });
-      if (res.data.error) {
-        toast({ title: "Linking failed", description: res.data.error, variant: "destructive" });
-      } else {
-        const updated = await base44.auth.me();
-        setCurrentUser(updated);
-        setDiscordIdInput("");
-        toast({
-          title: "Discord linked!",
-          description: res.data.rosterMember
-            ? `Linked as ${res.data.rosterMember.name} (${res.data.rosterMember.rank})`
-            : `Linked to ${res.data.displayName}`
-        });
-      }
-    } catch (e) { toast({ title: "Linking failed", description: e.message, variant: "destructive" }); }
-    setLinking(false);
-  };
-
-  const handleUnlinkDiscord = async () => {
-    try {
-      await base44.auth.updateMe({ discord_id: null, avatar_url: null });
-      const updated = await base44.auth.me();
-      setCurrentUser(updated);
-      await checkUserAuth();
-      toast({ title: "Discord unlinked", description: "Your Discord account has been disconnected." });
-    } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
-  };
 
   const handleSaveName = async () => {
     setSavingName(true);
@@ -119,7 +86,6 @@ export default function Settings() {
   }
 
   const isAdmin = currentUser?.role === "admin";
-  const hasDiscord = !!currentUser?.discord_id;
   const avatar = currentUser?.avatar_url;
 
   return (
@@ -136,55 +102,7 @@ export default function Settings() {
           </div>
 
           {/* Discord Linking */}
-          <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-6">
-            <h2 className="text-lg font-semibold text-white mb-2 flex items-center gap-2">
-              <MessageCircle className="w-4 h-4 text-indigo-400" /> Discord Linking
-            </h2>
-            <p className="text-sm text-slate-400 mb-4">
-              Link your Discord account to get access to your CAD departments, roles, and callsigns. The system reads your Discord roles to determine which departments you can access.
-            </p>
-
-            {hasDiscord ? (
-              <div className="flex items-center gap-3 bg-slate-800/50 rounded-lg p-4">
-                {avatar ? (
-                  <img src={avatar} alt="" className="w-12 h-12 rounded-full" />
-                ) : (
-                  <div className="w-12 h-12 rounded-full bg-indigo-500/20 flex items-center justify-center">
-                    <MessageCircle className="w-5 h-5 text-indigo-400" />
-                  </div>
-                )}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-white font-medium">Connected</span>
-                    <Check className="w-4 h-4 text-green-400" />
-                  </div>
-                  <p className="text-xs text-slate-400 truncate">Discord ID: {currentUser.discord_id}</p>
-                </div>
-                <Button onClick={handleUnlinkDiscord} variant="outline" size="sm" className="border-slate-700 text-slate-300 hover:bg-slate-800">
-                  <Unlink className="w-3.5 h-3.5 mr-1.5" /> Unlink
-                </Button>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <div>
-                  <Label className="text-slate-300 text-sm">Your Discord ID</Label>
-                  <Input
-                    placeholder="e.g. 1459547602230968330"
-                    value={discordIdInput}
-                    onChange={e => setDiscordIdInput(e.target.value)}
-                    className="bg-slate-800 border-slate-700 text-white mt-1"
-                  />
-                  <p className="text-xs text-slate-500 mt-1.5">
-                    To find your Discord ID: enable Developer Mode in Discord Settings → Advanced, then right-click your username → Copy User ID.
-                  </p>
-                </div>
-                <Button onClick={handleLinkDiscord} disabled={linking || !discordIdInput.trim()} className="bg-indigo-600 hover:bg-indigo-700">
-                  {linking ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <MessageCircle className="w-4 h-4 mr-2" />}
-                  Link Discord
-                </Button>
-              </div>
-            )}
-          </div>
+          <DiscordLinker variant="slate" />
 
           {/* Profile */}
           <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-6">
