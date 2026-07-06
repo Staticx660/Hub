@@ -77,7 +77,7 @@ const AuthenticatedApp = () => {
         {/* Landing - no sidebar */}
         <Route path="/" element={<Landing />} />
 
-        {/* Roster section */}
+        {/* Roster section + Admin pages */}
         <Route element={<AppLayout />}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/loa" element={<LOACalendar />} />
@@ -92,6 +92,10 @@ const AuthenticatedApp = () => {
             <Route path="/departments/:id" element={<DepartmentDetail />} />
             <Route path="/roster" element={<Roster />} />
             <Route path="/discord-sync" element={<DiscordSync />} />
+            <Route path="/cad/admin" element={<CADAdmin />} />
+            <Route path="/cad-settings" element={<CADSettings />} />
+            <Route path="/cad-personnel" element={<CADPersonnel />} />
+            <Route path="/system-logs" element={<SystemLogs />} />
           </Route>
         </Route>
 
@@ -105,12 +109,6 @@ const AuthenticatedApp = () => {
           <Route path="/my-records" element={<MyRecords />} />
           <Route path="/keybinds" element={<KeybindConfig />} />
           <Route path="/department-archive" element={<DepartmentArchive />} />
-          <Route element={<AdminRoute />}>
-            <Route path="/cad/admin" element={<CADAdmin />} />
-            <Route path="/cad-settings" element={<CADSettings />} />
-            <Route path="/cad-personnel" element={<CADPersonnel />} />
-            <Route path="/system-logs" element={<SystemLogs />} />
-          </Route>
         </Route>
 
         {/* Full-screen CAD apps - no sidebar, fills viewport */}

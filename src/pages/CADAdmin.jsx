@@ -58,18 +58,18 @@ export default function CADAdmin() {
   };
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold text-white mb-1">CAD Admin Panel</h1>
-      <p className="text-sm text-slate-400 mb-6">Central hub for all CAD management</p>
+    <div className="cad-font">
+      <h1 className="text-2xl font-bold text-cad-text mb-1">CAD Admin Panel</h1>
+      <p className="text-sm text-cad-muted mb-6">Central hub for all CAD management</p>
       <div className="flex gap-6">
-        <aside className="w-56 flex-shrink-0 sticky top-6 self-start max-h-[calc(100vh-8rem)] overflow-y-auto">
-          <div className="bg-slate-950 border border-slate-800 rounded-xl py-2">
+        <aside className="w-56 flex-shrink-0 sticky top-6 self-start max-h-[calc(100vh-8rem)] overflow-y-auto cad-scroll">
+          <div className="cad-card rounded-2xl py-2">
             {SECTIONS.map(section => (
               <div key={section.title} className="mb-2">
-                <p className="px-4 py-1.5 text-[10px] font-bold text-slate-600 uppercase tracking-wider">{section.title}</p>
+                <p className="px-4 py-1.5 text-[10px] font-bold text-cad-dim uppercase tracking-wider">{section.title}</p>
                 {section.items.map(item => (
                   <button key={item.id} onClick={() => setActive(item.id)}
-                    className={`w-full flex items-center gap-2.5 px-4 py-2 text-sm transition-colors ${active === item.id ? "bg-slate-800 text-white border-l-2 border-cyan-500" : "text-slate-400 hover:bg-slate-800/50 hover:text-white border-l-2 border-transparent"}`}>
+                    className={`w-full flex items-center gap-2.5 px-4 py-2 text-sm transition-colors border-l-2 ${active === item.id ? "bg-cad-accent/10 text-cad-accent border-cad-accent" : "text-cad-muted hover:bg-cad-surface-2/50 hover:text-cad-text border-transparent"}`}>
                     <item.icon className="w-4 h-4 flex-shrink-0" /> {item.label}
                   </button>
                 ))}
