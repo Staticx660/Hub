@@ -46,7 +46,7 @@ export default function PCRForm({ department, session }) {
       pcr_number: `PCR-${Date.now().toString().slice(-6)}`,
       patient_civilian_id: "", patient_name: "", patient_dob: "", patient_age: "", patient_gender: "Unknown",
       patient_race: "", patient_address: "", patient_phone: "", blood_type: "",
-      incident_location: "", incident_type: department.category === "Fire" ? "Fire" : "Medical",
+      incident_location: "", pickup_location: "", incident_type: department.category === "Fire" ? "Fire" : "Medical",
       allergies: [], food_allergies: [], medications: [], medical_history: [],
       symptoms: "", last_oral_intake: "", events_leading: "",
       pain_onset: "", pain_provocation: "", pain_quality: "", pain_radiation: "", pain_severity: "", pain_time: "",
@@ -74,7 +74,7 @@ export default function PCRForm({ department, session }) {
   const handleGenerateNarrative = async () => {
     setGenerating(true);
     try {
-      const narrative = await generatePCRNarrative(form);
+      const narrative = await generatePCRNarrative(form, session, department);
       update("narrative", narrative);
       toast({ title: "Narrative generated" });
     } catch (e) { toast({ title: "Error generating narrative", description: e.message, variant: "destructive" }); }

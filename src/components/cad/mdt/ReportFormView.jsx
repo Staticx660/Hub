@@ -12,8 +12,9 @@ import VehicleSearch from "@/components/cad/mdt/VehicleSearch";
 import AddressSearch from "@/components/cad/mdt/AddressSearch";
 import LinkedRecordsDialog from "@/components/cad/mdt/LinkedRecordsDialog";
 import { logSystemEvent } from "@/lib/logSystemEvent";
-import { ALL_REPORT_TYPES, getReportTypes, hasCharges } from "@/lib/reportTypes";
+import { ALL_REPORT_TYPES, getReportTypes, hasCharges, shouldShowSection } from "@/lib/reportTypes";
 import { generateReportNarrative } from "@/lib/aiNarrative";
+import ReportTypeFields from "@/components/cad/mdt/ReportTypeFields";
 
 function GridField({ label, children, span }) {
   return (
@@ -55,7 +56,7 @@ export default function ReportFormView({ department, session, initialType, templ
   const [saving, setSaving] = useState(false);
   const [generatingNarrative, setGeneratingNarrative] = useState(false);
   const [recordNumber, setRecordNumber] = useState(existingReport?.run_number || "");
-  const [officerName, setOfficerName] = useState(fd.signatures?.officer_name || "");
+  const [officerName, setOfficerName] = useState(fd.signatures?.officer_name || session?.user_name || "");
   const [observingSignature, setObservingSignature] = useState(fd.signatures?.observing_unit || "");
   const [supervisorSignature, setSupervisorSignature] = useState(fd.signatures?.supervisor || "");
   const { toast } = useToast();
@@ -88,8 +89,9 @@ export default function ReportFormView({ department, session, initialType, templ
   const handleGenerateNarrative = async () => {
     setGeneratingNarrative(true);
     try {
-      const report = { title, report_type: reportType, location, description: narrative, filed_by_name: officerName || session?.user_name, linked_civilian_name: selectedCivilian ? `${selectedCivilian.first_name} ${selectedCivilian.last_name}`.trim() : "", linked_vehicle_plate: vehicleData.plate || "", field_data: fieldData };
-      const result = await generateReportNarrative(report, selectedTemplate?.fields);
+      const fullFieldData = { ...fieldData, flags, civilian: civilianData, vehicle: vehicleData, charges, narrative, linked_records: linkedRecords, signatures: { officer_name: officerName, observing_unit: observingSignature, supervisor: supervisorSignature }, agency: { unit: session?.callsign, unit_name: session?.user_name, department: department?.name } };
+      const report = { title, report_type: reportType, location, description: narrative, filed_by_name: officerName || session?.user_name, linked_civilian_name: selectedCivilian ? `${selectedCivilian.first_name} ${selectedCivilian.last_name}`.trim() : "", linked_vehicle_plate: vehicleData.plate || "", field_data: fullFieldData };
+      const result = await generateReportNarrative(report, session, department, selectedTemplate?.fields);
       setNarrative(result);
       toast({ title: "Narrative generated" });
     } catch (e) { toast({ title: "Error generating narrative", description: e.message, variant: "destructive" }); }
@@ -284,6 +286,7 @@ export default function ReportFormView({ department, session, initialType, templ
 
       <div className="p-4 space-y-4 max-w-5xl">
         {/* Flags */}
+        {shouldShowSection(reportType, "flags") && (
         <div className="bg-[#262a30] rounded-lg p-3">
           <div className="flex items-center gap-6">
             {[
@@ -298,6 +301,7 @@ export default function ReportFormView({ department, session, initialType, templ
             ))}
           </div>
         </div>
+        )}
 
         {/* Agency Information */}
         <div className="bg-[#262a30] rounded-lg p-3">
@@ -340,6 +344,7 @@ export default function ReportFormView({ department, session, initialType, templ
         </div>
 
         {/* Civilian Information */}
+        {shouldShowSection(reportType, "civilian") && (
         <div className="bg-[#262a30] rounded-lg p-3">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300">Civilian Information</h3>
@@ -391,8 +396,10 @@ export default function ReportFormView({ department, session, initialType, templ
             <GridField label="Contact Number"><Input value={civilianData.emergency_phone || ""} onChange={e => setCivilianData({ ...civilianData, emergency_phone: e.target.value })} className={darkInput} /></GridField>
           </div>
         </div>
+        )}
 
         {/* Vehicle Information */}
+        {shouldShowSection(reportType, "vehicle") && (
         <div className="bg-[#262a30] rounded-lg p-3">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300">Vehicle Information</h3>
@@ -418,9 +425,10 @@ export default function ReportFormView({ department, session, initialType, templ
             <GridField label="Year"><Input type="number" value={vehicleData.year || ""} onChange={e => setVehicleData({ ...vehicleData, year: e.target.value })} className={darkInput} /></GridField>
           </div>
         </div>
+        )}
 
         {/* Charges */}
-        {hasCharges(department?.category) && (
+        {hasCharges(department?.category) && shouldShowSection(reportType, "charges") && (
         <div className="bg-[#262a30] rounded-lg p-3">
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-xs font-bold uppercase tracking-wider text-red-500">Charges</h3>
@@ -469,6 +477,9 @@ export default function ReportFormView({ department, session, initialType, templ
         </div>
         )}
 
+        {/* Report Type Specific Fields */}
+        <ReportTypeFields reportType={reportType} fieldData={fieldData} updateField={(key, val) => setFieldData({ ...fieldData, [key]: val })} />
+
         {/* Narrative */}
         <div className="bg-[#262a30] rounded-lg p-3">
           <div className="flex items-center justify-between mb-2">
@@ -481,6 +492,7 @@ export default function ReportFormView({ department, session, initialType, templ
         </div>
 
         {/* Status */}
+        {shouldShowSection(reportType, "signatures") && (
         <div className="bg-[#262a30] rounded-lg p-3">
           <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300 mb-3">Status</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -495,6 +507,7 @@ export default function ReportFormView({ department, session, initialType, templ
             <GridField label="Observing Unit's Signature"><Input value={observingSignature} onChange={e => setObservingSignature(e.target.value)} className={`${darkInput} ${observingSignature ? "text-green-400" : ""}`} placeholder="Type name to sign..." /></GridField>
           </div>
         </div>
+        )}
 
         {/* Template Fields */}
         {selectedTemplate?.fields?.length > 0 && (

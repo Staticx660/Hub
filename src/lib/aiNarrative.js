@@ -2,14 +2,29 @@ import { base44 } from "@/api/base44Client";
 
 /**
  * Generates a PCR narrative from the form data using AI.
- * Compiles: DOB, chief complaint, assessment findings, vitals,
- * treatments, medications, transport info, and non-transport reasons.
+ * Includes responding unit/apparatus identification from session.
  */
-export async function generatePCRNarrative(form) {
+export async function generatePCRNarrative(form, session, department) {
   const sections = [];
+
+  // Responding unit identification
+  if (session) {
+    const unitParts = [`Responding Unit: ${session.callsign || session.user_name || "Unknown"}`];
+    if (session.rank) unitParts.push(`Rank: ${session.rank}`);
+    if (session.group_name) unitParts.push(`Apparatus: ${session.group_name}`);
+    if (department?.name) unitParts.push(`Agency: ${department.name}`);
+    if (session.user_name) unitParts.push(`Provider: ${session.user_name}`);
+    sections.push(unitParts.join(", ") + ".");
+  }
 
   // Patient demographics
   sections.push(`Patient: ${form.patient_name || "Unknown"}, DOB: ${form.patient_dob || "Unknown"}, Age: ${form.patient_age || "Unknown"}, Gender: ${form.patient_gender || "Unknown"}, Race: ${form.patient_race || "Unknown"}.`);
+
+  // Patient home address (for billing)
+  if (form.patient_address) sections.push(`Patient Home Address: ${form.patient_address}.`);
+
+  // Pickup location (for billing - where patient was picked up)
+  if (form.pickup_location) sections.push(`Pickup Location: ${form.pickup_location}.`);
 
   // Incident info
   if (form.incident_type || form.incident_location) {
@@ -88,7 +103,7 @@ export async function generatePCRNarrative(form) {
 
   // Treatments
   if (form.treatments?.length) {
-    const txStr = form.treatments.map(t => `${t.intervention || "Unknown"}${t.result ? ` → ${t.result}` : ""}`);
+    const txStr = form.treatments.map(t => `${t.intervention || "Unknown"}${t.result ? ` -> ${t.result}` : ""}`);
     sections.push(`Treatments: ${txStr.join(", ")}.`);
   }
 
@@ -116,7 +131,7 @@ export async function generatePCRNarrative(form) {
     sections.push(disp);
   }
 
-  const prompt = `You are a professional EMS report writer. Generate a formal, clinical patient care narrative based on the following PCR data. Write in professional medical terminology, third person, past tense. The narrative should flow naturally as a single coherent document covering: dispatch/arrival, scene safety, mechanism of illness/injury, patient assessment, interventions, patient response, and transport/disposition. Do NOT include any headers, bullet points, or formatting — write as continuous paragraphs.
+  const prompt = `You are a professional EMS report writer. Generate a formal, clinical patient care narrative based on the following PCR data. Write in professional medical terminology, third person, past tense. The narrative should flow naturally as a single coherent document covering: dispatch/arrival, scene safety, mechanism of illness/injury, patient assessment, interventions, patient response, and transport/disposition. Reference the responding unit and provider by their callsign and name. Do NOT include any headers, bullet points, or formatting — write as continuous paragraphs.
 
 PCR Data:
 ${sections.join("\n")}`;
@@ -130,9 +145,20 @@ ${sections.join("\n")}`;
 
 /**
  * Generates a narrative for a CAD report from its field data.
+ * Includes full officer/unit identification from session.
  */
-export async function generateReportNarrative(report, templateFields) {
+export async function generateReportNarrative(report, session, department, templateFields) {
   const sections = [];
+
+  // Officer/Unit identification
+  if (session) {
+    const officerParts = [`Reporting Officer: ${session.user_name || "Unknown"}`];
+    if (session.callsign) officerParts.push(`Callsign/Badge: ${session.callsign}`);
+    if (session.rank) officerParts.push(`Rank: ${session.rank}`);
+    if (department?.name) officerParts.push(`Department: ${department.name}`);
+    if (session.group_name) officerParts.push(`Unit: ${session.group_name}`);
+    sections.push(officerParts.join(", ") + ".");
+  }
 
   sections.push(`Report Type: ${report.report_type}.`);
   sections.push(`Title: ${report.title}.`);
@@ -141,6 +167,22 @@ export async function generateReportNarrative(report, templateFields) {
   if (report.linked_civilian_name) sections.push(`Subject: ${report.linked_civilian_name}.`);
   if (report.linked_vehicle_plate) sections.push(`Vehicle: ${report.linked_vehicle_plate}.`);
 
+  // Type-specific custom fields
+  if (report.field_data) {
+    const typeFields = Object.keys(report.field_data).filter(k =>
+      !["flags", "civilian", "vehicle", "charges", "narrative", "linked_records", "signatures", "agency"].includes(k)
+    );
+    const fieldStrs = typeFields
+      .map(k => {
+        const val = report.field_data[k];
+        if (!val || val === "") return null;
+        return `${k.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase())}: ${Array.isArray(val) ? val.join(", ") : val}`;
+      })
+      .filter(Boolean);
+    if (fieldStrs.length) sections.push(`Report Details:\n${fieldStrs.join("\n")}`);
+  }
+
+  // Template fields
   if (report.field_data && templateFields?.length) {
     const fieldStrs = templateFields
       .map(f => {
@@ -149,12 +191,25 @@ export async function generateReportNarrative(report, templateFields) {
         return `${f.label}: ${Array.isArray(val) ? val.join(", ") : val}`;
       })
       .filter(Boolean);
-    if (fieldStrs.length) sections.push(`Report Details:\n${fieldStrs.join("\n")}`);
+    if (fieldStrs.length) sections.push(`Additional Fields:\n${fieldStrs.join("\n")}`);
+  }
+
+  // Charges (if applicable)
+  if (report.field_data?.charges?.length) {
+    const chargeStrs = report.field_data.charges.map(c => {
+      const parts = [c.charge || "Unknown charge"];
+      if (c.charge_type) parts.push(`Type: ${c.charge_type}`);
+      if (c.counts) parts.push(`Counts: ${c.counts}`);
+      if (c.bond_amount) parts.push(`Bond: $${c.bond_amount}`);
+      if (c.jail_time) parts.push(`Jail: ${c.jail_time}`);
+      return parts.join(", ");
+    });
+    sections.push(`Charges:\n${chargeStrs.join("\n")}`);
   }
 
   if (report.description) sections.push(`Summary: ${report.description}`);
 
-  const prompt = `You are a professional law enforcement report writer. Generate a formal incident narrative based on the following report data. Write in professional, objective, third-person past tense. Include all relevant details in a coherent narrative. Do NOT include headers, bullet points, or formatting — write as continuous paragraphs.
+  const prompt = `You are a professional law enforcement report writer. Generate a formal incident narrative based on the following report data. Write in professional, objective, third-person past tense. Reference the reporting officer by name and callsign/rank. Include all relevant details in a coherent narrative appropriate for this report type (${report.report_type}). Do NOT include any headers, bullet points, or formatting — write as continuous paragraphs.
 
 Report Data:
 ${sections.join("\n")}`;

@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
-import { Plus, Layers, Siren, Phone, ChevronRight, Stethoscope, AlertCircle, Truck, User } from "lucide-react";
+import { Plus, Ambulance, Siren, Phone, ChevronRight, Stethoscope, AlertCircle, Truck, User, Heart, Activity, Hospital } from "lucide-react";
 
 const STATUS_OPTS = ["Available", "Busy", "On Call", "Unavailable"];
 const statusBadge = (s) => {
@@ -12,6 +12,27 @@ const statusBadge = (s) => {
   if (s === "On Call") return "bg-red-500/15 text-red-400 border border-red-500/30";
   if (s === "Panic") return "bg-red-500 text-white border border-red-600 animate-pulse";
   return "bg-slate-700 text-slate-400 border border-slate-600";
+};
+
+const priorityBadge = (priority) => {
+  if (!priority) return "bg-slate-700 text-slate-400";
+  if (priority.startsWith("1")) return "bg-red-500/20 text-red-400 border border-red-500/40";
+  if (priority.startsWith("2")) return "bg-yellow-500/20 text-yellow-400 border border-yellow-500/40";
+  return "bg-green-500/20 text-green-400 border border-green-500/40";
+};
+
+const medicalIcon = (type) => {
+  const t = (type || "").toLowerCase();
+  if (t.includes("chest") || t.includes("cardiac")) return "🫀";
+  if (t.includes("breath") || t.includes("respiratory")) return "🫁";
+  if (t.includes("mva") || t.includes("accident") || t.includes("trauma")) return "🚗";
+  if (t.includes("overdose") || t.includes("od")) return "💊";
+  if (t.includes("fall")) return "🦴";
+  if (t.includes("seizure")) return "⚡";
+  if (t.includes("stroke") || t.includes("cva")) return "🧠";
+  if (t.includes("bleed") || t.includes("hemorrhage")) return "🩸";
+  if (t.includes("psych") || t.includes("mental")) return "🧠";
+  return "🚑";
 };
 
 export default function EMSDashboard({ department, session, setSession, onOpenCall, onNewCall, onManageGroups }) {
@@ -28,9 +49,9 @@ export default function EMSDashboard({ department, session, setSession, onOpenCa
         base44.entities.CADSession.filter({ is_active: true }),
         base44.entities.CADDepartment.list(),
       ]);
-      const nonCivilianIds = allDepts.filter(d => d.category !== "Civilian").map(d => d.id);
+      const emsDeptIds = allDepts.filter(d => d.category === "EMS" || d.category === "Fire").map(d => d.id);
       setCalls(allCalls.filter(c => c.status !== "Closed"));
-      setSessions(allSessions.filter(s => nonCivilianIds.includes(s.department_id)));
+      setSessions(allSessions.filter(s => emsDeptIds.includes(s.department_id)));
       try {
         const g = await base44.entities.CADUnitGroup.filter({});
         setGroups(g);
@@ -68,18 +89,29 @@ export default function EMSDashboard({ department, session, setSession, onOpenCa
   const emergencyCalls = calls.filter(c => c.status === "Pending");
   const availableCount = sessions.filter(s => s.status === "Available").length;
   const onCallCount = sessions.filter(s => s.status === "On Call").length;
+  const transportingCount = sessions.filter(s => s.status === "Busy").length;
+  const p1Count = calls.filter(c => c.priority?.startsWith("1")).length;
 
   const th = "text-left px-3 py-2 font-semibold text-slate-500 text-[10px] uppercase tracking-wider whitespace-nowrap";
   const td = "px-3 py-2 border-t border-slate-800";
-  const cardShell = "bg-[#1a2026] rounded-lg border border-slate-800 flex flex-col overflow-hidden min-h-0";
+  const cardShell = "bg-[#0e1518] rounded-lg border border-green-950/40 flex flex-col overflow-hidden min-h-0";
 
   return (
-    <div className="h-full overflow-hidden p-3 bg-[#10141a]">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 h-full">
-        {/* Top Left: Active Calls */}
+    <div className="h-full overflow-hidden p-3 bg-[#0a0f12]">
+      {/* Top stat bar */}
+      <div className="flex items-center gap-4 mb-3 px-2">
+        <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-green-500" /><span className="text-xs text-slate-400">Available</span><span className="text-sm font-bold text-green-400">{availableCount}</span></div>
+        <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-yellow-500" /><span className="text-xs text-slate-400">Busy</span><span className="text-sm font-bold text-yellow-400">{transportingCount}</span></div>
+        <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-red-500" /><span className="text-xs text-slate-400">On Call</span><span className="text-sm font-bold text-red-400">{onCallCount}</span></div>
+        <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-red-600 animate-pulse" /><span className="text-xs text-slate-400">P1 Calls</span><span className="text-sm font-bold text-red-400">{p1Count}</span></div>
+        <div className="ml-auto flex items-center gap-2"><Hospital className="w-4 h-4 text-cyan-500" /><span className="text-xs text-slate-400">Total Personnel</span><span className="text-sm font-bold text-white">{sessions.length}</span></div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 h-[calc(100%-2.5rem)]">
+        {/* Top Left: Active Medical Calls */}
         <div className={cardShell}>
-          <div className="flex items-center justify-between px-3 py-2 border-b border-slate-800">
-            <h3 className="text-xs font-bold text-white flex items-center gap-2"><Siren className="w-3.5 h-3.5 text-green-400" /> ACTIVE CALLS</h3>
+          <div className="flex items-center justify-between px-3 py-2 border-b border-green-950/40">
+            <h3 className="text-xs font-bold text-white flex items-center gap-2"><Heart className="w-3.5 h-3.5 text-green-400" /> ACTIVE MEDICAL CALLS</h3>
             <div className="flex items-center gap-2">
               <span className="text-xs text-slate-500">{activeCalls.filter(c => c.assigned_unit_ids?.length > 0).length}/{activeCalls.length}</span>
               <Button onClick={onNewCall} size="sm" className="h-6 px-2 text-xs bg-green-600 hover:bg-green-700 gap-1"><Plus className="w-3 h-3" /> New</Button>
@@ -87,13 +119,13 @@ export default function EMSDashboard({ department, session, setSession, onOpenCa
           </div>
           <div className="flex-1 overflow-auto">
             <table className="w-full text-xs">
-              <thead className="bg-[#121418] sticky top-0 z-10"><tr><th className={th}>ID</th><th className={th}>Call Title</th><th className={th}>Address</th><th className={th}>Units</th><th className={th}>Status</th></tr></thead>
+              <thead className="bg-[#0a1013] sticky top-0 z-10"><tr><th className={th}>Priority</th><th className={th}>Call Type</th><th className={th}>Location</th><th className={th}>Units</th><th className={th}>Status</th></tr></thead>
               <tbody>
-                {activeCalls.length === 0 ? <tr><td colSpan="5" className="text-center text-slate-600 py-6">No active calls</td></tr> :
+                {activeCalls.length === 0 ? <tr><td colSpan="5" className="text-center text-slate-600 py-6">No active medical calls</td></tr> :
                   activeCalls.map(call => (
-                    <tr key={call.id} onClick={() => onOpenCall(call.id)} className="hover:bg-slate-800/50 cursor-pointer transition-colors">
-                      <td className={td + " text-slate-400 font-mono"}>{call.run_number || "—"}</td>
-                      <td className={td + " text-white font-medium"}>{call.call_type}</td>
+                    <tr key={call.id} onClick={() => onOpenCall(call.id)} className="hover:bg-green-500/10 cursor-pointer transition-colors">
+                      <td className={td}><span className={`text-[10px] px-1.5 py-0.5 rounded ${priorityBadge(call.priority)}`}>{call.priority || "P3"}</span></td>
+                      <td className={td + " text-white font-medium"}><span className="mr-1">{medicalIcon(call.call_type)}</span>{call.call_type}</td>
                       <td className={td + " text-slate-400 truncate max-w-[120px]"}>{call.location}</td>
                       <td className={td + " text-green-400 font-medium"}>{call.assigned_unit_ids?.length || 0}</td>
                       <td className={td}><span className="text-[10px] px-1.5 py-0.5 rounded bg-green-500/15 text-green-400">{call.status}</span></td>
@@ -107,16 +139,17 @@ export default function EMSDashboard({ department, session, setSession, onOpenCa
 
         {/* Top Right: Personnel */}
         <div className={cardShell}>
-          <div className="flex items-center justify-between px-3 py-2 border-b border-slate-800">
-            <h3 className="text-xs font-bold text-white flex items-center gap-2"><User className="w-3.5 h-3.5 text-green-400" /> PERSONNEL</h3>
+          <div className="flex items-center justify-between px-3 py-2 border-b border-green-950/40">
+            <h3 className="text-xs font-bold text-white flex items-center gap-2"><Stethoscope className="w-3.5 h-3.5 text-green-400" /> FIELD PERSONNEL</h3>
             <div className="flex items-center gap-3 text-xs">
               <span className="text-slate-500">AVAIL: <span className="text-green-400 font-bold">{availableCount}</span></span>
+              <span className="text-slate-500">TRANSPORTING: <span className="text-yellow-400 font-bold">{transportingCount}</span></span>
               <span className="text-slate-500">ON CALL: <span className="text-red-400 font-bold">{onCallCount}</span></span>
             </div>
           </div>
           <div className="flex-1 overflow-auto">
             <table className="w-full text-xs">
-              <thead className="bg-[#121418] sticky top-0 z-10"><tr><th className={th}>Person</th><th className={th}>Apparatus</th><th className={th}>Dept</th><th className={th}>Status</th></tr></thead>
+              <thead className="bg-[#0a1013] sticky top-0 z-10"><tr><th className={th}>Provider</th><th className={th}>Ambulance</th><th className={th}>Dept</th><th className={th}>Status</th></tr></thead>
               <tbody>
                 {sessions.length === 0 ? <tr><td colSpan="4" className="text-center text-slate-600 py-6">No active personnel</td></tr> :
                   sessions.map(s => (
@@ -124,15 +157,15 @@ export default function EMSDashboard({ department, session, setSession, onOpenCa
                       <td className={td}>
                         <div className="flex flex-col">
                           <span className="text-white font-medium truncate max-w-[100px]">{s.user_name}</span>
-                          <span className="font-mono text-[10px] text-green-400">{s.callsign || "—"}</span>
+                          <span className="font-mono text-[10px] text-green-400">{s.callsign || "—"}{s.rank ? ` · ${s.rank}` : ""}</span>
                         </div>
                       </td>
-                      <td className={td}><span className="text-[10px] font-bold text-green-400 bg-green-500/10 px-1.5 py-0.5 rounded">{s.group_name || "—"}</span></td>
+                      <td className={td}><span className="text-[10px] font-bold text-cyan-400 bg-cyan-500/10 px-1.5 py-0.5 rounded">{s.group_name || "Unassigned"}</span></td>
                       <td className={td + " text-slate-400 truncate max-w-[80px]"}>{s.department_name || "—"}</td>
                       <td className={td}>
                         <Select value={s.status} onValueChange={(v) => setUnitStatus(s.id, v)}>
                           <SelectTrigger className="h-6 w-28 text-[10px] bg-transparent border-0 p-0 focus:ring-0 shadow-none"><span className={`px-1.5 py-0.5 rounded ${statusBadge(s.status)}`}>{s.status}</span></SelectTrigger>
-                          <SelectContent className="bg-[#1a1e23] border-[#272d35]">{STATUS_OPTS.map(st => <SelectItem key={st} value={st} className="text-white text-xs">{st}</SelectItem>)}</SelectContent>
+                          <SelectContent className="bg-[#0e1518] border-green-950/40">{STATUS_OPTS.map(st => <SelectItem key={st} value={st} className="text-white text-xs">{st}</SelectItem>)}</SelectContent>
                         </Select>
                       </td>
                     </tr>
@@ -143,21 +176,21 @@ export default function EMSDashboard({ department, session, setSession, onOpenCa
           </div>
         </div>
 
-        {/* Bottom Left: Emergency Calls */}
+        {/* Bottom Left: Pending 911 Medical Requests */}
         <div className={cardShell}>
-          <div className="flex items-center justify-between px-3 py-2 border-b border-slate-800">
-            <h3 className="text-xs font-bold text-white flex items-center gap-2"><Phone className="w-3.5 h-3.5 text-red-400" /> EMERGENCY CALLS</h3>
+          <div className="flex items-center justify-between px-3 py-2 border-b border-green-950/40">
+            <h3 className="text-xs font-bold text-white flex items-center gap-2"><Phone className="w-3.5 h-3.5 text-red-400" /> PENDING 911 MEDICAL REQUESTS</h3>
             <span className="text-xs text-slate-500">{emergencyCalls.length}</span>
           </div>
           <div className="flex-1 overflow-auto">
             <table className="w-full text-xs">
-              <thead className="bg-[#121418] sticky top-0 z-10"><tr><th className={th}>ID</th><th className={th}>Type</th><th className={th}>Caller</th><th className={th}>Location</th><th className={th}>Description</th></tr></thead>
+              <thead className="bg-[#0a1013] sticky top-0 z-10"><tr><th className={th}>Pri</th><th className={th}>Complaint</th><th className={th}>Caller</th><th className={th}>Location</th><th className={th}>Details</th></tr></thead>
               <tbody>
-                {emergencyCalls.length === 0 ? <tr><td colSpan="5" className="text-center text-slate-600 py-6">No emergency calls</td></tr> :
+                {emergencyCalls.length === 0 ? <tr><td colSpan="5" className="text-center text-slate-600 py-6">No pending medical requests</td></tr> :
                   emergencyCalls.map(call => (
                     <tr key={call.id} onClick={() => onOpenCall(call.id)} className="hover:bg-red-500/10 cursor-pointer transition-colors">
-                      <td className={td + " text-slate-400 font-mono"}>{call.run_number || "—"}</td>
-                      <td className={td + " text-white font-medium"}>{call.call_type}</td>
+                      <td className={td}><span className={`text-[10px] px-1.5 py-0.5 rounded ${priorityBadge(call.priority)}`}>{call.priority?.charAt(0) || "3"}</span></td>
+                      <td className={td + " text-white font-medium"}><span className="mr-1">{medicalIcon(call.call_type)}</span>{call.call_type}</td>
                       <td className={td + " text-slate-400 truncate max-w-[80px]"}>{call.caller_name || "—"}</td>
                       <td className={td + " text-slate-400 truncate max-w-[100px]"}>{call.location}</td>
                       <td className={td + " text-slate-500 truncate max-w-[120px]"}>{call.description}</td>
@@ -169,36 +202,36 @@ export default function EMSDashboard({ department, session, setSession, onOpenCa
           </div>
         </div>
 
-        {/* Bottom Right: Apparatus */}
+        {/* Bottom Right: Ambulances & Apparatus */}
         <div className={cardShell}>
-          <div className="flex items-center justify-between px-3 py-2 border-b border-slate-800">
-            <h3 className="text-xs font-bold text-white flex items-center gap-2"><Truck className="w-3.5 h-3.5 text-green-400" /> APPARATUS</h3>
-            <span className="text-xs text-slate-500">{groups.length}</span>
+          <div className="flex items-center justify-between px-3 py-2 border-b border-green-950/40">
+            <h3 className="text-xs font-bold text-white flex items-center gap-2"><Ambulance className="w-3.5 h-3.5 text-cyan-400" /> AMBULANCES & APPARATUS</h3>
+            <span className="text-xs text-slate-500">{apparatusWithCrew.length}</span>
           </div>
           <div className="flex-1 overflow-auto p-2 space-y-1.5">
-            {groups.length === 0 ? (
+            {apparatusWithCrew.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-slate-700 py-8">
-                <AlertCircle className="w-8 h-8 mb-2" />
-                <p className="text-xs text-slate-600">No apparatus assigned</p>
+                <Ambulance className="w-8 h-8 mb-2" />
+                <p className="text-xs text-slate-600">No ambulances assigned</p>
               </div>
             ) : apparatusWithCrew.map(g => {
               const maxSeats = g.max_seats || 0;
               const minSeats = g.min_seats || 0;
               const understaffed = minSeats > 0 && g.crewCount < minSeats;
               return (
-                <div key={g.id} className="bg-[#121418] rounded-lg p-2 flex items-center justify-between">
+                <div key={g.id} className="bg-[#0a1013] rounded-lg p-2 flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Truck className="w-3 h-3 text-green-500" />
-                    <span className="text-xs text-white font-medium">{g.name || "Apparatus"}</span>
-                    <span className={`text-[10px] ${understaffed ? "text-red-400 font-bold" : "text-slate-500"}`}>{g.crewCount}{maxSeats ? `/${maxSeats}` : ""} crew{understaffed ? " ⚠" : ""}</span>
+                    <Ambulance className="w-3.5 h-3.5 text-cyan-500" />
+                    <span className="text-xs text-white font-medium">{g.name || "Ambulance"}</span>
+                    <span className={`text-[10px] ${understaffed ? "text-red-400 font-bold" : "text-slate-500"}`}>{g.crewCount}{maxSeats ? `/${maxSeats}` : ""} crew{understaffed ? " - UNDERSTAFFED" : ""}</span>
                   </div>
                   <span className={`text-[10px] px-1.5 py-0.5 rounded ${statusBadge(g.status || "Off Duty")}`}>{g.status || "Off Duty"}</span>
                 </div>
               );
             })}
           </div>
-          <div className="p-2 border-t border-slate-800">
-            <Button onClick={onManageGroups} size="sm" variant="outline" className="w-full h-7 text-xs border-slate-700 text-slate-400 hover:text-white">Manage Apparatus</Button>
+          <div className="p-2 border-t border-green-950/40">
+            <Button onClick={onManageGroups} size="sm" variant="outline" className="w-full h-7 text-xs border-slate-700 text-slate-400 hover:text-white">Manage Ambulances</Button>
           </div>
         </div>
       </div>

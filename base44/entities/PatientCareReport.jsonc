@@ -46,6 +46,9 @@
     "incident_location": {
       "type": "string"
     },
+    "pickup_location": {
+      "type": "string"
+    },
     "incident_type": {
       "type": "string"
     },
