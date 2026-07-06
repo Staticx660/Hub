@@ -47,9 +47,11 @@ import CivilianDashboard from '@/pages/CivilianDashboard';
 import MyRecords from '@/pages/MyRecords';
 import SystemLogs from '@/pages/SystemLogs';
 import { useCadTheme } from "@/hooks/useCadTheme";
+import { useCommunityBranding } from "@/hooks/useCommunityBranding";
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
+  useCommunityBranding();
 
   if (isLoadingPublicSettings || isLoadingAuth) {
     return (
