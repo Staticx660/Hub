@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
 import { Upload, X, ChevronDown, ChevronUp, Camera } from "lucide-react";
+import AddressSearch from "@/components/cad/mdt/AddressSearch";
 
 const HAIR_COLORS = ["Black", "Brown", "Blonde", "Red", "Gray", "White", "Bald", "Blue", "Green", "Pink", "Purple"];
 const EYE_COLORS = ["Brown", "Blue", "Green", "Hazel", "Gray", "Amber", "Black"];
@@ -181,7 +182,7 @@ export default function CharacterForm({ open, onOpenChange, editing, department,
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <div><Label className="text-slate-300">Address</Label><Input value={form.address} onChange={e => set("address", e.target.value)} className="bg-slate-800 border-slate-700 text-white" /></div>
+            <div><Label className="text-slate-300">Address</Label><AddressSearch value={form.address} onChange={v => set("address", v)} className="w-full bg-slate-800 border border-slate-700 text-white text-sm h-9 rounded-md pl-8 pr-2 focus-visible:ring-1 focus-visible:ring-slate-600 placeholder:text-slate-600" placeholder="Search address..." /></div>
             <div><Label className="text-slate-300">Phone</Label><Input value={form.phone} onChange={e => set("phone", formatPhone(e.target.value))} className="bg-slate-800 border-slate-700 text-white" placeholder="(555) 123-4567" /></div>
           </div>
           <div className="grid grid-cols-3 gap-3">

@@ -5,9 +5,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import AddressSearch from "@/components/cad/mdt/AddressSearch";
 
 const priorityOptions = ["1 - High", "2 - Medium", "3 - Low"];
-const emptyForm = { call_type: "", priority: "2 - Medium", location: "", description: "", caller_name: "", caller_phone: "", cad_notes: "" };
+const emptyForm = { call_type: "", priority: "2 - Medium", location: "", cross_streets: "", description: "", caller_name: "", caller_phone: "", cad_notes: "" };
 
 export default function SelfDispatchDialog({ open, onOpenChange, onCreate }) {
   const [form, setForm] = useState(emptyForm);
@@ -35,7 +36,8 @@ export default function SelfDispatchDialog({ open, onOpenChange, onCreate }) {
               </Select>
             </div>
           </div>
-          <div><Label className="text-slate-300">Location</Label><Input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} className="bg-slate-800 border-slate-700 text-white" placeholder="e.g. Vinewood Blvd & Alta St" /></div>
+          <div><Label className="text-slate-300">Location</Label><AddressSearch value={form.location} onChange={(v) => setForm({ ...form, location: v })} className="w-full bg-slate-800 border border-slate-700 text-white text-sm h-9 rounded-md pl-8 pr-2 focus-visible:ring-1 focus-visible:ring-slate-600 placeholder:text-slate-600" placeholder="Search address..." /></div>
+          <div><Label className="text-slate-300">Cross Streets</Label><Input value={form.cross_streets} onChange={(e) => setForm({ ...form, cross_streets: e.target.value })} className="bg-slate-800 border-slate-700 text-white" placeholder="e.g. Vinewood Blvd & Alta St" /></div>
           <div><Label className="text-slate-300">Description</Label><Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="bg-slate-800 border-slate-700 text-white" rows={2} /></div>
           <div className="grid grid-cols-2 gap-3">
             <div><Label className="text-slate-300">Caller Name</Label><Input value={form.caller_name} onChange={(e) => setForm({ ...form, caller_name: e.target.value })} className="bg-slate-800 border-slate-700 text-white" /></div>

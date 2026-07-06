@@ -15,6 +15,8 @@
         "Use of Force",
         "Vehicle Accident",
         "Evidence",
+        "Medical",
+        "Fire",
         "Other"
       ]
     },
@@ -34,9 +36,26 @@
             "enum": [
               "text",
               "textarea",
+              "address",
+              "select",
+              "checkboxes",
               "date",
+              "time",
+              "image",
+              "status",
+              "label",
+              "id",
+              "random",
               "number",
-              "select"
+              "UNIT_NUMBER",
+              "UNIT_NAME",
+              "UNIT_RANK",
+              "UNIT_AGENCY",
+              "UNIT_DEPARTMENT",
+              "UNIT_SUBDIVISION",
+              "UNIT_AGENCY_LOCATION",
+              "UNIT_AGENCY_ZIP",
+              "UNIT_LOCATION"
             ]
           },
           "required": {

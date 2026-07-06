@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
+import { getBranding } from "@/hooks/useCommunityBranding";
 import { Shield, Search, FileText, Radio, Layers, Maximize, Home, UserCog, Keyboard, LogOut, ChevronUp, AlertTriangle, Users, Archive, Camera, ChevronDown, ClipboardList } from "lucide-react";
 
 const statusOptions = [
@@ -17,9 +18,20 @@ export default function Taskbar({ activeView, setActiveView, session, department
   const isDispatch = category === "Dispatch";
   const [logoMenu, setLogoMenu] = useState(false);
   const [statusMenu, setStatusMenu] = useState(false);
+  const [logoUrl, setLogoUrl] = useState("");
   const logoRef = useRef(null);
   const statusRef = useRef(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const branding = getBranding();
+    if (branding?.logo_url) setLogoUrl(branding.logo_url);
+    else {
+      base44.entities.CommunitySetting.list().then(list => {
+        if (list.length > 0 && list[0].logo_url) setLogoUrl(list[0].logo_url);
+      }).catch(() => {});
+    }
+  }, []);
 
   useEffect(() => {
     const handler = (e) => {
@@ -85,7 +97,13 @@ export default function Taskbar({ activeView, setActiveView, session, department
       {/* Logo */}
       <div ref={logoRef} className="relative">
         <button onClick={() => setLogoMenu(!logoMenu)} className="flex items-center gap-2 px-2 h-10 rounded-lg hover:bg-slate-800 transition-colors">
-          <img src="https://media.base44.com/images/public/6a441f279b9d3cd678958799/5a43a1b46_OCRP20.png" alt="OCRP" className="w-8 h-8 rounded object-cover" />
+          {logoUrl ? (
+            <img src={logoUrl} alt="Logo" className="w-8 h-8 rounded object-cover" />
+          ) : (
+            <div className="w-8 h-8 bg-primary rounded flex items-center justify-center">
+              <Radio className="w-5 h-5 text-white" />
+            </div>
+          )}
         </button>
         {logoMenu && (
           <div className="absolute bottom-11 left-0 w-48 bg-slate-800 border border-slate-700 rounded-lg shadow-xl py-1 z-50">

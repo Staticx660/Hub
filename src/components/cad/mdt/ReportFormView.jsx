@@ -9,6 +9,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { ArrowLeft, Plus, Trash2, Search, Car, User, Link2, ChevronDown, ChevronUp, Eye, FileText, Gavel, X } from "lucide-react";
 import CivilianSearch from "@/components/cad/mdt/CivilianSearch";
 import VehicleSearch from "@/components/cad/mdt/VehicleSearch";
+import AddressSearch from "@/components/cad/mdt/AddressSearch";
 import LinkedRecordsDialog from "@/components/cad/mdt/LinkedRecordsDialog";
 import { logSystemEvent } from "@/lib/logSystemEvent";
 
@@ -153,7 +154,16 @@ export default function ReportFormView({ department, session, initialType, templ
     if (!title.trim()) { toast({ title: "Title required", variant: "destructive" }); return; }
     setSaving(true);
     try {
+      const identifierValues = {};
+      if (selectedTemplate?.fields) {
+        selectedTemplate.fields.forEach(f => {
+          if (IDENTIFIER_TYPES.includes(f.field_type)) {
+            identifierValues[f.label] = getIdentifierValue(f.field_type);
+          }
+        });
+      }
       const allFieldData = {
+        ...identifierValues,
         ...fieldData,
         flags,
         civilian: civilianData,
@@ -198,7 +208,26 @@ export default function ReportFormView({ department, session, initialType, templ
       onClose();
       };
 
-      const availableTemplates = (templates || []).filter(t => {
+      const IDENTIFIER_TYPES = ["id", "random", "UNIT_NUMBER", "UNIT_NAME", "UNIT_RANK", "UNIT_AGENCY", "UNIT_DEPARTMENT", "UNIT_SUBDIVISION", "UNIT_AGENCY_LOCATION", "UNIT_AGENCY_ZIP", "UNIT_LOCATION"];
+
+  const getIdentifierValue = (fieldType) => {
+    switch (fieldType) {
+      case "UNIT_NUMBER": return session?.callsign || "";
+      case "UNIT_NAME": return session?.user_name || "";
+      case "UNIT_RANK": return session?.rank || "";
+      case "UNIT_AGENCY": return "PUBLIC SAFETY";
+      case "UNIT_DEPARTMENT": return department?.name || "";
+      case "UNIT_SUBDIVISION": return "NOT SET";
+      case "UNIT_AGENCY_LOCATION": return "";
+      case "UNIT_AGENCY_ZIP": return "";
+      case "UNIT_LOCATION": return location || "";
+      case "id": return recordNumber || "";
+      case "random": return `RND-${Date.now().toString().slice(-6)}`;
+      default: return "";
+    }
+  };
+
+  const availableTemplates = (templates || []).filter(t => {
     if (t.department_id && t.department_id !== department.id) return false;
     return reportTypes.includes(t.category);
   });
@@ -251,7 +280,7 @@ export default function ReportFormView({ department, session, initialType, templ
             <GridField label="Unit #"><Input value={session?.callsign || ""} readOnly className={darkInput} /></GridField>
             <GridField label="Unit Name"><Input value={session?.user_name || ""} readOnly className={darkInput} /></GridField>
             <GridField label="Date"><Input value={new Date().toLocaleDateString()} readOnly className={darkInput} /></GridField>
-            <GridField label="Location"><Input value={location} onChange={e => setLocation(e.target.value)} className={darkInput} placeholder="Incident location..." /></GridField>
+            <GridField label="Location"><AddressSearch value={location} onChange={setLocation} className={`w-full ${darkInput} pl-8`} placeholder="Search address..." /></GridField>
           </div>
         </div>
 
@@ -429,20 +458,63 @@ export default function ReportFormView({ department, session, initialType, templ
           <div className="bg-[#262a30] rounded-lg p-3">
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300 mb-3">Template Fields</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {selectedTemplate.fields.map((field, i) => (
-                <GridField key={i} label={field.label}>
-                  {field.field_type === "textarea" ? (
-                    <Textarea value={fieldData[field.label] || ""} onChange={e => setFieldData({ ...fieldData, [field.label]: e.target.value })} className={`${darkInput} min-h-[60px]`} />
-                  ) : field.field_type === "select" ? (
-                    <Select value={fieldData[field.label] || ""} onValueChange={v => setFieldData({ ...fieldData, [field.label]: v })}>
-                      <SelectTrigger className={darkSelect}><SelectValue placeholder="Select..." /></SelectTrigger>
-                      <SelectContent className="bg-slate-800 border-slate-700">{(field.options || []).map(o => <SelectItem key={o} value={o} className="text-white">{o}</SelectItem>)}</SelectContent>
-                    </Select>
-                  ) : (
-                    <Input type={field.field_type === "number" ? "number" : field.field_type === "date" ? "date" : "text"} value={fieldData[field.label] || ""} onChange={e => setFieldData({ ...fieldData, [field.label]: e.target.value })} className={darkInput} />
-                  )}
-                </GridField>
-              ))}
+              {selectedTemplate.fields.map((field, i) => {
+                if (field.field_type === "label") {
+                  return <div key={i} className="col-span-2 md:col-span-4"><h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 border-b border-slate-700 pb-1">{field.label}</h4></div>;
+                }
+                if (IDENTIFIER_TYPES.includes(field.field_type)) {
+                  return (
+                    <GridField key={i} label={field.label}>
+                      <Input value={getIdentifierValue(field.field_type)} readOnly className={`${darkInput} text-cyan-400 font-mono`} />
+                    </GridField>
+                  );
+                }
+                if (field.field_type === "status") {
+                  return (
+                    <GridField key={i} label={field.label}>
+                      <Select value={fieldData[field.label] || ""} onValueChange={v => setFieldData({ ...fieldData, [field.label]: v })}>
+                        <SelectTrigger className={darkSelect}><SelectValue placeholder="Select..." /></SelectTrigger>
+                        <SelectContent className="bg-slate-800 border-slate-700">{["Draft", "Filed", "Reviewed", "Approved"].map(s => <SelectItem key={s} value={s} className="text-white">{s}</SelectItem>)}</SelectContent>
+                      </Select>
+                    </GridField>
+                  );
+                }
+                return (
+                  <GridField key={i} label={field.label}>
+                    {field.field_type === "textarea" ? (
+                      <Textarea value={fieldData[field.label] || ""} onChange={e => setFieldData({ ...fieldData, [field.label]: e.target.value })} className={`${darkInput} min-h-[60px]`} />
+                    ) : field.field_type === "select" ? (
+                      <Select value={fieldData[field.label] || ""} onValueChange={v => setFieldData({ ...fieldData, [field.label]: v })}>
+                        <SelectTrigger className={darkSelect}><SelectValue placeholder="Select..." /></SelectTrigger>
+                        <SelectContent className="bg-slate-800 border-slate-700">{(field.options || []).map(o => <SelectItem key={o} value={o} className="text-white">{o}</SelectItem>)}</SelectContent>
+                      </Select>
+                    ) : field.field_type === "checkboxes" ? (
+                      <div className="space-y-1">
+                        {(field.options || []).map(opt => (
+                          <label key={opt} className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
+                            <input type="checkbox" checked={(fieldData[field.label] || []).includes(opt)} onChange={e => { const cur = fieldData[field.label] || []; setFieldData({ ...fieldData, [field.label]: e.target.checked ? [...cur, opt] : cur.filter(c => c !== opt) }); }} className="rounded border-slate-600" />
+                            {opt}
+                          </label>
+                        ))}
+                      </div>
+                    ) : field.field_type === "address" ? (
+                      <AddressSearch value={fieldData[field.label] || ""} onChange={v => setFieldData({ ...fieldData, [field.label]: v })} className="w-full bg-[#0f1115] border-none text-white text-sm h-9 rounded-md focus-visible:ring-1 focus-visible:ring-slate-600 placeholder:text-slate-600 pl-8" placeholder="Search address..." />
+                    ) : field.field_type === "time" ? (
+                      <Input type="time" value={fieldData[field.label] || ""} onChange={e => setFieldData({ ...fieldData, [field.label]: e.target.value })} className={darkInput} />
+                    ) : field.field_type === "image" ? (
+                      <div>
+                        {fieldData[field.label] && <img src={fieldData[field.label]} alt="" className="w-full h-20 rounded object-cover mb-1" />}
+                        <label className="cursor-pointer">
+                          <span className="text-xs text-cyan-400 hover:text-cyan-300">Upload image</span>
+                          <input type="file" accept="image/*" className="hidden" onChange={async (e) => { const f = e.target.files?.[0]; if (!f) return; try { const { file_url } = await base44.integrations.Core.UploadFile({ file: f }); setFieldData({ ...fieldData, [field.label]: file_url }); } catch (err) { toast({ title: "Upload failed", variant: "destructive" }); } }} />
+                        </label>
+                      </div>
+                    ) : (
+                      <Input type={field.field_type === "number" ? "number" : field.field_type === "date" ? "date" : "text"} value={fieldData[field.label] || ""} onChange={e => setFieldData({ ...fieldData, [field.label]: e.target.value })} className={darkInput} />
+                    )}
+                  </GridField>
+                );
+              })}
             </div>
           </div>
         )}

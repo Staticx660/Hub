@@ -26,6 +26,9 @@
     "location": {
       "type": "string"
     },
+    "cross_streets": {
+      "type": "string"
+    },
     "description": {
       "type": "string"
     },

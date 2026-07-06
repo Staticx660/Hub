@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/components/ui/use-toast";
 import { ArrowLeft, Plus, Ban, Save, X, FileText, MapPin } from "lucide-react";
 import { playDispatchAnnouncement } from "@/components/cad/mdt/panicSound";
+import AddressSearch from "@/components/cad/mdt/AddressSearch";
 
 const CALL_TITLES = ["Structure Fire", "Medical Emergency", "Traffic Accident", "Domestic Dispute", "Burglary", "Robbery", "Assault", "Theft", "Vandalism", "Noise Complaint", "Suspicious Person", "Welfare Check", "Traffic Stop", "DUI", "Shots Fired", "Pursuit", "Other"];
 const CALL_ORIGINS = ["911", "Non-Emergency", "Walk-In", "Officer Initiated", "Self-Dispatch"];
@@ -53,7 +54,7 @@ export default function CallViewer({ department, session, selectedCallId, onSele
     try {
       await base44.entities.ActiveCall.update(call.id, {
         call_type: call.call_type, status: call.status, priority: call.priority,
-        location: call.location, description: call.description, cad_notes: call.cad_notes,
+        location: call.location, cross_streets: call.cross_streets, description: call.description, cad_notes: call.cad_notes,
         call_origin: call.call_origin, postal: call.postal, block: call.block,
       });
       toast({ title: "Call updated" });
@@ -78,7 +79,7 @@ export default function CallViewer({ department, session, selectedCallId, onSele
     try {
       const runNum = `911-${Date.now().toString().slice(-6)}`;
       const c = await base44.entities.ActiveCall.create({
-        call_type: "New Call", priority: "2 - Medium", status: "Pending", location: "", description: "",
+        call_type: "New Call", priority: "2 - Medium", status: "Pending", location: "", cross_streets: "", description: "",
         department_id: department.id, run_number: runNum, assigned_unit_ids: [], cad_notes: "",
         call_origin: "911", postal: "", block: "",
       });
@@ -189,7 +190,8 @@ export default function CallViewer({ department, session, selectedCallId, onSele
                 <Input value={call.postal || ""} onChange={(e) => update("postal", e.target.value)} className={inputCls + " h-8 text-xs"} placeholder="Postal" />
                 <Input value={call.block || ""} onChange={(e) => update("block", e.target.value)} className={inputCls + " h-8 text-xs"} placeholder="Block" />
               </div>
-              <Input value={call.location || ""} onChange={(e) => update("location", e.target.value)} className={inputCls + " h-8 text-xs mt-2"} placeholder="Address" />
+              <AddressSearch value={call.location || ""} onChange={(v) => update("location", v)} className="w-full bg-[#1a1e23] border-[#272d35] text-white text-xs h-8 rounded-md pl-8 pr-2 mt-2 focus-visible:ring-1 focus-visible:ring-slate-600 placeholder:text-slate-600" placeholder="Address" />
+              <Input value={call.cross_streets || ""} onChange={(e) => update("cross_streets", e.target.value)} className={inputCls + " h-8 text-xs mt-2"} placeholder="Cross Streets" />
             </div>
             <div>
               <label className={fieldLabel}>Call Description</label>

@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 
 function hexToHsl(hex) {
@@ -24,22 +24,7 @@ function hexToHsl(hex) {
 }
 
 let cached = null;
-
-export function useCommunityBranding() {
-  useEffect(() => {
-    const apply = async () => {
-      try {
-        if (cached) { applyBranding(cached); return; }
-        const list = await base44.entities.CommunitySetting.list();
-        if (list.length > 0) {
-          cached = list[0];
-          applyBranding(cached);
-        }
-      } catch (e) { /* silent */ }
-    };
-    apply();
-  }, []);
-}
+const listeners = new Set();
 
 function applyBranding(setting) {
   const root = document.documentElement;
@@ -53,6 +38,47 @@ function applyBranding(setting) {
   if (setting.community_name) {
     document.title = `${setting.community_name} — CAD System`;
   }
+}
+
+export function useCommunityBranding() {
+  const [branding, setBranding] = useState(cached);
+
+  const fetchBranding = useCallback(async () => {
+    try {
+      const list = await base44.entities.CommunitySetting.list();
+      if (list.length > 0) {
+        cached = list[0];
+        applyBranding(cached);
+      } else {
+        cached = null;
+      }
+    } catch (e) { /* silent */ }
+    setBranding(cached);
+    listeners.forEach(fn => fn(cached));
+  }, []);
+
+  useEffect(() => {
+    const init = async () => {
+      if (cached) { applyBranding(cached); setBranding(cached); return; }
+      await fetchBranding();
+    };
+    init();
+    const listener = (data) => setBranding(data);
+    listeners.add(listener);
+    return () => { listeners.delete(listener); };
+  }, [fetchBranding]);
+
+  return { branding, refreshBranding: fetchBranding };
+}
+
+export function refreshBranding() {
+  const list = base44.entities.CommunitySetting.list();
+  return list.then(data => {
+    cached = data.length > 0 ? data[0] : null;
+    if (cached) applyBranding(cached);
+    listeners.forEach(fn => fn(cached));
+    return cached;
+  });
 }
 
 export function getBranding() { return cached; }

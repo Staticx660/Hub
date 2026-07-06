@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
-import { Building2, ChevronRight, Users, Siren, Radio, Lock, AlertCircle, Flame, Ambulance } from "lucide-react";
+import { Building2, ChevronRight, Users, Siren, Radio, Lock, AlertCircle, Flame, Ambulance, MessageCircle, Globe } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
 export default function CADDepartments() {
@@ -11,19 +11,22 @@ export default function CADDepartments() {
   const [calls, setCalls] = useState([]);
   const [loading, setLoading] = useState(true);
   const [accessInfo, setAccessInfo] = useState(null);
+  const [community, setCommunity] = useState(null);
   const { toast } = useToast();
 
   const load = async () => {
     try {
-      const [accessRes, u, p, c] = await Promise.all([
+      const [accessRes, u, p, c, cs] = await Promise.all([
         base44.functions.invoke('getUserCADDepartments', {}),
         base44.entities.CADUnit.list(),
         base44.entities.CADPersonnel.list(),
         base44.entities.ActiveCall.list(),
+        base44.entities.CommunitySetting.list().catch(() => []),
       ]);
       setDepartments(accessRes.data.departments || []);
       setAccessInfo(accessRes.data);
       setUnits(u); setPersonnel(p); setCalls(c);
+      if (cs.length > 0) setCommunity(cs[0]);
     } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
     finally { setLoading(false); }
   };
@@ -38,8 +41,26 @@ export default function CADDepartments() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-white mb-1">CAD System</h1>
-      <p className="text-sm text-slate-400 mb-6">Select a department to view calls, units, and personnel</p>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-white mb-1">{community?.community_name ? `${community.community_name} CAD` : "CAD System"}</h1>
+          <p className="text-sm text-slate-400">Select a department to view calls, units, and personnel</p>
+        </div>
+        {community && (community.discord_invite_url || community.website_url) && (
+          <div className="flex items-center gap-2">
+            {community.discord_invite_url && (
+              <a href={community.discord_invite_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-3 py-2 rounded-lg bg-indigo-600/20 text-indigo-400 hover:bg-indigo-600/30 text-sm font-medium transition-colors">
+                <MessageCircle className="w-4 h-4" /> Discord
+              </a>
+            )}
+            {community.website_url && (
+              <a href={community.website_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-700/50 text-slate-300 hover:bg-slate-700 text-sm font-medium transition-colors">
+                <Globe className="w-4 h-4" /> Website
+              </a>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* Departments */}
       <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">Departments</h2>

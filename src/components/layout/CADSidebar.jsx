@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/lib/AuthContext";
 import {
@@ -6,6 +6,7 @@ import {
   Settings, Keyboard
 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { useCommunityBranding } from "@/hooks/useCommunityBranding";
 
 const navItems = [
   { label: "Departments", path: "/cad", icon: Building2 },
@@ -20,17 +21,9 @@ export default function CADSidebar() {
   const isAdmin = user?.role === "admin";
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [logoUrl, setLogoUrl] = useState("");
-
-  useEffect(() => {
-    const loadBranding = async () => {
-      try {
-        const list = await base44.entities.CommunitySetting.list();
-        if (list.length > 0 && list[0].logo_url) setLogoUrl(list[0].logo_url);
-      } catch (e) { /* silent */ }
-    };
-    loadBranding();
-  }, []);
+  const { branding } = useCommunityBranding();
+  const logoUrl = branding?.logo_url || "";
+  const communityName = branding?.community_name || "";
 
   const visibleNavItems = navItems.filter(item => !item.adminOnly || isAdmin);
 
@@ -59,7 +52,7 @@ export default function CADSidebar() {
                   <Radio className="w-5 h-5 text-white" />
                 </div>
               )}
-              <span className="font-bold text-white text-lg tracking-tight">CAD</span>
+              <span className="font-bold text-white text-lg tracking-tight">{communityName || "CAD"}</span>
             </div>
           )}
           <button

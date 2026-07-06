@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Taskbar from "@/components/cad/mdt/Taskbar";
 import ClockInDialog from "@/components/cad/mdt/ClockInDialog";
+import AddressSearch from "@/components/cad/mdt/AddressSearch";
 import { useCommunityBranding } from "@/hooks/useCommunityBranding";
 import { Clock, Siren, Users, PhoneCall, Activity, Flame, Ambulance, Radio, Plus, X, MapPin, AlertTriangle, CheckCircle, Building2, Stethoscope, ChevronLeft } from "lucide-react";
 
@@ -496,7 +497,7 @@ function EMSContent({ calls, units, personnel, accent, deptId }) {
 }
 
 function CallIntakeDialog({ department, session, onClose, onSaved }) {
-  const [form, setForm] = useState({ call_type: "", priority: "2 - Medium", location: "", description: "", caller_name: "", caller_phone: "" });
+  const [form, setForm] = useState({ call_type: "", priority: "2 - Medium", location: "", cross_streets: "", description: "", caller_name: "", caller_phone: "" });
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
 
@@ -527,7 +528,8 @@ function CallIntakeDialog({ department, session, onClose, onSaved }) {
               <SelectContent className="bg-slate-800 border-slate-700">{["1 - High", "2 - Medium", "3 - Low"].map(p => <SelectItem key={p} value={p} className="text-white">{p}</SelectItem>)}</SelectContent>
             </Select>
           </div>
-          <div><Label className="text-slate-300 text-xs">Location *</Label><Input value={form.location} onChange={e => setForm({ ...form, location: e.target.value })} className="bg-slate-800 border-slate-700 text-white" placeholder="Street address or landmark" /></div>
+          <div><Label className="text-slate-300 text-xs">Location *</Label><AddressSearch value={form.location} onChange={v => setForm({ ...form, location: v })} className="w-full bg-slate-800 border border-slate-700 text-white text-sm h-9 rounded-md pl-8 pr-2 focus-visible:ring-1 focus-visible:ring-slate-600 placeholder:text-slate-600" placeholder="Search address..." /></div>
+          <div><Label className="text-slate-300 text-xs">Cross Streets</Label><Input value={form.cross_streets} onChange={e => setForm({ ...form, cross_streets: e.target.value })} className="bg-slate-800 border-slate-700 text-white" placeholder="e.g. Vinewood Blvd & Alta St" /></div>
           <div className="grid grid-cols-2 gap-2">
             <div><Label className="text-slate-300 text-xs">Caller Name</Label><Input value={form.caller_name} onChange={e => setForm({ ...form, caller_name: e.target.value })} className="bg-slate-800 border-slate-700 text-white" /></div>
             <div><Label className="text-slate-300 text-xs">Caller Phone</Label><Input value={form.caller_phone} onChange={e => setForm({ ...form, caller_phone: e.target.value })} className="bg-slate-800 border-slate-700 text-white" /></div>

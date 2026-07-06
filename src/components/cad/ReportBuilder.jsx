@@ -8,14 +8,35 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { useToast } from "@/components/ui/use-toast";
 import { Plus, Trash2, Pencil, FileText, ChevronUp, ChevronDown, Copy, X } from "lucide-react";
 
-const CATEGORIES = ["Incident", "Arrest", "Traffic Stop", "Field Contact", "Use of Force", "Vehicle Accident", "Evidence", "Other"];
+const CATEGORIES = ["Incident", "Arrest", "Traffic Stop", "Field Contact", "Use of Force", "Vehicle Accident", "Evidence", "Medical", "Fire", "Other"];
+
 const FIELD_TYPES = [
-  { value: "text", label: "Text Input" },
-  { value: "textarea", label: "Text Area" },
-  { value: "date", label: "Date" },
-  { value: "number", label: "Number" },
-  { value: "select", label: "Dropdown" },
+  { value: "text", label: "Text", group: "Fields" },
+  { value: "textarea", label: "Text Area", group: "Fields" },
+  { value: "address", label: "Address", group: "Fields" },
+  { value: "select", label: "Dropdown", group: "Fields" },
+  { value: "checkboxes", label: "Checkboxes", group: "Fields" },
+  { value: "date", label: "Date", group: "Fields" },
+  { value: "time", label: "Time", group: "Fields" },
+  { value: "image", label: "Image", group: "Fields" },
+  { value: "number", label: "Number", group: "Fields" },
+  { value: "status", label: "Status", group: "Fields" },
+  { value: "label", label: "Label", group: "Fields" },
+  { value: "id", label: "ID", group: "Identifiers" },
+  { value: "random", label: "Random", group: "Identifiers" },
+  { value: "UNIT_NUMBER", label: "Unit Number", group: "Identifiers" },
+  { value: "UNIT_NAME", label: "Unit Name", group: "Identifiers" },
+  { value: "UNIT_RANK", label: "Unit Rank", group: "Identifiers" },
+  { value: "UNIT_AGENCY", label: "Unit Agency", group: "Identifiers" },
+  { value: "UNIT_DEPARTMENT", label: "Unit Department", group: "Identifiers" },
+  { value: "UNIT_SUBDIVISION", label: "Unit Subdivision", group: "Identifiers" },
+  { value: "UNIT_AGENCY_LOCATION", label: "Unit Agency Location", group: "Identifiers" },
+  { value: "UNIT_AGENCY_ZIP", label: "Unit Agency Zip", group: "Identifiers" },
+  { value: "UNIT_LOCATION", label: "Unit Location", group: "Identifiers" },
 ];
+
+const IDENTIFIER_TYPES = FIELD_TYPES.filter(f => f.group === "Identifiers").map(f => f.value);
+const OPTIONS_TYPES = ["select", "checkboxes"];
 
 export default function ReportBuilder() {
   const [templates, setTemplates] = useState([]);
@@ -73,7 +94,7 @@ export default function ReportBuilder() {
     if (!form.name) { toast({ title: "Name required", variant: "destructive" }); return; }
     const cleanFields = form.fields.filter(f => f.label?.trim()).map(f => ({
       label: f.label.trim(), field_type: f.field_type, required: f.required,
-      ...(f.field_type === "select" ? { options: (f.options || []).filter(o => o?.trim()) } : {})
+      ...(OPTIONS_TYPES.includes(f.field_type) ? { options: (f.options || []).filter(o => o?.trim()) } : {})
     }));
     const data = { name: form.name, category: form.category, description: form.description, fields: cleanFields, department_id: form.is_global ? "" : form.department_id };
     try {
@@ -122,7 +143,7 @@ export default function ReportBuilder() {
                   {t.description && <p className="text-sm text-slate-400 mb-2">{t.description}</p>}
                   <div className="flex flex-wrap gap-1.5">
                     {(t.fields || []).map((f, i) => (
-                      <span key={i} className="text-xs bg-slate-800 text-slate-400 px-2 py-0.5 rounded">{f.label}{f.required && <span className="text-red-400 ml-0.5">*</span>}</span>
+                      <span key={i} className="text-xs bg-slate-800 text-slate-400 px-2 py-0.5 rounded">{f.label}<span className="text-slate-600 ml-1">[{f.field_type}]</span>{f.required && <span className="text-red-400 ml-0.5">*</span>}</span>
                     ))}
                   </div>
                 </div>
@@ -183,13 +204,18 @@ export default function ReportBuilder() {
                         </div>
                         <Input value={field.label} onChange={e => updateField(idx, "label", e.target.value)} className="bg-slate-800 border-slate-700 text-white flex-1" placeholder="Field label (e.g. Suspect Name)" />
                         <Select value={field.field_type} onValueChange={v => updateField(idx, "field_type", v)}>
-                          <SelectTrigger className="bg-slate-800 border-slate-700 text-white w-36"><SelectValue /></SelectTrigger>
-                          <SelectContent className="bg-slate-800 border-slate-700">{FIELD_TYPES.map(t => <SelectItem key={t.value} value={t.value} className="text-white">{t.label}</SelectItem>)}</SelectContent>
+                          <SelectTrigger className="bg-slate-800 border-slate-700 text-white w-44"><SelectValue /></SelectTrigger>
+                          <SelectContent className="bg-slate-800 border-slate-700 max-h-72">
+                            <SelectItem value="text" className="text-white font-semibold text-cyan-400" disabled>— Fields —</SelectItem>
+                            {FIELD_TYPES.filter(f => f.group === "Fields").map(t => <SelectItem key={t.value} value={t.value} className="text-white">{t.label}</SelectItem>)}
+                            <SelectItem value="id" className="text-white font-semibold text-cyan-400" disabled>— Identifiers —</SelectItem>
+                            {FIELD_TYPES.filter(f => f.group === "Identifiers").map(t => <SelectItem key={t.value} value={t.value} className="text-white">{t.label}</SelectItem>)}
+                          </SelectContent>
                         </Select>
                         <label className="flex items-center gap-1 text-xs text-slate-400 cursor-pointer whitespace-nowrap"><input type="checkbox" checked={field.required || false} onChange={e => updateField(idx, "required", e.target.checked)} className="rounded border-slate-600" /> Req</label>
                         <button onClick={() => removeField(idx)} className="p-1.5 rounded-lg hover:bg-red-500/10 text-slate-400 hover:text-red-400"><Trash2 className="w-3.5 h-3.5" /></button>
                       </div>
-                      {field.field_type === "select" && (
+                      {OPTIONS_TYPES.includes(field.field_type) && (
                         <div className="ml-8 space-y-1.5">
                           {(field.options || []).map((opt, oi) => (
                             <div key={oi} className="flex items-center gap-2">
@@ -199,6 +225,9 @@ export default function ReportBuilder() {
                           ))}
                           <button onClick={() => addOption(idx)} className="text-xs text-cyan-400 hover:text-cyan-300 flex items-center gap-1"><Plus className="w-3 h-3" /> Add Option</button>
                         </div>
+                      )}
+                      {IDENTIFIER_TYPES.includes(field.field_type) && (
+                        <p className="ml-8 text-xs text-cyan-400/70">Auto-populated from unit/agency data when the report is filled out.</p>
                       )}
                     </div>
                   ))}

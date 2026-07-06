@@ -6,7 +6,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
-import { Save } from "lucide-react";
+import { Save, Upload } from "lucide-react";
+import { refreshBranding } from "@/hooks/useCommunityBranding";
 
 const TIMEZONES = [
   "America/New_York", "America/Chicago", "America/Denver", "America/Los_Angeles",
@@ -17,6 +18,7 @@ const TIMEZONES = [
 export default function CommunityInfoManager() {
   const [setting, setSetting] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
   const [form, setForm] = useState({
     community_name: "", logo_url: "", accent_color: "#3b82f6",
     discord_invite_url: "", website_url: "", timezone: "America/New_York", description: ""
@@ -46,12 +48,25 @@ export default function CommunityInfoManager() {
     load();
   }, []);
 
+  const handleLogoUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      setForm({ ...form, logo_url: file_url });
+      toast({ title: "Logo uploaded" });
+    } catch (err) { toast({ title: "Upload failed", description: err.message, variant: "destructive" }); }
+    setUploading(false);
+  };
+
   const handleSave = async () => {
     if (!form.community_name?.trim()) { toast({ title: "Community name is required", variant: "destructive" }); return; }
     try {
       if (setting) { await base44.entities.CommunitySetting.update(setting.id, form); }
       else { const created = await base44.entities.CommunitySetting.create({ ...form, is_setup: true }); setSetting(created); }
-      toast({ title: "Community settings saved" });
+      await refreshBranding();
+      toast({ title: "Community settings saved", description: "Branding updated across the system" });
     } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
   };
 
@@ -67,9 +82,22 @@ export default function CommunityInfoManager() {
           <Input value={form.community_name || ""} onChange={e => setForm({ ...form, community_name: e.target.value })} className="bg-slate-800 border-slate-700 text-white" placeholder="e.g. OCRP" />
         </div>
         <div>
-          <Label className="text-slate-300">Logo URL</Label>
-          <Input value={form.logo_url || ""} onChange={e => setForm({ ...form, logo_url: e.target.value })} className="bg-slate-800 border-slate-700 text-white" placeholder="https://..." />
-          {form.logo_url && <img src={form.logo_url} alt="Logo" className="w-16 h-16 rounded-lg object-cover mt-2" />}
+          <Label className="text-slate-300">Logo</Label>
+          <div className="flex items-center gap-3">
+            {form.logo_url ? (
+              <img src={form.logo_url} alt="Logo" className="w-16 h-16 rounded-lg object-cover border border-slate-700" />
+            ) : (
+              <div className="w-16 h-16 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-600 text-xs">No logo</div>
+            )}
+            <label>
+              <span className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-800 text-slate-300 text-sm hover:bg-slate-700 border border-slate-700 cursor-pointer">
+                <Upload className="w-4 h-4" /> {uploading ? "Uploading..." : "Upload Logo"}
+              </span>
+              <input type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} disabled={uploading} />
+            </label>
+          </div>
+          <p className="text-xs text-slate-500 mt-1">Or paste a URL below</p>
+          <Input value={form.logo_url || ""} onChange={e => setForm({ ...form, logo_url: e.target.value })} className="bg-slate-800 border-slate-700 text-white mt-1" placeholder="https://..." />
         </div>
         <div>
           <Label className="text-slate-300">Accent Color</Label>
