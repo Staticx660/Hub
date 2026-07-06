@@ -57,6 +57,7 @@ export default function CallViewer({ department, session, selectedCallId, onSele
         call_type: call.call_type, status: call.status, priority: call.priority,
         location: call.location, cross_streets: call.cross_streets, description: call.description, cad_notes: call.cad_notes,
         call_origin: call.call_origin, postal: call.postal, block: call.block,
+        caller_name: call.caller_name, caller_phone: call.caller_phone, notes: call.notes,
       });
       toast({ title: "Call updated" });
     } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
