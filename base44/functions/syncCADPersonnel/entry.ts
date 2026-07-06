@@ -20,8 +20,10 @@ Deno.serve(async (req) => {
 
     const cadDepartments = await base44.asServiceRole.entities.CADDepartment.filter({ is_active: true });
     const roleMap = {};
+    const supervisorRoleIds = [];
     for (const dept of cadDepartments) {
       if (dept.discord_role_id) roleMap[dept.discord_role_id] = dept;
+      if (dept.discord_supervisor_role_id) supervisorRoleIds.push(dept.discord_supervisor_role_id);
     }
     const defaultDept = cadDepartments.find(d => d.category === "Civilian") || cadDepartments[0] || null;
 
@@ -187,6 +189,9 @@ Deno.serve(async (req) => {
         }
         if (discordId && !existing.discord_id) updates.discord_id = discordId;
         if (existing.name !== displayName) updates.name = displayName;
+
+        const hasSupervisorRole = supervisorRoleIds.some(rid => memberRoles.includes(rid));
+        if (hasSupervisorRole && !existing.is_supervisor) updates.is_supervisor = true;
 
         if (Object.keys(updates).length > 0) {
           try {

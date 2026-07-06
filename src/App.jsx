@@ -106,8 +106,8 @@ const AuthenticatedApp = () => {
           <Route path="/my-records" element={<MyRecords />} />
           <Route path="/keybinds" element={<KeybindConfig />} />
           <Route path="/department-archive" element={<DepartmentArchive />} />
+          <Route path="/cad-settings" element={<CADSettings />} />
           <Route element={<AdminRoute />}>
-            <Route path="/cad-settings" element={<CADSettings />} />
             <Route path="/cad-personnel" element={<CADPersonnel />} />
             <Route path="/system-logs" element={<SystemLogs />} />
           </Route>

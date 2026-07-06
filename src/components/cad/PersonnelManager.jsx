@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Plus, Pencil, Trash2, Users, RefreshCw, Loader2, CheckCircle2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Users, RefreshCw, Loader2, CheckCircle2, Shield, Crown } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
 const statusColors = { "Available": "bg-green-500/15 text-green-400", "On Duty": "bg-blue-500/15 text-blue-400", "Off Duty": "bg-slate-700 text-slate-400" };
@@ -118,7 +118,7 @@ export default function PersonnelManager() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead><tr className="text-left text-slate-500 border-b border-slate-800">
-              <th className="pb-2 pr-4">Name</th><th className="pb-2 pr-4">Department</th><th className="pb-2 pr-4">Rank</th><th className="pb-2 pr-4">Badge</th><th className="pb-2 pr-4">Callsign</th><th className="pb-2 pr-4">Status</th><th className="pb-2"></th>
+              <th className="pb-2 pr-4">Name</th><th className="pb-2 pr-4">Department</th><th className="pb-2 pr-4">Rank</th><th className="pb-2 pr-4">Badge</th><th className="pb-2 pr-4">Callsign</th><th className="pb-2 pr-4">Roles</th><th className="pb-2 pr-4">Status</th><th className="pb-2"></th>
             </tr></thead>
             <tbody>
               {filtered.map((p) => (
@@ -136,7 +136,13 @@ export default function PersonnelManager() {
                   </td>
                   <td className="py-2.5 pr-4 text-slate-400">{p.rank || "—"}</td>
                   <td className="py-2.5 pr-4 text-slate-400">{p.badge_number || "—"}</td>
-                  <td className="py-2.5 pr-4 text-slate-400">{p.callsign || "—"}</td>
+                  <td className="py-2.5 pr-4">
+                    <div className="flex flex-wrap gap-1">
+                      {p.is_supervisor && <span className="inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/20"><Shield className="w-3 h-3" /> Supervisor</span>}
+                      {p.is_cad_admin && <span className="inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded bg-blue-500/15 text-blue-400 border border-blue-500/20"><Crown className="w-3 h-3" /> Admin</span>}
+                      {!p.is_supervisor && !p.is_cad_admin && <span className="text-xs text-slate-600">—</span>}
+                    </div>
+                  </td>
                   <td className="py-2.5 pr-4"><span className={`text-xs px-2 py-0.5 rounded-full ${statusColors[p.status] || statusColors["Off Duty"]}`}>{p.status}</span></td>
                   <td className="py-2.5"><div className="flex gap-1"><button onClick={() => openEdit(p)} className="p-1.5 rounded-lg hover:bg-slate-700 text-slate-400 hover:text-white"><Pencil className="w-3.5 h-3.5" /></button><button onClick={() => handleDelete(p.id)} className="p-1.5 rounded-lg hover:bg-red-500/10 text-slate-400 hover:text-red-400"><Trash2 className="w-3.5 h-3.5" /></button></div></td>
                 </tr>

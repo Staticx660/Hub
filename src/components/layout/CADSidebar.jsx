@@ -12,7 +12,7 @@ import { useCommunityBranding } from "@/hooks/useCommunityBranding";
 const navItems = [
   { label: "Departments", path: "/cad", icon: Building2 },
   { label: "Keybinds", path: "/keybinds", icon: Keyboard },
-  { label: "CAD Settings", path: "/cad-settings", icon: Settings, platformAdminOnly: true },
+  { label: "CAD Settings", path: "/cad-settings", icon: Settings },
   { label: "Admin Panel", path: "/cad/admin", icon: Shield, supervisorOrAbove: true },
 ];
 
