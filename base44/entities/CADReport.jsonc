@@ -9,13 +9,16 @@
       "type": "string",
       "enum": [
         "Incident",
+        "Arrest",
+        "General Citation",
+        "Vehicle Citation",
+        "Use of Force",
+        "MVA Report",
+        "Fire",
+        "Medical",
+        "Use of Medications",
         "Traffic Stop",
         "Field Contact",
-        "Arrest",
-        "Medical",
-        "Fire",
-        "Vehicle Accident",
-        "Use of Force",
         "Evidence",
         "Other"
       ]

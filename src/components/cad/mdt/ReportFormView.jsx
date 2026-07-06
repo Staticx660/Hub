@@ -6,13 +6,14 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
-import { ArrowLeft, Plus, Trash2, Search, Car, User, Link2, ChevronDown, ChevronUp, Eye, FileText, Gavel, X } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Search, Car, User, Link2, ChevronDown, ChevronUp, Eye, FileText, Gavel, X, Sparkles } from "lucide-react";
 import CivilianSearch from "@/components/cad/mdt/CivilianSearch";
 import VehicleSearch from "@/components/cad/mdt/VehicleSearch";
 import AddressSearch from "@/components/cad/mdt/AddressSearch";
 import LinkedRecordsDialog from "@/components/cad/mdt/LinkedRecordsDialog";
 import { logSystemEvent } from "@/lib/logSystemEvent";
-import { ALL_REPORT_TYPES, getReportTypes } from "@/lib/reportTypes";
+import { ALL_REPORT_TYPES, getReportTypes, hasCharges } from "@/lib/reportTypes";
+import { generateReportNarrative } from "@/lib/aiNarrative";
 
 function GridField({ label, children, span }) {
   return (
@@ -52,6 +53,7 @@ export default function ReportFormView({ department, session, initialType, templ
   const [showLinkedRecords, setShowLinkedRecords] = useState(false);
   const [linkedRecords, setLinkedRecords] = useState(fd.linked_records || []);
   const [saving, setSaving] = useState(false);
+  const [generatingNarrative, setGeneratingNarrative] = useState(false);
   const [recordNumber, setRecordNumber] = useState(existingReport?.run_number || "");
   const [officerName, setOfficerName] = useState(fd.signatures?.officer_name || "");
   const [observingSignature, setObservingSignature] = useState(fd.signatures?.observing_unit || "");
@@ -82,6 +84,17 @@ export default function ReportFormView({ department, session, initialType, templ
       if (t) setSelectedTemplate(t);
     }
   }, [existingReport, templates]);
+
+  const handleGenerateNarrative = async () => {
+    setGeneratingNarrative(true);
+    try {
+      const report = { title, report_type: reportType, location, description: narrative, filed_by_name: officerName || session?.user_name, linked_civilian_name: selectedCivilian ? `${selectedCivilian.first_name} ${selectedCivilian.last_name}`.trim() : "", linked_vehicle_plate: vehicleData.plate || "", field_data: fieldData };
+      const result = await generateReportNarrative(report, selectedTemplate?.fields);
+      setNarrative(result);
+      toast({ title: "Narrative generated" });
+    } catch (e) { toast({ title: "Error generating narrative", description: e.message, variant: "destructive" }); }
+    setGeneratingNarrative(false);
+  };
 
   useEffect(() => {
     const genRecordNum = async () => {
@@ -407,6 +420,7 @@ export default function ReportFormView({ department, session, initialType, templ
         </div>
 
         {/* Charges */}
+        {hasCharges(department?.category) && (
         <div className="bg-[#262a30] rounded-lg p-3">
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-xs font-bold uppercase tracking-wider text-red-500">Charges</h3>
@@ -453,10 +467,16 @@ export default function ReportFormView({ department, session, initialType, templ
           ))}
           {charges.length === 0 && <p className="text-xs text-slate-500 text-center py-2">No charges added. Click + to add one.</p>}
         </div>
+        )}
 
         {/* Narrative */}
         <div className="bg-[#262a30] rounded-lg p-3">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-red-500 mb-2">Narrative</h3>
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-red-500">Narrative</h3>
+            <Button onClick={handleGenerateNarrative} disabled={generatingNarrative} size="sm" variant="outline" className="border-slate-600 text-cyan-400 hover:text-cyan-300 h-7 gap-1.5 text-xs">
+              <Sparkles className="w-3.5 h-3.5" /> {generatingNarrative ? "Generating..." : "AI Generate"}
+            </Button>
+          </div>
           <Textarea value={narrative} onChange={e => setNarrative(e.target.value)} className="bg-[#0f1115] border-none text-white min-h-[120px]" placeholder="Describe the incident in detail..." />
         </div>
 

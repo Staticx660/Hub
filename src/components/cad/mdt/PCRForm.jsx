@@ -4,8 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
-import { ClipboardList, Plus, ArrowLeft, Save, Activity, Heart, Pill, FileText, Truck, User, Stethoscope } from "lucide-react";
+import { ClipboardList, Plus, ArrowLeft, Save, Activity, Heart, Pill, FileText, Truck, User, Stethoscope, Sparkles } from "lucide-react";
 import PCRPatientTab from "@/components/cad/pcr/PCRPatientTab";
+import { generatePCRNarrative } from "@/lib/aiNarrative";
 import PCRHistoryTab from "@/components/cad/pcr/PCRHistoryTab";
 import PCRAssessmentTab from "@/components/cad/pcr/PCRAssessmentTab";
 import PCRVitalsTab from "@/components/cad/pcr/PCRVitalsTab";
@@ -17,8 +18,8 @@ const TABS = [
   { id: "assessment", label: "Assessment", icon: Activity },
   { id: "vitals", label: "Vitals", icon: Heart },
   { id: "treatment", label: "Treatment", icon: Pill },
-  { id: "narrative", label: "Narrative", icon: FileText },
   { id: "disposition", label: "Disposition", icon: Truck },
+  { id: "narrative", label: "Narrative", icon: FileText },
 ];
 
 export default function PCRForm({ department, session }) {
@@ -27,6 +28,7 @@ export default function PCRForm({ department, session }) {
   const [tab, setTab] = useState("patient");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [generating, setGenerating] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => { loadPcrs(); }, []);
@@ -68,6 +70,16 @@ export default function PCRForm({ department, session }) {
 
   const editPcr = (pcr) => { setForm({ ...pcr }); setTab("patient"); };
   const update = (field, value) => setForm((prev) => ({ ...prev, [field]: value }));
+
+  const handleGenerateNarrative = async () => {
+    setGenerating(true);
+    try {
+      const narrative = await generatePCRNarrative(form);
+      update("narrative", narrative);
+      toast({ title: "Narrative generated" });
+    } catch (e) { toast({ title: "Error generating narrative", description: e.message, variant: "destructive" }); }
+    setGenerating(false);
+  };
 
   const save = async (status) => {
     if (!form.patient_name?.trim()) { toast({ title: "Patient name required", variant: "destructive" }); setTab("patient"); return; }
@@ -130,9 +142,15 @@ export default function PCRForm({ department, session }) {
           {tab === "treatment" && <PCRTreatmentTab form={form} update={update} />}
           {tab === "narrative" && (
             <div className="max-w-2xl">
-              <Label className="text-slate-400 text-xs">Patient Care Narrative</Label>
+              <div className="flex items-center justify-between mb-1">
+                <Label className="text-slate-400 text-xs">Patient Care Narrative</Label>
+                <Button onClick={handleGenerateNarrative} disabled={generating} size="sm" variant="outline" className="border-slate-700 text-cyan-400 hover:text-cyan-300 h-7 gap-1.5 text-xs">
+                  <Sparkles className="w-3.5 h-3.5" /> {generating ? "Generating..." : "AI Generate"}
+                </Button>
+              </div>
               <Textarea value={form.narrative || ""} onChange={(e) => update("narrative", e.target.value)} className="bg-slate-800 border-slate-700 text-white mt-1" rows={18} placeholder="Document the full patient encounter: dispatch info, arrival, scene safety, mechanism/nature of illness, initial assessment, interventions performed, patient response, changes in condition, transport, and transfer of care..." />
               <p className="text-xs text-slate-500 mt-2">{(form.narrative || "").length} characters</p>
+              <p className="text-xs text-slate-600 mt-1">Tip: Fill out all other tabs first, then click AI Generate to compile a narrative from your data.</p>
             </div>
           )}
           {tab === "disposition" && (

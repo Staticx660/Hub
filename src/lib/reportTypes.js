@@ -1,10 +1,15 @@
-export const ALL_REPORT_TYPES = ["Incident", "Traffic Stop", "Field Contact", "Arrest", "Medical", "Fire", "Vehicle Accident", "Use of Force", "Evidence", "Other"];
+export const ALL_REPORT_TYPES = [
+  "Incident", "Arrest", "General Citation", "Vehicle Citation",
+  "Use of Force", "MVA Report", "Fire", "Medical",
+  "Use of Medications", "Traffic Stop", "Field Contact",
+  "Evidence", "Other"
+];
 
 export const REPORT_TYPES_BY_CATEGORY = {
-  Police: ["Incident", "Traffic Stop", "Field Contact", "Arrest", "Vehicle Accident", "Use of Force", "Evidence", "Other"],
-  Fire: ["Fire", "Vehicle Accident", "Other"],
-  EMS: ["Medical", "Vehicle Accident", "Other"],
-  Dispatch: ["Incident", "Traffic Stop", "Other"],
+  Police: ["Arrest", "General Citation", "Vehicle Citation", "Use of Force", "MVA Report", "Incident", "Traffic Stop", "Field Contact", "Evidence", "Other"],
+  Fire: ["Fire", "Incident", "MVA Report", "Other"],
+  EMS: ["Incident", "Use of Medications", "Medical", "Other"],
+  Dispatch: ["Incident", "Other"],
   Civilian: ["Other"],
   "Private Security": ["Incident", "Field Contact", "Other"],
   Other: ALL_REPORT_TYPES,
@@ -14,4 +19,9 @@ export const REPORT_TEMPLATE_CATEGORIES = ["Incident", "Arrest", "Traffic Stop",
 
 export function getReportTypes(category) {
   return REPORT_TYPES_BY_CATEGORY[category] || ALL_REPORT_TYPES;
+}
+
+// Whether a department category should show charges on reports
+export function hasCharges(category) {
+  return category === "Police" || category === "Private Security";
 }
