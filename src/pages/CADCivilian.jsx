@@ -12,6 +12,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { UserPlus, Pencil, FileText, Car, Phone, AlertTriangle, Eye, Gavel, ChevronLeft } from "lucide-react";
 import CharacterForm from "@/components/cad/civilian/CharacterForm";
 import CivilianDMV from "@/components/cad/civilian/CivilianDMV";
+import AddressSearch from "@/components/cad/mdt/AddressSearch";
+
+const CIVILIAN_CALL_TYPES = ["Medical Emergency", "Structure Fire", "Traffic Accident", "Burglary", "Robbery", "Assault", "Theft", "Vandalism", "Noise Complaint", "Suspicious Person", "Welfare Check", "Domestic Dispute", "Shots Fired", "Other"];
 
 const OCRP_LOGO = "https://media.base44.com/images/public/6a441f279b9d3cd678958799/5a43a1b46_OCRP20.png";
 
@@ -38,7 +41,7 @@ export default function CADCivilian() {
   const [charFormOpen, setCharFormOpen] = useState(false);
   const [editingChar, setEditingChar] = useState(null);
   const [call911Open, setCall911Open] = useState(false);
-  const [call911Form, setCall911Form] = useState({ location: "", description: "", priority: "2 - Medium" });
+  const [call911Form, setCall911Form] = useState({ call_type: "Medical Emergency", location: "", cross_streets: "", postal: "", block: "", description: "", priority: "1 - High" });
   const [warrants, setWarrants] = useState([]);
   const [bolos, setBolos] = useState([]);
   const [reports, setReports] = useState([]);
@@ -111,16 +114,19 @@ export default function CADCivilian() {
       const dispatchDept = depts.find(d => d.category === "Dispatch") || policeDept || depts.find(d => d.id === deptId);
       const runNum = `911-${Date.now().toString().slice(-6)}`;
       await base44.entities.ActiveCall.create({
-        call_type: "911 Emergency Call", priority: call911Form.priority, status: "Pending",
-        location: call911Form.location, description: call911Form.description,
+        call_type: call911Form.call_type, priority: call911Form.priority, status: "Pending",
+        call_origin: "911",
+        location: call911Form.location, cross_streets: call911Form.cross_streets,
+        postal: call911Form.postal, block: call911Form.block,
+        description: call911Form.description,
         caller_name: `${selectedChar.first_name} ${selectedChar.last_name}`,
         caller_phone: selectedChar.phone || "",
         department_id: dispatchDept?.id || deptId, run_number: runNum,
-        assignment_log: [{ unit_name: "911 Caller", action: "call_placed", timestamp: new Date().toISOString(), message: call911Form.description }],
+        assignment_log: [{ unit_name: "911 Caller", action: "call_placed", timestamp: new Date().toISOString(), message: `${call911Form.call_type}: ${call911Form.description}` }],
       });
       toast({ title: "911 call placed", description: runNum });
       setCall911Open(false);
-      setCall911Form({ location: "", description: "", priority: "2 - Medium" });
+      setCall911Form({ call_type: "Medical Emergency", location: "", cross_streets: "", postal: "", block: "", description: "", priority: "1 - High" });
     } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
   };
 
@@ -325,18 +331,43 @@ export default function CADCivilian() {
           </DialogHeader>
           <p className="text-sm text-slate-400">Calling as: <span className="text-white font-medium">{fullName}</span>{selectedChar?.phone && ` · ${selectedChar.phone}`}</p>
           <div className="space-y-3">
-            <div>
-              <Label className="text-slate-300">Location *</Label>
-              <Input value={call911Form.location} onChange={e => setCall911Form({ ...call911Form, location: e.target.value })} className="bg-slate-800 border-slate-700 text-white" placeholder="Where is the emergency?" />
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-slate-300">Call Type *</Label>
+                <Select value={call911Form.call_type} onValueChange={v => setCall911Form({ ...call911Form, call_type: v })}>
+                  <SelectTrigger className="bg-slate-800 border-slate-700 text-white"><SelectValue /></SelectTrigger>
+                  <SelectContent className="bg-slate-800 border-slate-700 max-h-60">
+                    {CIVILIAN_CALL_TYPES.map(t => <SelectItem key={t} value={t} className="text-white">{t}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-slate-300">Priority</Label>
+                <Select value={call911Form.priority} onValueChange={v => setCall911Form({ ...call911Form, priority: v })}>
+                  <SelectTrigger className="bg-slate-800 border-slate-700 text-white"><SelectValue /></SelectTrigger>
+                  <SelectContent className="bg-slate-800 border-slate-700">
+                    {["1 - High", "2 - Medium", "3 - Low"].map(p => <SelectItem key={p} value={p} className="text-white">{p}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <div>
-              <Label className="text-slate-300">Priority</Label>
-              <Select value={call911Form.priority} onValueChange={v => setCall911Form({ ...call911Form, priority: v })}>
-                <SelectTrigger className="bg-slate-800 border-slate-700 text-white"><SelectValue /></SelectTrigger>
-                <SelectContent className="bg-slate-800 border-slate-700">
-                  {["1 - High", "2 - Medium", "3 - Low"].map(p => <SelectItem key={p} value={p} className="text-white">{p}</SelectItem>)}
-                </SelectContent>
-              </Select>
+              <Label className="text-slate-300">Address *</Label>
+              <AddressSearch value={call911Form.location} onChange={v => setCall911Form({ ...call911Form, location: v })} className="w-full bg-slate-800 border-slate-700 text-white text-sm h-9 rounded-md pl-9 pr-3 focus-visible:ring-1 focus-visible:ring-slate-600" placeholder="Search for a road..." />
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <Label className="text-slate-300">Postal</Label>
+                <Input value={call911Form.postal} onChange={e => setCall911Form({ ...call911Form, postal: e.target.value })} className="bg-slate-800 border-slate-700 text-white" placeholder="e.g. 1234" />
+              </div>
+              <div>
+                <Label className="text-slate-300">Block</Label>
+                <Input value={call911Form.block} onChange={e => setCall911Form({ ...call911Form, block: e.target.value })} className="bg-slate-800 border-slate-700 text-white" placeholder="e.g. 100" />
+              </div>
+              <div>
+                <Label className="text-slate-300">Cross Streets</Label>
+                <Input value={call911Form.cross_streets} onChange={e => setCall911Form({ ...call911Form, cross_streets: e.target.value })} className="bg-slate-800 border-slate-700 text-white" placeholder="e.g. Vinewood & Power" />
+              </div>
             </div>
             <div>
               <Label className="text-slate-300">Description</Label>

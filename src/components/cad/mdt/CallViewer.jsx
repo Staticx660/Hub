@@ -91,12 +91,20 @@ export default function CallViewer({ department, session, selectedCallId, onSele
     } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
   };
 
+  const buildPersistPayload = (extra) => ({
+    call_type: call.call_type, status: call.status, priority: call.priority,
+    location: call.location, cross_streets: call.cross_streets, description: call.description,
+    cad_notes: call.cad_notes, call_origin: call.call_origin, postal: call.postal, block: call.block,
+    caller_name: call.caller_name, caller_phone: call.caller_phone, notes: call.notes,
+    ...extra,
+  });
+
   const addUnit = async (unitId) => {
     try {
       const unit = sessions.find(s => s.id === unitId);
       const newIds = [...new Set([...(call.assigned_unit_ids || []), unitId])];
       const log = [...(call.assignment_log || []), { unit_name: unit?.callsign || "unit", action: "attached", timestamp: new Date().toISOString() }];
-      await base44.entities.ActiveCall.update(call.id, { assigned_unit_ids: newIds, assignment_log: log, status: "Active" });
+      await base44.entities.ActiveCall.update(call.id, buildPersistPayload({ assigned_unit_ids: newIds, assignment_log: log, status: "Active" }));
       await base44.entities.CADSession.update(unitId, { active_call_id: call.id, status: "On Call" });
       const unitLabel = unit?.group_name || unit?.callsign || unit?.user_name || "unit";
       const announceText = `Dispatching ${unitLabel} to ${call.call_type || "call"}${call.location ? " at " + call.location : ""}.`;
@@ -112,7 +120,7 @@ export default function CallViewer({ department, session, selectedCallId, onSele
       const unit = sessions.find(s => s.id === unitId);
       const newIds = (call.assigned_unit_ids || []).filter(id => id !== unitId);
       const log = [...(call.assignment_log || []), { unit_name: unit?.callsign || "unit", action: "detached", timestamp: new Date().toISOString() }];
-      await base44.entities.ActiveCall.update(call.id, { assigned_unit_ids: newIds, assignment_log: log });
+      await base44.entities.ActiveCall.update(call.id, buildPersistPayload({ assigned_unit_ids: newIds, assignment_log: log }));
       await base44.entities.CADSession.update(unitId, { active_call_id: "", status: "Available" });
       toast({ title: "Unit removed" });
       setCall({ ...call, assigned_unit_ids: newIds, assignment_log: log });

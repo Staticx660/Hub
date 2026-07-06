@@ -60,11 +60,9 @@ export default function CivilianDMV({ character, department, user, onUpdate }) {
     } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
   };
 
-  const toggleArrayField = async (field, value) => {
-    const current = character[field] || [];
-    const updated = current.includes(value) ? current.filter(t => t !== value) : [...current, value];
+  const saveArrayField = async (field, newArray) => {
     try {
-      await base44.entities.Civilian.update(character.id, { [field]: updated });
+      await base44.entities.Civilian.update(character.id, { [field]: newArray });
       if (onUpdate) await onUpdate();
     } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
   };
@@ -158,10 +156,10 @@ export default function CivilianDMV({ character, department, user, onUpdate }) {
         </div>
 
         <div className="mt-3 space-y-3">
-          <LicenseMultiSelect label="Pilot License Endorsements" icon={Plane} options={PILOT_ENDORSEMENTS} selected={character.pilot_license_endorsements || []} onChange={(v) => toggleArrayField("pilot_license_endorsements", v)} />
-          <LicenseMultiSelect label="Weapon License Types" icon={Crosshair} options={WEAPON_LICENSE_TYPES} selected={character.weapon_license_types || []} onChange={(v) => toggleArrayField("weapon_license_types", v)} />
-          <LicenseMultiSelect label="DCNR / Fish & Game License Types" icon={Leaf} options={HUNTING_TYPES} selected={character.hunting_license_types || []} onChange={(v) => toggleArrayField("hunting_license_types", v)} />
-          <LicenseMultiSelect label="DCNR / Fish & Game Stamps" icon={Leaf} options={HUNTING_STAMPS} selected={character.hunting_license_stamps || []} onChange={(v) => toggleArrayField("hunting_license_stamps", v)} />
+          <LicenseMultiSelect label="Pilot License Endorsements" icon={Plane} options={PILOT_ENDORSEMENTS} selected={character.pilot_license_endorsements || []} onChange={(v) => saveArrayField("pilot_license_endorsements", v)} />
+          <LicenseMultiSelect label="Weapon License Types" icon={Crosshair} options={WEAPON_LICENSE_TYPES} selected={character.weapon_license_types || []} onChange={(v) => saveArrayField("weapon_license_types", v)} />
+          <LicenseMultiSelect label="DCNR / Fish & Game License Types" icon={Leaf} options={HUNTING_TYPES} selected={character.hunting_license_types || []} onChange={(v) => saveArrayField("hunting_license_types", v)} />
+          <LicenseMultiSelect label="DCNR / Fish & Game Stamps" icon={Leaf} options={HUNTING_STAMPS} selected={character.hunting_license_stamps || []} onChange={(v) => saveArrayField("hunting_license_stamps", v)} />
         </div>
       </div>
 
