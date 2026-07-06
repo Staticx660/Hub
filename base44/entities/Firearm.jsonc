@@ -42,17 +42,30 @@
     "serial_number"
   ],
   "rls": {
-    "create": {
-      "created_by_id": "{{user.id}}"
-    },
     "read": {
       "$or": [
         {
-          "created_by_id": "{{user.id}}"
+          "user_condition": {
+            "role": "admin"
+          }
         },
         {
           "user_condition": {
+            "role": "user"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
             "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "user"
           }
         }
       ]
@@ -60,17 +73,30 @@
     "update": {
       "$or": [
         {
-          "created_by_id": "{{user.id}}"
+          "user_condition": {
+            "role": "admin"
+          }
         },
         {
           "user_condition": {
-            "role": "admin"
+            "role": "user"
           }
         }
       ]
     },
     "delete": {
-      "created_by_id": "{{user.id}}"
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        }
+      ]
     }
   }
 }

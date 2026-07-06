@@ -92,8 +92,34 @@
     "location"
   ],
   "rls": {
-    "create": null,
-    "read": null,
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        }
+      ]
+    },
     "update": {
       "$or": [
         {
@@ -103,30 +129,24 @@
         },
         {
           "user_condition": {
-            "role": "dispatcher"
-          }
-        },
-        {
-          "user_condition": {
-            "role": "officer"
-          }
-        },
-        {
-          "user_condition": {
-            "role": "ems"
-          }
-        },
-        {
-          "user_condition": {
-            "role": "fire"
+            "role": "user"
           }
         }
       ]
     },
     "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        }
+      ]
     }
   }
 }

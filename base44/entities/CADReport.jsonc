@@ -77,18 +77,44 @@
     "description"
   ],
   "rls": {
-    "create": {
-      "created_by_id": "{{user.id}}"
-    },
-    "read": null,
-    "update": {
+    "read": {
       "$or": [
-        {
-          "data.filed_by_id": "{{user.id}}"
-        },
         {
           "user_condition": {
             "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "user"
           }
         }
       ]
@@ -96,11 +122,13 @@
     "delete": {
       "$or": [
         {
-          "data.filed_by_id": "{{user.id}}"
+          "user_condition": {
+            "role": "admin"
+          }
         },
         {
           "user_condition": {
-            "role": "admin"
+            "role": "user"
           }
         }
       ]
