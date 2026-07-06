@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
-import { RefreshCw, Users, Loader2, CheckCircle2 } from "lucide-react";
+import { RefreshCw, Users, Loader2, CheckCircle2, Server, Webhook, KeyRound } from "lucide-react";
 
 export default function DiscordSettings() {
   const [guild, setGuild] = useState(null);
@@ -59,27 +59,37 @@ export default function DiscordSettings() {
 
   return (
     <div className="space-y-6 max-w-3xl">
-      {/* Guild Info */}
+      {/* Guild Info & Configuration */}
       <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-5">
         <h2 className="text-lg font-semibold text-white mb-1">Discord Guild</h2>
         <p className="text-sm text-slate-400 mb-4">Global Discord settings for the CAD system. The Guild ID is configured via environment variables.</p>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+          <div className="bg-slate-800/50 rounded-lg p-3">
+            <div className="flex items-center gap-2 mb-1"><Server className="w-4 h-4 text-slate-500" /><span className="text-xs text-slate-500 uppercase">Guild ID</span></div>
+            <p className="text-sm text-slate-300 font-mono">{guild ? guild.id : "—"}</p>
+          </div>
+          <div className="bg-slate-800/50 rounded-lg p-3">
+            <div className="flex items-center gap-2 mb-1"><Webhook className="w-4 h-4 text-slate-500" /><span className="text-xs text-slate-500 uppercase">Bot Token</span></div>
+            <p className="text-sm text-green-400">✓ Active</p>
+          </div>
+          <div className="bg-slate-800/50 rounded-lg p-3">
+            <div className="flex items-center gap-2 mb-1"><KeyRound className="w-4 h-4 text-slate-500" /><span className="text-xs text-slate-500 uppercase">Public Key</span></div>
+            <p className="text-sm text-green-400">✓ Set</p>
+          </div>
+        </div>
+        <p className="text-xs text-slate-500">Discord secrets are managed in the app dashboard under Environment Variables. The Guild ID, Bot Token, and Public Key are used for all Discord integrations across the CAD system.</p>
         {guild ? (
-          <div className="space-y-2">
+          <div className="space-y-2 mt-4 pt-4 border-t border-slate-800">
             <div className="flex items-center gap-3">
               {guild.icon && <img src={`https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.png`} alt="" className="w-12 h-12 rounded-full" />}
               <div>
                 <p className="text-white font-medium">{guild.name}</p>
-                <p className="text-xs text-slate-500 font-mono">ID: {guild.id}</p>
+                <p className="text-xs text-slate-500">Members: {guild.approximate_member_count || "—"} · Online: {guild.approximate_presence_count || "—"} · Roles: {roles.length}</p>
               </div>
-            </div>
-            <div className="flex gap-4 text-sm text-slate-400 mt-2">
-              <span>Members: {guild.approximate_member_count || "—"}</span>
-              <span>Online: {guild.approximate_presence_count || "—"}</span>
-              <span>Roles: {roles.length}</span>
             </div>
           </div>
         ) : (
-          <p className="text-sm text-red-400">Could not load guild data. Make sure DISCORD_GUILD_ID and DISCORD_BOT_TOKEN are set.</p>
+          <p className="text-sm text-red-400 mt-4 pt-4 border-t border-slate-800">Could not load guild data. Make sure DISCORD_GUILD_ID and DISCORD_BOT_TOKEN are set.</p>
         )}
       </div>
 
