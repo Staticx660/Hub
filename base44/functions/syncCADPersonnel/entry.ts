@@ -177,10 +177,8 @@ Deno.serve(async (req) => {
       if (existing) {
         const updates = {};
         if (existing.department_id !== primaryDept.id) updates.department_id = primaryDept.id;
-        const currentAdditional = existing.additional_department_ids || [];
-        const mergedAdditional = [...new Set([...currentAdditional, ...additionalDeptIds])];
-        if (JSON.stringify(mergedAdditional.sort()) !== JSON.stringify(currentAdditional.sort())) {
-          updates.additional_department_ids = mergedAdditional;
+        if (JSON.stringify((additionalDeptIds || []).slice().sort()) !== JSON.stringify((existing.additional_department_ids || []).slice().sort())) {
+          updates.additional_department_ids = additionalDeptIds;
         }
         if (rosterMember) {
           if (rosterMember.rank && existing.rank !== rosterMember.rank) updates.rank = rosterMember.rank;
@@ -191,7 +189,7 @@ Deno.serve(async (req) => {
         if (existing.name !== displayName) updates.name = displayName;
 
         const hasSupervisorRole = supervisorRoleIds.some(rid => memberRoles.includes(rid));
-        if (hasSupervisorRole && !existing.is_supervisor) updates.is_supervisor = true;
+        if (hasSupervisorRole !== existing.is_supervisor) updates.is_supervisor = hasSupervisorRole;
 
         if (Object.keys(updates).length > 0) {
           try {

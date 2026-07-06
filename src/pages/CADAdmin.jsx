@@ -2,10 +2,7 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import RegisteredUsersManager from "@/components/cad/RegisteredUsersManager";
 import DiscordMembersManager from "@/components/cad/DiscordMembersManager";
-import UnitsManager from "@/components/cad/UnitsManager";
-import PersonnelManager from "@/components/cad/PersonnelManager";
 import DiscordSettings from "@/components/cad/DiscordSettings";
-import SimpleListManager from "@/components/cad/customizer/SimpleListManager";
 import CommunityInfoManager from "@/components/cad/customizer/CommunityInfoManager";
 import AddressesManager from "@/components/cad/customizer/AddressesManager";
 import UserRestrictionsManager from "@/components/cad/customizer/UserRestrictionsManager";
@@ -15,7 +12,7 @@ import PenalCodesManager from "@/components/cad/PenalCodesManager";
 import DepartmentsGroupsManager from "@/components/cad/DepartmentsGroupsManager";
 import PermissionsManager from "@/components/cad/PermissionsManager";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
-import { Users, IdCard, Settings, Building2, MapPin, Gavel, ShieldCheck, Bell, Award, AlertTriangle, MessageCircle, ScrollText, ArrowLeft, KeyRound, Crown, Trash2 } from "lucide-react";
+import { Users, IdCard, Settings, Building2, MapPin, Gavel, ShieldCheck, Bell, MessageCircle, ScrollText, ArrowLeft, KeyRound, Crown, Trash2 } from "lucide-react";
 import SystemLogs from "@/pages/SystemLogs";
 
 // access: "supervisor" = visible to supervisors+, "admin" = visible to CAD/platform admins only
@@ -32,8 +29,6 @@ const ALL_SECTIONS = [
     { id: "penal", label: "Penal Codes", icon: Gavel, access: "admin" },
     { id: "restrictions", label: "User Restrictions", icon: ShieldCheck, access: "admin" },
     { id: "tones", label: "Notification Tones", icon: Bell, access: "admin" },
-    { id: "licenses", label: "Licenses", icon: Award, access: "admin" },
-    { id: "incidents", label: "Incident Types", icon: AlertTriangle, access: "supervisor" },
   ]},
   { title: "ADVANCED", items: [
     { id: "discord", label: "Discord", icon: MessageCircle, access: "admin" },
@@ -70,8 +65,6 @@ export default function CADAdmin() {
       case "penal": return <PenalCodesManager />;
       case "restrictions": return <UserRestrictionsManager />;
       case "tones": return <NotificationTonesManager />;
-      case "licenses": return <SimpleListManager entityName="CustomLicense" title="Custom Licenses" description="Create custom license types for civilians" fields={[{ name: "name", label: "License Name", type: "text", required: true }, { name: "description", label: "Description", type: "text" }, { name: "icon", label: "Icon (emoji or text)", type: "text" }]} />;
-      case "incidents": return <SimpleListManager entityName="IncidentType" title="Incident Types" description="Customize incident types for reports" fields={[{ name: "name", label: "Type Name", type: "text", required: true }, { name: "category", label: "Category", type: "text" }, { name: "description", label: "Description", type: "text" }, { name: "color", label: "Color", type: "color" }]} />;
       case "discord": return <DiscordSettings />;
       case "logs": return <SystemLogs />;
       case "danger": return <DangerZoneManager />;

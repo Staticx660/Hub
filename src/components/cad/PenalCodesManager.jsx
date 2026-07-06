@@ -266,7 +266,7 @@ function ChargeTypeManager({ chargeTypes, onLoad }) {
       <SimpleDialog open={dialogOpen} onOpenChange={setDialogOpen} editing={editing} form={form} setForm={setForm} onSave={handleSave} title="Charge Type" fields={[
         { name: "name", label: "Name", required: true },
         { name: "description", label: "Description" },
-        { name: "color", label: "Color (hex)" },
+        { name: "color", label: "Color", type: "color" },
       ]} />
     </div>
   );
@@ -275,11 +275,11 @@ function ChargeTypeManager({ chargeTypes, onLoad }) {
 function BondTypeManager({ bondTypes, onLoad }) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState(null);
-  const [form, setForm] = useState({ name: "", description: "", default_amount: 0, is_active: true });
+  const [form, setForm] = useState({ name: "", description: "", color: "#3b82f6", default_amount: 0, is_active: true });
   const { toast } = useToast();
 
-  const openCreate = () => { setEditing(null); setForm({ name: "", description: "", default_amount: 0, is_active: true }); setDialogOpen(true); };
-  const openEdit = (item) => { setEditing(item); setForm({ name: item.name || "", description: item.description || "", default_amount: item.default_amount || 0, is_active: item.is_active !== false }); setDialogOpen(true); };
+  const openCreate = () => { setEditing(null); setForm({ name: "", description: "", color: "#3b82f6", default_amount: 0, is_active: true }); setDialogOpen(true); };
+  const openEdit = (item) => { setEditing(item); setForm({ name: item.name || "", description: item.description || "", color: item.color || "#3b82f6", default_amount: item.default_amount || 0, is_active: item.is_active !== false }); setDialogOpen(true); };
   const handleSave = async () => {
     if (!form.name?.trim()) { toast({ title: "Name required", variant: "destructive" }); return; }
     try { if (editing) { await base44.entities.BondType.update(editing.id, form); } else { await base44.entities.BondType.create(form); } toast({ title: "Saved" }); setDialogOpen(false); onLoad(); }
@@ -296,7 +296,7 @@ function BondTypeManager({ bondTypes, onLoad }) {
       <div className="space-y-2">
         {bondTypes.map(bt => (
           <div key={bt.id} className="bg-slate-900/60 border border-slate-800 rounded-xl p-4 flex items-center justify-between">
-            <div><span className="text-white font-medium">{bt.name}</span>{bt.default_amount ? <span className="text-xs text-slate-500 ml-2">${bt.default_amount}</span> : null}</div>
+            <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: bt.color || "#3b82f6" }} /><span className="text-white font-medium">{bt.name}</span>{bt.default_amount ? <span className="text-xs text-slate-500 ml-2">${bt.default_amount}</span> : null}</div>
             <div className="flex gap-1">
               <button onClick={() => openEdit(bt)} className="p-1.5 rounded-lg hover:bg-slate-700 text-slate-400 hover:text-white"><Pencil className="w-3.5 h-3.5" /></button>
               <button onClick={() => handleDelete(bt.id)} className="p-1.5 rounded-lg hover:bg-red-500/10 text-slate-400 hover:text-red-400"><Trash2 className="w-3.5 h-3.5" /></button>
@@ -308,6 +308,7 @@ function BondTypeManager({ bondTypes, onLoad }) {
       <SimpleDialog open={dialogOpen} onOpenChange={setDialogOpen} editing={editing} form={form} setForm={setForm} onSave={handleSave} title="Bond Type" fields={[
         { name: "name", label: "Name", required: true },
         { name: "description", label: "Description" },
+        { name: "color", label: "Color", type: "color" },
         { name: "default_amount", label: "Default Amount ($)", type: "number" },
       ]} />
     </div>
@@ -323,7 +324,14 @@ function SimpleDialog({ open, onOpenChange, editing, form, setForm, onSave, titl
           {fields.map(f => (
             <div key={f.name}>
               <Label className="text-slate-300">{f.label}{f.required && <span className="text-red-400 ml-0.5">*</span>}</Label>
-              <Input type={f.type === "number" ? "number" : "text"} value={form[f.name] ?? ""} onChange={e => setForm({ ...form, [f.name]: f.type === "number" ? Number(e.target.value) : e.target.value })} className="bg-slate-800 border-slate-700 text-white" />
+              {f.type === "color" ? (
+                <div className="flex items-center gap-2">
+                  <input type="color" value={form[f.name] || "#3b82f6"} onChange={e => setForm({ ...form, [f.name]: e.target.value })} className="w-10 h-9 rounded border border-slate-700 bg-slate-800 cursor-pointer" />
+                  <Input value={form[f.name] || ""} onChange={e => setForm({ ...form, [f.name]: e.target.value })} className="bg-slate-800 border-slate-700 text-white flex-1" />
+                </div>
+              ) : (
+                <Input type={f.type === "number" ? "number" : "text"} value={form[f.name] ?? ""} onChange={e => setForm({ ...form, [f.name]: f.type === "number" ? Number(e.target.value) : e.target.value })} className="bg-slate-800 border-slate-700 text-white" />
+              )}
             </div>
           ))}
         </div>

@@ -8,6 +8,10 @@
     "description": {
       "type": "string"
     },
+    "color": {
+      "type": "string",
+      "default": "#3b82f6"
+    },
     "default_amount": {
       "type": "number",
       "default": 0
