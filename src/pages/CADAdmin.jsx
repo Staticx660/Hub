@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
+import RegisteredUsersManager from "@/components/cad/RegisteredUsersManager";
+import DiscordMembersManager from "@/components/cad/DiscordMembersManager";
 import UnitsManager from "@/components/cad/UnitsManager";
 import PersonnelManager from "@/components/cad/PersonnelManager";
 import DiscordSettings from "@/components/cad/DiscordSettings";
@@ -59,9 +61,9 @@ export default function CADAdmin() {
 
   const renderPanel = () => {
     switch (effectiveActive) {
-      case "members": return <PersonnelManager />;
+      case "members": return <RegisteredUsersManager />;
       case "permissions": return <PermissionsManager />;
-      case "identifiers": return <UnitsManager />;
+      case "identifiers": return <DiscordMembersManager />;
       case "community": return <CommunityInfoManager />;
       case "departments": return <DepartmentsGroupsManager />;
       case "addresses": return <AddressesManager />;
