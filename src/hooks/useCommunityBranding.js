@@ -34,6 +34,8 @@ function applyBranding(setting) {
     root.style.setProperty("--primary-foreground", "0 0% 100%");
     root.style.setProperty("--ring", `${hsl.h} ${hsl.s}% ${hsl.l}%`);
     root.style.setProperty("--community-accent", setting.accent_color);
+    root.style.setProperty("--cad-accent", `${hsl.h} ${hsl.s}% ${hsl.l}%`);
+    root.style.setProperty("--cad-accent-soft", `${hsl.h} ${hsl.s}% ${hsl.l}%`);
   }
   if (setting.community_name) {
     document.title = `${setting.community_name} — CAD System`;
