@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { MapPin, Phone, Siren, Unlink, Link2, Users, Clock, Save, Radio, CheckCircle2, ArrowLeft, Send } from "lucide-react";
-import GTA5Map from "@/components/cad/mdt/GTA5Map";
+import LocationMap from "@/components/cad/mdt/LocationMap";
 
 export default function MyCallView({ department, session, setSession, selectedCallId, setSelectedCallId, setActiveView }) {
   const [call, setCall] = useState(null);
@@ -24,12 +24,22 @@ export default function MyCallView({ department, session, setSession, selectedCa
         base44.entities.ActiveCall.get(callId),
         base44.entities.CADSession.filter({ department_id: department.id, is_active: true }),
       ]);
-      setCall(c); setSessions(s); setNotes(c.cad_notes || "");
-    } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
+      if (c.status === "Closed") { setCall(null); } else { setCall(c); setNotes(c.cad_notes || ""); }
+      setSessions(s);
+    } catch (e) { setCall(null); }
     setLoading(false);
   };
 
   useEffect(() => { setLoading(true); setCall(null); load(); }, [callId]);
+
+  useEffect(() => {
+    const unsub = base44.entities.ActiveCall.subscribe((event) => {
+      if (!callId) return;
+      if (event.type === "delete" && event.data?.id === callId) { setCall(null); setSelectedCallId(null); }
+      else if (event.type === "update" && event.data?.id === callId) { load(); }
+    });
+    return unsub;
+  }, [callId]);
 
   const isAttached = call?.assigned_unit_ids?.includes(session.id);
   const isSupervisor = session.rank?.toLowerCase().match(/sergeant|lieutenant|captain|chief|supervisor|commander|sheriff/);
@@ -73,9 +83,12 @@ export default function MyCallView({ department, session, setSession, selectedCa
     try {
       const log = [...(call.assignment_log || []), { unit_name: session.callsign || session.user_name, action: "cleared", timestamp: new Date().toISOString() }];
       await base44.entities.ActiveCall.update(call.id, { status: "Closed", assignment_log: log });
-      toast({ title: "Call cleared" });
+      await base44.entities.CADSession.update(session.id, { active_call_id: "" });
+      setSession({ ...session, active_call_id: "" });
       setSelectedCallId(null);
+      setCall(null);
       setActiveView("dispatch");
+      toast({ title: "Call cleared" });
     } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
   };
 
@@ -138,8 +151,8 @@ export default function MyCallView({ department, session, setSession, selectedCa
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-4">
-            <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">GTA V Location Map</h3>
-            <GTA5Map location={call.location} height={280} />
+            <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Location Map</h3>
+            <LocationMap location={call.location} height={280} />
           </div>
           <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-4">
             <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">CAD Notes</h3>

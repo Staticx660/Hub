@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { getBranding } from "@/hooks/useCommunityBranding";
 import { Shield, Search, FileText, Radio, Layers, Maximize, Home, UserCog, Keyboard, LogOut, ChevronUp, AlertTriangle, Users, Archive, Camera, ChevronDown, ClipboardList } from "lucide-react";
+import SessionEditDialog from "@/components/cad/mdt/SessionEditDialog";
 
 const statusOptions = [
   { value: "Available", color: "text-green-400", bg: "bg-green-500/15", dot: "bg-green-400" },
@@ -11,13 +12,14 @@ const statusOptions = [
   { value: "Unavailable", color: "text-gray-400", bg: "bg-gray-500/15", dot: "bg-gray-400" },
 ];
 
-export default function Taskbar({ activeView, setActiveView, session, departmentCategory, onStatusChange, onPanic, onClockOut, onOpenKeybinds }) {
+export default function Taskbar({ activeView, setActiveView, session, departmentCategory, onStatusChange, onPanic, onClockOut, onOpenKeybinds, onSessionUpdate }) {
   const category = departmentCategory || "Police";
   const isFire = category === "Fire";
   const isMedical = category === "EMS" || isFire;
   const isDispatch = category === "Dispatch";
   const [logoMenu, setLogoMenu] = useState(false);
   const [statusMenu, setStatusMenu] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
   const [logoUrl, setLogoUrl] = useState("");
   const logoRef = useRef(null);
   const statusRef = useRef(null);
@@ -59,7 +61,7 @@ export default function Taskbar({ activeView, setActiveView, session, department
 
   const navButtons = isDispatch
     ? [
-        { id: "lookups", label: "Lookup", icon: Search, hasDropdown: true },
+        { id: "lookups", label: "Lookup", icon: Search, hasDropdown: false },
         { id: "records", label: "Records", icon: FileText, hasDropdown: true },
         { id: "dispatch", label: "Call Viewer", icon: Radio, hasDropdown: false },
         { id: "groups", label: "Groups", icon: Layers, hasDropdown: false },
@@ -79,7 +81,7 @@ export default function Taskbar({ activeView, setActiveView, session, department
         { id: "dispatch", label: "Board", icon: Radio, hasDropdown: false },
       ]
     : [
-        { id: "lookups", label: "Lookup", icon: Search, hasDropdown: true },
+        { id: "lookups", label: "Lookup", icon: Search, hasDropdown: false },
         { id: "records", label: "Records", icon: FileText, hasDropdown: true },
         { id: "mycall", label: "My Call", icon: Shield, hasDropdown: false },
         { id: "groups", label: "Groups", icon: Layers, hasDropdown: false },
@@ -129,13 +131,6 @@ export default function Taskbar({ activeView, setActiveView, session, department
               <span className="hidden sm:block">{v.label}</span>
               {v.hasDropdown && <ChevronDown className="w-3 h-3 opacity-50" />}
             </button>
-            {v.id === "lookups" && v.hasDropdown && activeView === "lookups" && (
-              <div className="absolute bottom-11 left-0 w-40 bg-slate-800 border border-slate-700 rounded-lg shadow-xl py-1 z-50">
-                {lookupTypes.map(lt => (
-                  <button key={lt.label} onClick={() => setActiveView("lookups")} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:bg-slate-700"><lt.icon className="w-3.5 h-3.5" /> {lt.label}</button>
-                ))}
-              </div>
-            )}
           </div>
         ))}
 
@@ -146,7 +141,7 @@ export default function Taskbar({ activeView, setActiveView, session, department
       {/* Unit Info */}
       <div className="hidden md:flex items-center gap-2 px-2">
         <Camera className="w-4 h-4 text-slate-500" />
-        <span className="font-mono font-semibold text-white text-sm">{session?.callsign || session?.user_name}</span>
+        <button onClick={() => setEditOpen(true)} className="font-mono font-semibold text-white text-sm hover:text-blue-400 transition-colors">{session?.callsign || session?.user_name}</button>
         <span className={`w-2 h-2 rounded-full ${currentStatus.dot}`} />
       </div>
 
@@ -184,6 +179,7 @@ export default function Taskbar({ activeView, setActiveView, session, department
         <LogOut className="w-4 h-4" />
         <span className="hidden sm:block">Clock Out</span>
       </button>
+      <SessionEditDialog open={editOpen} onOpenChange={setEditOpen} session={session} onSaved={onSessionUpdate} />
     </div>
   );
 }

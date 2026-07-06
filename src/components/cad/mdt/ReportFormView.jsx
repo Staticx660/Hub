@@ -146,7 +146,7 @@ export default function ReportFormView({ department, session, initialType, templ
   };
 
   const updateCharge = (id, key, val) => {
-    setCharges(charges.map(c => c.id === id ? { ...c, [key]: val } : c));
+    setCharges(prev => prev.map(c => c.id === id ? { ...c, [key]: val } : c));
   };
 
   const removeCharge = (id) => {
@@ -412,7 +412,7 @@ export default function ReportFormView({ department, session, initialType, templ
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <GridField label="Charge">
                   {penalCodes.length > 0 ? (
-                    <Select value={charge.charge} onValueChange={v => { const pc = penalCodes.find(p => p.id === v); updateCharge(charge.id, "charge", pc ? `${pc.code} - ${pc.title}` : v); if (pc) { updateCharge(charge.id, "title_code", pc.code); updateCharge(charge.id, "bond_amount", pc.fine_amount || 0); } }}>
+                    <Select value={charge.charge} onValueChange={v => { const pc = penalCodes.find(p => p.id === v); updateCharge(charge.id, "charge", pc ? `${pc.code} - ${pc.title}` : v); if (pc) { updateCharge(charge.id, "title_code", pc.code); updateCharge(charge.id, "bond_amount", pc.fine_amount || 0); updateCharge(charge.id, "jail_time", pc.jail_time_months ? `${pc.jail_time_months} month${pc.jail_time_months !== 1 ? 's' : ''}` : ""); } }}>
                       <SelectTrigger className={darkSelect}><SelectValue placeholder="Select..." /></SelectTrigger>
                       <SelectContent className="bg-slate-800 border-slate-700">{penalCodes.map(pc => <SelectItem key={pc.id} value={pc.id} className="text-white">{pc.code} - {pc.title}</SelectItem>)}</SelectContent>
                     </Select>

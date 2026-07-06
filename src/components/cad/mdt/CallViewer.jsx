@@ -102,7 +102,8 @@ export default function CallViewer({ department, session, selectedCallId, onSele
       const announceText = `Dispatching ${unitLabel} to ${call.call_type || "call"}${call.location ? " at " + call.location : ""}.`;
       playDispatchAnnouncement(announceText);
       toast({ title: "Unit assigned", description: unit?.callsign || unit?.user_name });
-      loadCall();
+      setCall({ ...call, assigned_unit_ids: newIds, assignment_log: log, status: "Active" });
+      setSessions(prev => prev.map(s => s.id === unitId ? { ...s, active_call_id: call.id, status: "On Call" } : s));
     } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
   };
 
@@ -114,7 +115,8 @@ export default function CallViewer({ department, session, selectedCallId, onSele
       await base44.entities.ActiveCall.update(call.id, { assigned_unit_ids: newIds, assignment_log: log });
       await base44.entities.CADSession.update(unitId, { active_call_id: "", status: "Available" });
       toast({ title: "Unit removed" });
-      loadCall();
+      setCall({ ...call, assigned_unit_ids: newIds, assignment_log: log });
+      setSessions(prev => prev.map(s => s.id === unitId ? { ...s, active_call_id: "", status: "Available" } : s));
     } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
   };
 
