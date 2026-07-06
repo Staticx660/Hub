@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
 import { ArrowLeft, Plus, Ban, Save, X, FileText, MapPin } from "lucide-react";
-import { playDispatchAnnouncement } from "@/components/cad/mdt/panicSound";
+import { playDispatchAnnouncement, loadNotificationTones } from "@/components/cad/mdt/panicSound";
 import AddressSearch from "@/components/cad/mdt/AddressSearch";
 
 const CALL_TITLES = ["Structure Fire", "Medical Emergency", "Traffic Accident", "Domestic Dispute", "Burglary", "Robbery", "Assault", "Theft", "Vandalism", "Noise Complaint", "Suspicious Person", "Welfare Check", "Traffic Stop", "DUI", "Shots Fired", "Pursuit", "Other"];
@@ -23,6 +23,7 @@ export default function CallViewer({ department, session, selectedCallId, onSele
   const { toast } = useToast();
 
   useEffect(() => {
+    loadNotificationTones();
     if (selectedCallId) loadCall();
     else setLoading(false);
   }, [selectedCallId]);

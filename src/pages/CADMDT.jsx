@@ -16,7 +16,7 @@ import CallViewer from "@/components/cad/mdt/CallViewer";
 import ClockInDialog from "@/components/cad/mdt/ClockInDialog";
 import KeybindsDialog from "@/components/cad/mdt/KeybindsDialog";
 import { useKeybinds, loadKeybinds } from "@/hooks/useKeybinds";
-import { startPanicSound, stopPanicSound, playStatusBeep, stopPanicVoice } from "@/components/cad/mdt/panicSound";
+import { startPanicSound, stopPanicSound, playStatusBeep, stopPanicVoice, loadNotificationTones } from "@/components/cad/mdt/panicSound";
 
 const OCRP_LOGO = "https://media.base44.com/images/public/6a441f279b9d3cd678958799/5a43a1b46_OCRP20.png";
 
@@ -37,6 +37,7 @@ export default function CADMDT() {
   const [keybindsOpen, setKeybindsOpen] = useState(false);
 
   useEffect(() => {
+    loadNotificationTones();
     const init = async () => {
       try {
         const dept = await base44.entities.CADDepartment.get(deptId);

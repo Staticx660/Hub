@@ -27,32 +27,36 @@ function GridField({ label, children, span }) {
 const darkInput = "bg-[#0f1115] border-none text-white text-sm h-9 rounded-md focus-visible:ring-1 focus-visible:ring-slate-600 placeholder:text-slate-600";
 const darkSelect = "bg-[#0f1115] border-none text-white text-sm h-9 rounded-md focus-visible:ring-1 focus-visible:ring-slate-600";
 
-export default function ReportFormView({ department, session, initialType, templates, onClose, onSaved }) {
-  const [reportType, setReportType] = useState(initialType || "Incident");
-  const [title, setTitle] = useState("");
-  const [location, setLocation] = useState("");
-  const [flags, setFlags] = useState({ armed: false, violent: false, mentally_ill: false });
-  const [selectedCivilian, setSelectedCivilian] = useState(null);
+export default function ReportFormView({ department, session, initialType, templates, existingReport, onClose, onSaved }) {
+  const fd = existingReport?.field_data || {};
+  const loadedNarrative = fd.narrative != null ? fd.narrative : (existingReport?.description && existingReport.description !== "No narrative provided" ? existingReport.description : "");
+  const loadedFieldData = (() => { const o = {}; Object.keys(fd).forEach(k => { if (!["flags", "civilian", "vehicle", "charges", "narrative", "linked_records", "signatures", "agency"].includes(k)) o[k] = fd[k]; }); return o; })();
+  const linkedCivilian = existingReport?.linked_civilian_id ? { id: existingReport.linked_civilian_id, first_name: (existingReport.linked_civilian_name || "").split(" ")[0] || "", last_name: (existingReport.linked_civilian_name || "").split(" ").slice(1).join(" ") } : null;
+  const [reportType, setReportType] = useState(existingReport?.report_type || initialType || "Incident");
+  const [title, setTitle] = useState(existingReport?.title || "");
+  const [location, setLocation] = useState(existingReport?.location || "");
+  const [flags, setFlags] = useState(fd.flags || { armed: false, violent: false, mentally_ill: false });
+  const [selectedCivilian, setSelectedCivilian] = useState(linkedCivilian);
   const [selectedVehicle, setSelectedVehicle] = useState(null);
-  const [civilianData, setCivilianData] = useState({});
-  const [vehicleData, setVehicleData] = useState({});
-  const [charges, setCharges] = useState([]);
-  const [narrative, setNarrative] = useState("");
-  const [status, setStatus] = useState("Draft");
+  const [civilianData, setCivilianData] = useState(fd.civilian || {});
+  const [vehicleData, setVehicleData] = useState(fd.vehicle || {});
+  const [charges, setCharges] = useState(fd.charges || []);
+  const [narrative, setNarrative] = useState(loadedNarrative || "");
+  const [status, setStatus] = useState(existingReport?.status || "Draft");
   const [selectedTemplate, setSelectedTemplate] = useState(null);
-  const [fieldData, setFieldData] = useState({});
+  const [fieldData, setFieldData] = useState(loadedFieldData);
   const [chargeTypes, setChargeTypes] = useState([]);
   const [bondTypes, setBondTypes] = useState([]);
   const [penalCodes, setPenalCodes] = useState([]);
   const [showCivilianSearch, setShowCivilianSearch] = useState(false);
   const [showVehicleSearch, setShowVehicleSearch] = useState(false);
   const [showLinkedRecords, setShowLinkedRecords] = useState(false);
-  const [linkedRecords, setLinkedRecords] = useState([]);
+  const [linkedRecords, setLinkedRecords] = useState(fd.linked_records || []);
   const [saving, setSaving] = useState(false);
-  const [recordNumber, setRecordNumber] = useState("");
-  const [officerName, setOfficerName] = useState("");
-  const [observingSignature, setObservingSignature] = useState("");
-  const [supervisorSignature, setSupervisorSignature] = useState("");
+  const [recordNumber, setRecordNumber] = useState(existingReport?.run_number || "");
+  const [officerName, setOfficerName] = useState(fd.signatures?.officer_name || "");
+  const [observingSignature, setObservingSignature] = useState(fd.signatures?.observing_unit || "");
+  const [supervisorSignature, setSupervisorSignature] = useState(fd.signatures?.supervisor || "");
   const { toast } = useToast();
 
   const reportTypes = department?.category === "Police" ? ["Incident", "Traffic Stop", "Field Contact", "Arrest", "Vehicle Accident", "Use of Force", "Evidence", "Other"]
@@ -74,10 +78,11 @@ export default function ReportFormView({ department, session, initialType, templ
     loadOptions();
   }, []);
 
-  useEffect(() => { setTitle(`${reportType} Report`); }, [reportType]);
+  useEffect(() => { if (!existingReport) setTitle(`${reportType} Report`); }, [reportType]);
 
   useEffect(() => {
     const genRecordNum = async () => {
+      if (existingReport) return;
       try {
         const existing = await base44.entities.CADReport.filter({ department_id: department.id });
         const num = String(existing.length + 1).padStart(4, "0");
@@ -183,26 +188,34 @@ export default function ReportFormView({ department, session, initialType, templ
           date: new Date().toLocaleDateString(),
         },
       };
-      await base44.entities.CADReport.create({
+      const payload = {
         title, report_type: reportType, description: narrative || "No narrative provided",
         location, department_id: department.id,
-        filed_by_name: session.callsign || session.user_name, filed_by_id: session.user_id,
+        filed_by_name: existingReport?.filed_by_name || (session.callsign || session.user_name),
+        filed_by_id: existingReport?.filed_by_id || session.user_id,
         status: asDraft ? "Draft" : "Filed", run_number: recordNumber,
-        template_id: selectedTemplate?.id || "",
+        template_id: selectedTemplate?.id || existingReport?.template_id || "",
         linked_civilian_id: selectedCivilian?.id || "",
         linked_civilian_name: selectedCivilian ? `${selectedCivilian.first_name} ${selectedCivilian.last_name}` : "",
         linked_vehicle_plate: vehicleData.plate || "",
         field_data: allFieldData,
-      });
-      logSystemEvent("Report Filed", "CAD", `Report "${title}" filed by ${session.callsign || session.user_name}`, { entity_type: "CADReport" });
-      toast({ title: asDraft ? "Draft saved" : "Report filed" });
+      };
+      if (existingReport) {
+        await base44.entities.CADReport.update(existingReport.id, payload);
+        logSystemEvent("Report Updated", "CAD", `Report "${title}" updated by ${session.callsign || session.user_name}`, { entity_type: "CADReport" });
+        toast({ title: asDraft ? "Draft updated" : "Report updated" });
+      } else {
+        await base44.entities.CADReport.create(payload);
+        logSystemEvent("Report Filed", "CAD", `Report "${title}" filed by ${session.callsign || session.user_name}`, { entity_type: "CADReport" });
+        toast({ title: asDraft ? "Draft saved" : "Report filed" });
+      }
       onSaved?.();
       } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
       setSaving(false);
       };
 
       const handleClose = async () => {
-      if (title.trim() && !saving) {
+      if (!existingReport && title.trim() && !saving) {
       await handleSave(true);
       }
       onClose();
@@ -237,7 +250,7 @@ export default function ReportFormView({ department, session, initialType, templ
       {/* Header */}
       <div className="flex items-center gap-3 px-4 py-3 border-b border-[#2c2f36] sticky top-0 bg-[#1a1d21] z-10">
         <button onClick={handleClose} className="text-slate-400 hover:text-white"><ArrowLeft className="w-5 h-5" /></button>
-        <h2 className="text-lg font-bold text-white">New {reportType}</h2>
+        <h2 className="text-lg font-bold text-white">{existingReport ? "Edit" : "New"} {reportType}</h2>
         <div className="ml-auto flex items-center gap-2">
           <Select value={reportType} onValueChange={setReportType}>
             <SelectTrigger className={`${darkSelect} w-40`}><SelectValue /></SelectTrigger>

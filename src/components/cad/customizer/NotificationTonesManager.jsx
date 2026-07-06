@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { Save, Upload, Play, Bell } from "lucide-react";
+import { setTonesCache } from "@/components/cad/mdt/panicSound";
 
 const TONES = [
   { key: "new_dispatch", label: "New Dispatch" },
@@ -58,6 +59,7 @@ export default function NotificationTonesManager() {
     try {
       if (setting) { await base44.entities.CommunitySetting.update(setting.id, { notification_tones: tones }); }
       else { const created = await base44.entities.CommunitySetting.create({ community_name: "My Community", is_setup: true, notification_tones: tones }); setSetting(created); }
+      setTonesCache(tones);
       toast({ title: "Notification tones saved" });
     } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
   };

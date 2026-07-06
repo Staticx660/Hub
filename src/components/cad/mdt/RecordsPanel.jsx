@@ -38,6 +38,7 @@ export default function RecordsPanel({ department, session }) {
   const [boloOpen, setBoloOpen] = useState(false);
   const [warrantOpen, setWarrantOpen] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  const [editingReport, setEditingReport] = useState(null);
   const [formType, setFormType] = useState("Incident");
   const [newFileExpanded, setNewFileExpanded] = useState(false);
   const [historyExpanded, setHistoryExpanded] = useState(true);
@@ -93,9 +94,16 @@ export default function RecordsPanel({ department, session }) {
 
   const openNewFile = (type) => {
     setFormType(type);
+    setEditingReport(null);
     setShowForm(true);
     setSelected(null);
     setNewFileExpanded(false);
+  };
+
+  const openEditFile = (report) => {
+    setEditingReport(report);
+    setFormType(report.report_type || "Incident");
+    setShowForm(true);
   };
 
   const deleteReport = async (id) => {
@@ -107,7 +115,7 @@ export default function RecordsPanel({ department, session }) {
   if (loading) return <div className="flex justify-center py-16"><div className="w-8 h-8 border-2 border-slate-700 border-t-blue-500 rounded-full animate-spin" /></div>;
 
   if (showForm) {
-    return <ReportFormView department={department} session={session} initialType={formType} templates={templates} onClose={() => setShowForm(false)} onSaved={() => { setShowForm(false); load(); }} />;
+    return <ReportFormView department={department} session={session} initialType={formType} templates={templates} existingReport={editingReport} onClose={() => { setShowForm(false); setEditingReport(null); }} onSaved={() => { setShowForm(false); setEditingReport(null); load(); }} />;
   }
 
   const isClosedCall = selected?.call_type !== undefined;
@@ -328,7 +336,12 @@ export default function RecordsPanel({ department, session }) {
                   </div>
                 )}
                 {(selected.filed_by_name || selected.issued_by_name) && <p className="text-xs text-slate-500 mt-4">Filed by: {selected.filed_by_name || selected.issued_by_name}</p>}
-                {selected.title && <button onClick={() => deleteReport(selected.id)} className="mt-4 text-sm text-red-400 hover:text-red-300">Delete Report</button>}
+                {selected.title && (
+                  <div className="flex gap-4 mt-4">
+                    <button onClick={() => openEditFile(selected)} className="text-sm text-blue-400 hover:text-blue-300">Edit Report</button>
+                    <button onClick={() => deleteReport(selected.id)} className="text-sm text-red-400 hover:text-red-300">Delete Report</button>
+                  </div>
+                )}
               </div>
             )}
           </div>

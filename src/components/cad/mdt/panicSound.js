@@ -1,6 +1,39 @@
+import { base44 } from "@/api/base44Client";
+
 let audioContext = null;
 let panicIntervalId = null;
 let voiceTimeoutId = null;
+let panicAudioEl = null;
+
+let tonesCache = {};
+let tonesLoadPromise = null;
+
+export function loadNotificationTones() {
+  if (tonesLoadPromise) return tonesLoadPromise;
+  tonesLoadPromise = (async () => {
+    try {
+      const list = await base44.entities.CommunitySetting.list();
+      if (list.length > 0) tonesCache = list[0].notification_tones || {};
+    } catch (e) { /* silent */ }
+  })();
+  return tonesLoadPromise;
+}
+
+export function setTonesCache(tones) { tonesCache = tones || {}; }
+
+function getToneUrl(key) { return tonesCache[key] || null; }
+
+function playCustomTone(url, { loop = false, duration = null } = {}) {
+  if (!url) return null;
+  try {
+    const audio = new Audio(url);
+    audio.volume = 1;
+    if (loop) audio.loop = true;
+    audio.play().catch(() => {});
+    if (duration) setTimeout(() => { try { audio.pause(); audio.currentTime = 0; } catch (e) {} }, duration);
+    return audio;
+  } catch (e) { return null; }
+}
 
 function getAudioContext() {
   if (!audioContext) {
@@ -12,6 +45,8 @@ function getAudioContext() {
 
 // Quick status change beep
 export function playStatusBeep() {
+  const custom = getToneUrl("status_change");
+  if (custom) { playCustomTone(custom); return; }
   try {
     const ctx = getAudioContext();
     const osc = ctx.createOscillator();
@@ -30,6 +65,15 @@ export function playStatusBeep() {
 // Emergency siren wail — plays for 3 seconds, then voice announces the unit
 export function startPanicSound(unitName) {
   stopPanicSound();
+  const custom = getToneUrl("panic");
+  if (custom) {
+    panicAudioEl = playCustomTone(custom, { loop: true });
+    voiceTimeoutId = setTimeout(() => {
+      stopPanicSound();
+      if (unitName) speakPanicAlert(unitName);
+    }, 3000);
+    return;
+  }
   try {
     const ctx = getAudioContext();
 
@@ -64,6 +108,7 @@ export function startPanicSound(unitName) {
 export function stopPanicSound() {
   if (panicIntervalId) { clearInterval(panicIntervalId); panicIntervalId = null; }
   if (voiceTimeoutId) { clearTimeout(voiceTimeoutId); voiceTimeoutId = null; }
+  if (panicAudioEl) { try { panicAudioEl.pause(); panicAudioEl.currentTime = 0; } catch (e) {} panicAudioEl = null; }
   stopPanicVoice();
 }
 
@@ -93,6 +138,8 @@ export function stopPanicVoice() {
 
 // Quick two-tone dispatch beep
 export function playDispatchTone() {
+  const custom = getToneUrl("new_dispatch") || getToneUrl("signal");
+  if (custom) { playCustomTone(custom); return; }
   try {
     const ctx = getAudioContext();
     [0, 0.15].forEach(delay => {
