@@ -4,7 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
-import { Clock, Lock, ChevronLeft } from "lucide-react";
+import { Clock, Lock, ChevronLeft, Radio } from "lucide-react";
 import Taskbar from "@/components/cad/mdt/Taskbar";
 import LookupPanel from "@/components/cad/mdt/LookupPanel";
 import RecordsPanel from "@/components/cad/mdt/RecordsPanel";
@@ -16,6 +16,8 @@ import CallViewer from "@/components/cad/mdt/CallViewer";
 import ClockInDialog from "@/components/cad/mdt/ClockInDialog";
 import KeybindsDialog from "@/components/cad/mdt/KeybindsDialog";
 import { useKeybinds, loadKeybinds } from "@/hooks/useKeybinds";
+import { useCadTheme } from "@/hooks/useCadTheme";
+import RetroClockInScreen from "@/components/cad/retro/RetroClockInScreen";
 import { startPanicSound, stopPanicSound, playStatusBeep, stopPanicVoice, loadNotificationTones } from "@/components/cad/mdt/panicSound";
 
 const OCRP_LOGO = "https://media.base44.com/images/public/6a441f279b9d3cd678958799/5a43a1b46_OCRP20.png";
@@ -35,6 +37,8 @@ export default function CADMDT() {
   const [accessDenied, setAccessDenied] = useState(false);
   const [keybinds, setKeybinds] = useState(loadKeybinds());
   const [keybindsOpen, setKeybindsOpen] = useState(false);
+  const { theme } = useCadTheme();
+  const retro = theme === "retro";
 
   useEffect(() => {
     loadNotificationTones();
@@ -194,6 +198,9 @@ export default function CADMDT() {
   if (!department) return <div className="flex justify-center items-center h-screen cad-gradient-bg cad-font text-cad-muted">Department not found</div>;
 
   if (!session) {
+    if (retro) return (
+      <RetroClockInScreen department={department} user={user} onClockIn={handleClockIn} clockInOpen={clockInOpen} setClockInOpen={setClockInOpen} subtitle={`${department.category} · MDT SYSTEM`} clockInLabel="Clock In & Start MDT" onBack={() => navigate("/cad")} icon={Radio} accentColor="#3b82f6" />
+    );
     return (
       <div className="flex flex-col items-center justify-center h-screen cad-gradient-bg cad-font gap-6">
         <img src={OCRP_LOGO} alt="OCRP" className="w-24 h-24 rounded-2xl shadow-xl cad-accent-glow" />
@@ -212,7 +219,7 @@ export default function CADMDT() {
   }
 
   return (
-    <div className="flex flex-col h-screen cad-gradient-bg cad-font overflow-hidden">
+    <div className={`flex flex-col h-screen cad-gradient-bg cad-font overflow-hidden ${retro ? "retro-shell" : ""}`}>
       {session.panic_active && <div className="bg-red-500/20 border-y border-red-500 text-red-400 text-center py-1.5 text-sm font-bold animate-pulse">🚨 PANIC ACTIVE — {session.callsign || session.user_name} — ALL UNITS RESPOND</div>}
       <div className="flex-1 overflow-hidden">
         {activeView === "dispatch" && <DispatchView department={department} session={session} setSession={setSession} setActiveView={setActiveView} setSelectedCallId={setSelectedCallId} />}

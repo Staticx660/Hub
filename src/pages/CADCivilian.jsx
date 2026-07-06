@@ -13,6 +13,7 @@ import { UserPlus, Pencil, FileText, Car, Phone, AlertTriangle, Eye, Gavel, Chev
 import CharacterForm from "@/components/cad/civilian/CharacterForm";
 import CivilianDMV from "@/components/cad/civilian/CivilianDMV";
 import AddressSearch from "@/components/cad/mdt/AddressSearch";
+import { useCadTheme } from "@/hooks/useCadTheme";
 
 const CIVILIAN_CALL_TYPES = ["Medical Emergency", "Structure Fire", "Traffic Accident", "Burglary", "Robbery", "Assault", "Theft", "Vandalism", "Noise Complaint", "Suspicious Person", "Welfare Check", "Domestic Dispute", "Shots Fired", "Other"];
 
@@ -38,6 +39,8 @@ export default function CADCivilian() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [panel, setPanel] = useState(null);
+  const { theme } = useCadTheme();
+  const retro = theme === "retro";
   const [charFormOpen, setCharFormOpen] = useState(false);
   const [editingChar, setEditingChar] = useState(null);
   const [call911Open, setCall911Open] = useState(false);
@@ -160,7 +163,7 @@ export default function CADCivilian() {
   const fullName = selectedChar ? `${selectedChar.first_name} ${selectedChar.middle_name ? selectedChar.middle_name + " " : ""}${selectedChar.last_name}` : "";
 
   return (
-    <div className="min-h-screen cad-gradient-bg cad-font p-4 lg:p-6 space-y-4">
+    <div className={`min-h-screen cad-gradient-bg cad-font p-4 lg:p-6 space-y-4 ${retro ? "retro-shell" : ""}`}>
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <img src={OCRP_LOGO} alt="OCRP" className="w-10 h-10 rounded-lg" />

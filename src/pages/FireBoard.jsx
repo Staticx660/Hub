@@ -10,6 +10,8 @@ import CallViewer from "@/components/cad/mdt/CallViewer";
 import GroupsView from "@/components/cad/mdt/GroupsView";
 import FireDashboard from "@/components/cad/fire/FireDashboard";
 import { useCommunityBranding } from "@/hooks/useCommunityBranding";
+import { useCadTheme } from "@/hooks/useCadTheme";
+import RetroClockInScreen from "@/components/cad/retro/RetroClockInScreen";
 import { Clock, Flame, ChevronLeft, ArrowLeft, FileText } from "lucide-react";
 
 export default function FireBoard() {
@@ -24,6 +26,8 @@ export default function FireBoard() {
   const [activeView, setActiveView] = useState("dashboard");
   const [selectedCallId, setSelectedCallId] = useState(null);
   useCommunityBranding();
+  const { theme } = useCadTheme();
+  const retro = theme === "retro";
 
   useEffect(() => {
     const init = async () => {
@@ -110,6 +114,7 @@ export default function FireBoard() {
   if (!department) return <div className="flex justify-center items-center h-screen cad-gradient-bg cad-font text-cad-muted">Department not found</div>;
 
   if (!session) {
+    if (retro) return <RetroClockInScreen department={department} user={user} onClockIn={handleClockIn} clockInOpen={clockInOpen} setClockInOpen={setClockInOpen} subtitle="FIRE OPERATIONS BOARD" clockInLabel="Clock In" onBack={() => navigate("/cad")} icon={Flame} accentColor="#ef4444" />;
     return (
       <div className="flex flex-col items-center justify-center h-screen cad-gradient-bg cad-font gap-6">
         <div className="w-20 h-20 rounded-2xl flex items-center justify-center bg-red-500/10 cad-accent-glow">
@@ -130,7 +135,7 @@ export default function FireBoard() {
   }
 
   return (
-    <div className="flex flex-col h-screen cad-gradient-bg cad-font overflow-hidden">
+    <div className={`flex flex-col h-screen cad-gradient-bg cad-font overflow-hidden ${retro ? "retro-shell" : ""}`}>
       {session.panic_active && <div className="bg-red-500/20 border-y border-red-500 text-red-400 text-center py-1.5 text-sm font-bold animate-pulse">🚨 PANIC ACTIVE — {session.callsign || session.user_name}</div>}
 
       {activeView === "callviewer" && (
