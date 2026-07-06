@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { useAuth } from "@/lib/AuthContext";
 import { base44 } from "@/api/base44Client";
 import {
-  Users, Radio, Shield, LogOut, Settings as SettingsIcon, ChevronRight, Home
+  Users, Radio, Shield, LogOut, Settings as SettingsIcon, ChevronRight, Home, HelpCircle
 } from "lucide-react";
 
 export default function Landing() {
@@ -106,6 +106,16 @@ export default function Landing() {
         </div>
 
         <div className="p-6 space-y-2">
+          <Link
+            to="/help"
+            className="flex items-center justify-between px-4 py-3 rounded-xl bg-slate-800/60 text-slate-300 hover:bg-slate-800 hover:text-white transition-colors text-sm font-medium border border-slate-700/50"
+          >
+            <span className="flex items-center gap-3">
+              <HelpCircle className="w-4 h-4" />
+              Help Center
+            </span>
+            <ChevronRight className="w-4 h-4 text-slate-500" />
+          </Link>
           <Link
             to="/settings"
             className="flex items-center justify-between px-4 py-3 rounded-xl bg-slate-800/60 text-slate-300 hover:bg-slate-800 hover:text-white transition-colors text-sm font-medium border border-slate-700/50"

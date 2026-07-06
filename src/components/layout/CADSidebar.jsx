@@ -4,7 +4,7 @@ import { useAuth } from "@/lib/AuthContext";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
 import {
   Radio, ChevronLeft, ChevronRight, LogOut, Menu, X, Home, Building2, Shield,
-  Settings, Keyboard
+  Settings, Keyboard, HelpCircle
 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useCommunityBranding } from "@/hooks/useCommunityBranding";
@@ -13,6 +13,7 @@ const navItems = [
   { label: "Departments", path: "/cad", icon: Building2 },
   { label: "Keybinds", path: "/keybinds", icon: Keyboard },
   { label: "CAD Settings", path: "/cad-settings", icon: Settings },
+  { label: "Help Center", path: "/help", icon: HelpCircle },
   { label: "Admin Panel", path: "/cad/admin", icon: Shield, supervisorOrAbove: true },
 ];
 

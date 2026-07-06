@@ -46,6 +46,8 @@ import Settings from '@/pages/Settings';
 import CivilianDashboard from '@/pages/CivilianDashboard';
 import MyRecords from '@/pages/MyRecords';
 import SystemLogs from '@/pages/SystemLogs';
+import Help from '@/pages/Help';
+import HelpDock from '@/components/help/HelpDock';
 import { useCadTheme } from "@/hooks/useCadTheme";
 import { useCommunityBranding } from "@/hooks/useCommunityBranding";
 
@@ -129,6 +131,7 @@ const AuthenticatedApp = () => {
 
         {/* Settings - accessible to all authenticated users */}
         <Route path="/settings" element={<Settings />} />
+        <Route path="/help" element={<Help />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>
@@ -143,6 +146,7 @@ function App() {
         <Router>
           <ScrollToTop />
           <AuthenticatedApp />
+          <HelpDock />
         </Router>
         <Toaster />
       </QueryClientProvider>
