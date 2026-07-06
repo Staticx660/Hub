@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import UnitsManager from "@/components/cad/UnitsManager";
 import PersonnelManager from "@/components/cad/PersonnelManager";
 import DiscordSettings from "@/components/cad/DiscordSettings";
-import ReportBuilder from "@/components/cad/ReportBuilder";
 import SimpleListManager from "@/components/cad/customizer/SimpleListManager";
 import CommunityInfoManager from "@/components/cad/customizer/CommunityInfoManager";
 import AddressesManager from "@/components/cad/customizer/AddressesManager";
@@ -13,7 +12,7 @@ import PenalCodesManager from "@/components/cad/PenalCodesManager";
 import DepartmentsGroupsManager from "@/components/cad/DepartmentsGroupsManager";
 import PermissionsManager from "@/components/cad/PermissionsManager";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
-import { Users, IdCard, Settings, FileText, Building2, MapPin, Gavel, ShieldCheck, Bell, Award, AlertTriangle, MessageCircle, ScrollText, ArrowLeft, KeyRound, Crown } from "lucide-react";
+import { Users, IdCard, Settings, Building2, MapPin, Gavel, ShieldCheck, Bell, Award, AlertTriangle, MessageCircle, ScrollText, ArrowLeft, KeyRound, Crown } from "lucide-react";
 import SystemLogs from "@/pages/SystemLogs";
 
 // access: "supervisor" = visible to supervisors+, "admin" = visible to CAD/platform admins only
@@ -25,7 +24,6 @@ const ALL_SECTIONS = [
   ]},
   { title: "CUSTOMIZATION", items: [
     { id: "community", label: "Community Info", icon: Settings, access: "admin" },
-    { id: "records", label: "Custom Records", icon: FileText, access: "admin" },
     { id: "departments", label: "Departments", icon: Building2, access: "supervisor" },
     { id: "addresses", label: "Addresses", icon: MapPin, access: "supervisor" },
     { id: "penal", label: "Penal Codes", icon: Gavel, access: "admin" },
@@ -63,7 +61,6 @@ export default function CADAdmin() {
       case "permissions": return <PermissionsManager />;
       case "identifiers": return <UnitsManager />;
       case "community": return <CommunityInfoManager />;
-      case "records": return <ReportBuilder />;
       case "departments": return <DepartmentsGroupsManager />;
       case "addresses": return <AddressesManager />;
       case "penal": return <PenalCodesManager />;
