@@ -51,6 +51,25 @@ export default function PermissionsManager() {
     }
   };
 
+  const updateDepts = async (id, data) => {
+    setUpdatingIds((prev) => new Set(prev).add(id));
+    try {
+      await base44.entities.CADPersonnel.update(id, data);
+      setPersonnel((prev) => prev.map((p) => (p.id === id ? { ...p, ...data } : p)));
+      toast({ title: "Department updated", duration: 2000 });
+    } catch (e) {
+      toast({ title: "Error", description: e.message, variant: "destructive" });
+    } finally {
+      setUpdatingIds((prev) => { const next = new Set(prev); next.delete(id); return next; });
+    }
+  };
+
+  const toggleAdditionalDept = (p, deptId) => {
+    const current = p.additional_department_ids || [];
+    const newAdditional = current.includes(deptId) ? current.filter((d) => d !== deptId) : [...current, deptId];
+    updateDepts(p.id, { additional_department_ids: newAdditional });
+  };
+
   const filtered = personnel.filter((p) => {
     const matchesSearch = !search || p.name?.toLowerCase().includes(search.toLowerCase()) || p.callsign?.toLowerCase().includes(search.toLowerCase());
     const matchesDept = filterDept === "all" || p.department_id === filterDept || (p.additional_department_ids || []).includes(filterDept);
@@ -135,6 +154,34 @@ export default function PermissionsManager() {
                   onChange={() => toggleFlag(p.id, "is_cad_admin", p.is_cad_admin)}
                   color="blue"
                 />
+              </div>
+
+              <div className="border-t border-cad-border/30 pt-3 mt-1">
+                <p className="text-[10px] font-bold text-cad-dim uppercase tracking-wider mb-2">Primary Department</p>
+                <select
+                  value={p.department_id || ""}
+                  onChange={(e) => updateDepts(p.id, { department_id: e.target.value })}
+                  className="w-full px-2 py-1.5 text-xs bg-cad-surface-2/50 border border-cad-border/40 rounded-lg text-cad-text focus:outline-none focus:border-cad-accent/50 mb-2"
+                >
+                  {departments.map((d) => (
+                    <option key={d.id} value={d.id}>{d.name}</option>
+                  ))}
+                </select>
+                <p className="text-[10px] font-bold text-cad-dim uppercase tracking-wider mb-1.5">Additional Departments</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {departments.filter((d) => d.id !== p.department_id).map((d) => {
+                    const isAdditional = (p.additional_department_ids || []).includes(d.id);
+                    return (
+                      <button
+                        key={d.id}
+                        onClick={() => toggleAdditionalDept(p, d.id)}
+                        className={`text-xs px-2 py-0.5 rounded-full border transition-colors ${isAdditional ? "bg-cad-accent/15 text-cad-accent border-cad-accent/30" : "bg-cad-surface-2/30 text-cad-muted border-cad-border/30 hover:border-cad-border-light/50"}`}
+                      >
+                        {d.name}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           );
