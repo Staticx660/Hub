@@ -13,7 +13,7 @@ import PenalCodesManager from "@/components/cad/PenalCodesManager";
 import DepartmentsGroupsManager from "@/components/cad/DepartmentsGroupsManager";
 import PermissionsManager from "@/components/cad/PermissionsManager";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
-import { Users, IdCard, Settings, FileText, Building2, MapPin, Gavel, ShieldCheck, Bell, Award, AlertTriangle, MessageCircle, ScrollText, ArrowLeft, KeyRound } from "lucide-react";
+import { Users, IdCard, Settings, FileText, Building2, MapPin, Gavel, ShieldCheck, Bell, Award, AlertTriangle, MessageCircle, ScrollText, ArrowLeft, KeyRound, Crown } from "lucide-react";
 import SystemLogs from "@/pages/SystemLogs";
 
 // access: "supervisor" = visible to supervisors+, "admin" = visible to CAD/platform admins only
@@ -85,9 +85,11 @@ export default function CADAdmin() {
             <ArrowLeft className="w-4 h-4" /> Back to CAD
           </Link>
           <h1 className="font-bold text-cad-text text-lg">CAD Admin</h1>
-          <p className="text-xs text-cad-dim">
-            {canSeeAdminSections ? "Admin Panel" : "Supervisor Panel"}
-          </p>
+          <div className="flex flex-wrap gap-1.5 mt-1.5">
+            {isPlatformAdmin && <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-purple-500/15 text-purple-400 border border-purple-500/20"><Crown className="w-2.5 h-2.5" /> Platform Admin</span>}
+            {isCADAdmin && <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-blue-500/15 text-blue-400 border border-blue-500/20"><ShieldCheck className="w-2.5 h-2.5" /> CAD Admin</span>}
+            {isSupervisor && <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/20"><ShieldCheck className="w-2.5 h-2.5" /> Supervisor</span>}
+          </div>
         </div>
         <nav className="flex-1 overflow-y-auto cad-scroll py-2">
           {visibleSections.map(section => (

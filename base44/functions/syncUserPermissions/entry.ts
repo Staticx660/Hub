@@ -54,20 +54,23 @@ Deno.serve(async (req) => {
       const p = personnel[0];
       personnelId = p.id;
 
-      // CAD permissions come ONLY from personnel record + Discord roles, NOT platform admin
       isSupervisor = p.is_supervisor || hasDiscordSupervisorRole;
-      isCADAdmin = p.is_cad_admin || false;
+      isCADAdmin = p.is_cad_admin || isPlatformAdmin;
 
-      // Sync email + discord_id + auto-grant supervisor flag if Discord role says so
       const updates = {};
       if (email && p.email !== email) updates.email = email;
       if (discordId && p.discord_id !== discordId) updates.discord_id = discordId;
       if (!p.is_supervisor && hasDiscordSupervisorRole) {
         updates.is_supervisor = true;
       }
+      if (isPlatformAdmin && !p.is_cad_admin) {
+        updates.is_cad_admin = true;
+      }
       if (Object.keys(updates).length > 0) {
         await base44.asServiceRole.entities.CADPersonnel.update(p.id, updates);
       }
+    } else {
+      isCADAdmin = isPlatformAdmin;
     }
 
     return Response.json({
