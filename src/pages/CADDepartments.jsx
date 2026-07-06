@@ -3,6 +3,8 @@ import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Building2, ChevronRight, Users, Siren, Radio, Lock, AlertCircle, Flame, Ambulance, MessageCircle, Globe } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { useCadTheme } from "@/hooks/useCadTheme";
+import RetroDepartmentList from "@/components/cad/retro/RetroDepartmentList";
 
 export default function CADDepartments() {
   const [departments, setDepartments] = useState([]);
@@ -33,10 +35,14 @@ export default function CADDepartments() {
 
   useEffect(() => { load(); }, []);
 
+  const { theme } = useCadTheme();
   const unitCount = (deptId) => units.filter(u => u.department_id === deptId).length;
   const personnelCount = (deptId) => personnel.filter(p => p.department_id === deptId).length;
 
   if (loading) return <div className="flex justify-center py-16"><div className="w-8 h-8 border-2 border-cad-border border-t-cad-accent rounded-full animate-spin" /></div>;
+
+  const isRetro = theme === "retro";
+  if (isRetro) return <RetroDepartmentList departments={departments} units={units} personnel={personnel} community={community} />;
 
   return (
     <div className="cad-font">

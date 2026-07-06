@@ -1,12 +1,16 @@
 import React from "react";
 import { Outlet } from "react-router-dom";
 import CADSidebar from "./CADSidebar";
+import RetroCADShell from "./RetroCADShell";
 import { useCommunityBranding } from "@/hooks/useCommunityBranding";
 import { useCadTheme } from "@/hooks/useCadTheme";
 
 export default function CADLayout() {
   useCommunityBranding();
-  useCadTheme();
+  const { theme } = useCadTheme();
+
+  if (theme === "retro") return <RetroCADShell />;
+
   return (
     <div className="flex h-screen overflow-hidden cad-gradient-bg cad-font">
       <CADSidebar />
