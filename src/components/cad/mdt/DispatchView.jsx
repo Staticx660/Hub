@@ -38,11 +38,13 @@ export default function DispatchView({ department, session, setSession, setActiv
   };
 
   useEffect(() => {
+    let timer;
+    const debouncedLoad = () => { clearTimeout(timer); timer = setTimeout(() => load(), 600); };
     load();
-    const u1 = base44.entities.ActiveCall.subscribe(() => load());
-    const u2 = base44.entities.CADSession.subscribe(() => load());
-    const u3 = base44.entities.CADUnitGroup.subscribe(() => load());
-    return () => { u1(); u2(); u3(); };
+    const u1 = base44.entities.ActiveCall.subscribe(debouncedLoad);
+    const u2 = base44.entities.CADSession.subscribe(debouncedLoad);
+    const u3 = base44.entities.CADUnitGroup.subscribe(debouncedLoad);
+    return () => { u1(); u2(); u3(); clearTimeout(timer); };
   }, []);
 
   const activeCalls = calls.filter(c => c.status === "Active");
