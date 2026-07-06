@@ -12,8 +12,7 @@ import VehicleSearch from "@/components/cad/mdt/VehicleSearch";
 import AddressSearch from "@/components/cad/mdt/AddressSearch";
 import LinkedRecordsDialog from "@/components/cad/mdt/LinkedRecordsDialog";
 import { logSystemEvent } from "@/lib/logSystemEvent";
-
-const ALL_REPORT_TYPES = ["Incident", "Traffic Stop", "Field Contact", "Arrest", "Medical", "Fire", "Vehicle Accident", "Use of Force", "Evidence", "Other"];
+import { ALL_REPORT_TYPES, getReportTypes } from "@/lib/reportTypes";
 
 function GridField({ label, children, span }) {
   return (
@@ -59,10 +58,7 @@ export default function ReportFormView({ department, session, initialType, templ
   const [supervisorSignature, setSupervisorSignature] = useState(fd.signatures?.supervisor || "");
   const { toast } = useToast();
 
-  const reportTypes = department?.category === "Police" ? ["Incident", "Traffic Stop", "Field Contact", "Arrest", "Vehicle Accident", "Use of Force", "Evidence", "Other"]
-    : department?.category === "Fire" ? ["Fire", "Vehicle Accident", "Other"]
-    : department?.category === "EMS" ? ["Medical", "Vehicle Accident", "Other"]
-    : ALL_REPORT_TYPES;
+  const reportTypes = getReportTypes(department?.category);
 
   useEffect(() => {
     const loadOptions = async () => {
@@ -79,6 +75,13 @@ export default function ReportFormView({ department, session, initialType, templ
   }, []);
 
   useEffect(() => { if (!existingReport) setTitle(`${reportType} Report`); }, [reportType]);
+
+  useEffect(() => {
+    if (existingReport?.template_id && templates?.length) {
+      const t = templates.find(t => t.id === existingReport.template_id);
+      if (t) setSelectedTemplate(t);
+    }
+  }, [existingReport, templates]);
 
   useEffect(() => {
     const genRecordNum = async () => {

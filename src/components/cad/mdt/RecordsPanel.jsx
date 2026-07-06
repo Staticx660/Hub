@@ -5,17 +5,7 @@ import { FileText, FolderOpen, Pencil, Eye, Plus, Shield, Clock, Gavel, ChevronD
 import BoloForm from "@/components/cad/mdt/BoloForm";
 import WarrantForm from "@/components/cad/mdt/WarrantForm";
 import ReportFormView from "@/components/cad/mdt/ReportFormView";
-
-const ALL_REPORT_TYPES = ["Incident", "Traffic Stop", "Field Contact", "Arrest", "Medical", "Fire", "Vehicle Accident", "Use of Force", "Evidence", "Other"];
-const REPORT_TYPES_BY_CATEGORY = {
-  Police: ["Incident", "Traffic Stop", "Field Contact", "Arrest", "Vehicle Accident", "Use of Force", "Evidence", "Other"],
-  Fire: ["Fire", "Vehicle Accident", "Other"],
-  EMS: ["Medical", "Vehicle Accident", "Other"],
-  Dispatch: ["Incident", "Traffic Stop", "Other"],
-  Civilian: ["Other"],
-  "Private Security": ["Incident", "Field Contact", "Other"],
-  Other: ALL_REPORT_TYPES,
-};
+import { ALL_REPORT_TYPES, REPORT_TYPES_BY_CATEGORY, getReportTypes } from "@/lib/reportTypes";
 
 const FILTER_CHECKBOXES_BY_CATEGORY = {
   Police: [{ key: "warrant", label: "Warrant" }, { key: "bolo", label: "BOLO" }, { key: "license", label: "License" }, { key: "vehicle", label: "Vehicle Registration" }],
@@ -66,7 +56,7 @@ export default function RecordsPanel({ department, session }) {
   const myReports = reports.filter((r) => r.filed_by_id === session.user_id);
   const myDrafts = myReports.filter((r) => r.status === "Draft");
   const isSupervisor = session.rank?.toLowerCase().match(/sergeant|lieutenant|captain|chief|supervisor|commander|sheriff/);
-  const reportTypes = REPORT_TYPES_BY_CATEGORY[department.category] || ALL_REPORT_TYPES;
+  const reportTypes = getReportTypes(department.category);
   const isPoliceType = ["Police", "Private Security", "Other"].includes(department.category);
   const filterCheckboxes = FILTER_CHECKBOXES_BY_CATEGORY[department.category] || [];
 

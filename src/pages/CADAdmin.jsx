@@ -50,7 +50,7 @@ export default function CADAdmin() {
       case "restrictions": return <UserRestrictionsManager />;
       case "tones": return <NotificationTonesManager />;
       case "licenses": return <SimpleListManager entityName="CustomLicense" title="Custom Licenses" description="Create custom license types for civilians" fields={[{ name: "name", label: "License Name", type: "text", required: true }, { name: "description", label: "Description", type: "text" }, { name: "icon", label: "Icon (emoji or text)", type: "text" }]} />;
-      case "incidents": return <SimpleListManager entityName="IncidentType" title="Incident Types" description="Customize incident types for reports" fields={[{ name: "name", label: "Type Name", type: "text", required: true }, { name: "category", label: "Category", type: "text" }, { name: "description", label: "Description", type: "text" }, { name: "color", label: "Color", type: "text" }]} />;
+      case "incidents": return <SimpleListManager entityName="IncidentType" title="Incident Types" description="Customize incident types for reports" fields={[{ name: "name", label: "Type Name", type: "text", required: true }, { name: "category", label: "Category", type: "text" }, { name: "description", label: "Description", type: "text" }, { name: "color", label: "Color", type: "color" }]} />;
       case "discord": return <DiscordSettings />;
       case "logs": return <SystemLogs />;
       default: return null;

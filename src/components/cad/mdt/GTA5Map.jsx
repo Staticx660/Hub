@@ -7,85 +7,89 @@ const MAP_IMAGE = 'https://www.bragitoff.com/wp-content/uploads/2015/11/GTAV-HD-
 const MAP_SIZE = 2048;
 const BOUNDS = [[0, 0], [MAP_SIZE, MAP_SIZE]];
 
-// Normalized GTA V locations (nx, ny) where (0,0) = top-left, (1,1) = bottom-right
-// Based on the standard GTA V satellite map layout
+// GTA V game world bounds (standard FiveM coordinates)
+// X: -4000 (west) to 4500 (east)
+// Y: -4000 (south) to 8000 (north)
+const GAME_X_MIN = -4000, GAME_X_MAX = 4500;
+const GAME_Y_MIN = -4000, GAME_Y_MAX = 8000;
+
+// GTA V locations with actual in-game coordinates [x, y] where x=east, y=north
 const LOCATIONS = [
   // North / Blaine County
-  { name: "Paleto Bay", x: 0.12, y: 0.08 },
-  { name: "Paleto Forest", x: 0.15, y: 0.15 },
-  { name: "Procopio Beach", x: 0.35, y: 0.06 },
-  { name: "El Gordo Lighthouse", x: 0.38, y: 0.10 },
-  { name: "Mount Chiliad", x: 0.22, y: 0.22 },
-  { name: "Mount Gordo", x: 0.36, y: 0.12 },
-  { name: "Mount Josiah", x: 0.52, y: 0.42 },
+  { name: "Paleto Bay", x: -440, y: 6015 },
+  { name: "Paleto Forest", x: -300, y: 5500 },
+  { name: "Mount Chiliad", x: -450, y: 5400 },
+  { name: "Mount Gordo", x: 500, y: 5400 },
+  { name: "Procopio Beach", x: -100, y: 6200 },
+  { name: "El Gordo Lighthouse", x: 300, y: 5600 },
   // Alamo Sea area
-  { name: "Alamo Sea", x: 0.48, y: 0.35 },
-  { name: "Sandy Shores", x: 0.50, y: 0.32 },
-  { name: "Sandy Shores Airfield", x: 0.46, y: 0.36 },
-  { name: "Grapeseed", x: 0.58, y: 0.38 },
-  // Central desert / Senora
-  { name: "Grand Senora Desert", x: 0.48, y: 0.50 },
-  { name: "Harmony", x: 0.42, y: 0.52 },
-  { name: "Redwood Lights Track", x: 0.40, y: 0.55 },
-  { name: "Great Chaparral", x: 0.46, y: 0.55 },
-  { name: "Galileo Observatory", x: 0.60, y: 0.48 },
-  { name: "Galileo Park", x: 0.63, y: 0.42 },
+  { name: "Alamo Sea", x: 1700, y: 4400 },
+  { name: "Sandy Shores", x: 2000, y: 3700 },
+  { name: "Sandy Shores Airfield", x: 1750, y: 3500 },
+  { name: "Grapeseed", x: 2440, y: 4970 },
+  { name: "Mount Josiah", x: 1500, y: 4900 },
+  // Central desert
+  { name: "Grand Senora Desert", x: 1500, y: 2500 },
+  { name: "Harmony", x: 500, y: 2300 },
+  { name: "Great Chaparral", x: 1000, y: 2000 },
+  { name: "Redwood Lights Track", x: 200, y: 2500 },
+  { name: "Galileo Observatory", x: -430, y: 750 },
+  { name: "Galileo Park", x: -200, y: 1100 },
   // Fort Zancudo area
-  { name: "Zancudo River", x: 0.30, y: 0.48 },
-  { name: "Fort Zancudo", x: 0.25, y: 0.52 },
-  { name: "Lago Zancudo", x: 0.23, y: 0.50 },
+  { name: "Zancudo River", x: -2000, y: 2700 },
+  { name: "Fort Zancudo", x: -2300, y: 3100 },
+  { name: "Lago Zancudo", x: -2300, y: 3300 },
   // West coast
-  { name: "Chumash", x: 0.18, y: 0.55 },
-  { name: "Banham Canyon", x: 0.32, y: 0.75 },
-  { name: "Tongva Valley", x: 0.38, y: 0.68 },
-  { name: "Tongva Hills", x: 0.40, y: 0.62 },
+  { name: "Chumash", x: -3200, y: 1050 },
+  { name: "Banham Canyon", x: -2300, y: 1500 },
+  { name: "Tongva Valley", x: -1800, y: 2000 },
+  { name: "Tongva Hills", x: -1600, y: 2200 },
   // Vinewood area
-  { name: "Vinewood Hills", x: 0.66, y: 0.58 },
-  { name: "Vinewood Sign", x: 0.68, y: 0.56 },
-  { name: "Vinewood Bowl", x: 0.70, y: 0.54 },
-  { name: "Vinewood", x: 0.70, y: 0.62 },
-  { name: "Downtown Vinewood", x: 0.70, y: 0.62 },
-  { name: "East Vinewood", x: 0.76, y: 0.58 },
-  { name: "Mirror Park", x: 0.73, y: 0.55 },
-  { name: "Vinewood Racetrack", x: 0.70, y: 0.56 },
+  { name: "Vinewood Hills", x: 200, y: 500 },
+  { name: "Vinewood Sign", x: 700, y: 150 },
+  { name: "Vinewood Bowl", x: 200, y: 200 },
+  { name: "Vinewood", x: 300, y: 100 },
+  { name: "Downtown Vinewood", x: 250, y: 50 },
+  { name: "East Vinewood", x: 900, y: -200 },
+  { name: "Mirror Park", x: 1140, y: -660 },
+  { name: "Vinewood Racetrack", x: 200, y: 150 },
   // Los Santos central
-  { name: "Rockford Hills", x: 0.63, y: 0.60 },
-  { name: "Burton", x: 0.65, y: 0.56 },
-  { name: "Richman", x: 0.60, y: 0.58 },
-  { name: "Morningwood", x: 0.55, y: 0.62 },
-  { name: "Del Perro", x: 0.56, y: 0.65 },
-  { name: "Del Perro Pier", x: 0.54, y: 0.65 },
-  { name: "Vespucci", x: 0.50, y: 0.70 },
-  { name: "Vespucci Beach", x: 0.52, y: 0.75 },
-  { name: "Pleasure Pier", x: 0.55, y: 0.72 },
-  { name: "Little Seoul", x: 0.60, y: 0.65 },
-  { name: "Los Santos Golf Club", x: 0.58, y: 0.60 },
+  { name: "Rockford Hills", x: -300, y: -200 },
+  { name: "Burton", x: -150, y: -100 },
+  { name: "Richman", x: -1600, y: -300 },
+  { name: "Morningwood", x: -1400, y: -500 },
+  { name: "Del Perro", x: -1600, y: -700 },
+  { name: "Del Perro Pier", x: -1200, y: -1500 },
+  { name: "Vespucci", x: -1100, y: -1200 },
+  { name: "Vespucci Beach", x: -1230, y: -1570 },
+  { name: "Pleasure Pier", x: -1150, y: -1650 },
+  { name: "Little Seoul", x: -600, y: -500 },
+  { name: "Los Santos Golf Club", x: -1000, y: -200 },
   // Downtown
-  { name: "Pillbox Hill", x: 0.66, y: 0.66 },
-  { name: "Mission Row", x: 0.68, y: 0.68 },
-  { name: "Legion Square", x: 0.70, y: 0.68 },
-  { name: "Maze Bank Tower", x: 0.66, y: 0.66 },
-  { name: "Pacific Standard Bank", x: 0.68, y: 0.64 },
+  { name: "Pillbox Hill", x: 200, y: -700 },
+  { name: "Mission Row", x: 428, y: -984 },
+  { name: "Legion Square", x: 300, y: -900 },
+  { name: "Maze Bank Tower", x: -100, y: -700 },
+  { name: "Pacific Standard Bank", x: 100, y: -600 },
   // South central
-  { name: "Strawberry", x: 0.66, y: 0.70 },
-  { name: "Chamberlain Hills", x: 0.64, y: 0.72 },
-  { name: "Davis", x: 0.68, y: 0.70 },
-  { name: "Central Los Santos Medical Center", x: 0.66, y: 0.72 },
-  { name: "Los Santos County Hospital", x: 0.66, y: 0.66 },
+  { name: "Strawberry", x: 200, y: -1300 },
+  { name: "Chamberlain Hills", x: 50, y: -1400 },
+  { name: "Davis", x: 100, y: -1500 },
+  { name: "Central Los Santos Medical Center", x: 300, y: -1400 },
   // East LS
-  { name: "La Mesa", x: 0.73, y: 0.65 },
-  { name: "Cypress Flats", x: 0.74, y: 0.62 },
-  { name: "Murrieta Heights", x: 0.76, y: 0.58 },
-  { name: "El Burro Heights", x: 0.80, y: 0.65 },
-  { name: "Rancho", x: 0.76, y: 0.72 },
-  { name: "Banning", x: 0.72, y: 0.75 },
+  { name: "La Mesa", x: 850, y: -1400 },
+  { name: "Cypress Flats", x: 900, y: -200 },
+  { name: "Murrieta Heights", x: 1100, y: -500 },
+  { name: "El Burro Heights", x: 1380, y: -1400 },
+  { name: "Rancho", x: 400, y: -1700 },
+  { name: "Banning", x: 200, y: -1900 },
   // Port / Airport
-  { name: "Los Santos International Airport", x: 0.58, y: 0.82 },
-  { name: "Elysian Island", x: 0.53, y: 0.78 },
-  { name: "Terminal", x: 0.56, y: 0.80 },
+  { name: "Los Santos International Airport", x: -1043, y: -3106 },
+  { name: "Elysian Island", x: -1700, y: -2500 },
+  { name: "Terminal", x: -1200, y: -2900 },
   // East mountains
-  { name: "Tataviam Mountains", x: 0.82, y: 0.50 },
-  { name: "Palomino Highlands", x: 0.88, y: 0.62 },
+  { name: "Tataviam Mountains", x: 2000, y: -200 },
+  { name: "Palomino Highlands", x: 2500, y: -500 },
 ];
 
 function normalize(str) {
@@ -95,7 +99,6 @@ function normalize(str) {
 function findLocation(str) {
   if (!str) return null;
   const q = normalize(str);
-  // Try exact match first, then partial contains
   let best = null;
   let bestLen = 0;
   for (const loc of LOCATIONS) {
@@ -115,19 +118,23 @@ function findLocation(str) {
   return best;
 }
 
+// Convert GTA V game coordinates to Leaflet [lat, lng] for a square image
+function gameToLeaflet(gx, gy) {
+  const normX = (gx - GAME_X_MIN) / (GAME_X_MAX - GAME_X_MIN);
+  const normY = (GAME_Y_MAX - gy) / (GAME_Y_MAX - GAME_Y_MIN);
+  const lng = normX * MAP_SIZE;
+  const lat = (1 - normY) * MAP_SIZE;
+  return [lat, lng];
+}
+
 function hashLocation(str) {
   if (!str) return [MAP_SIZE / 2, MAP_SIZE / 2];
   let hash = 0;
   for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
-  const x = 150 + (Math.abs(hash) % (MAP_SIZE - 300));
-  const y = 150 + (Math.abs(hash >> 8) % (MAP_SIZE - 300));
-  return [y, x]; // [lat, lng]
-}
-
-function toLeafletCoord(loc) {
-  // Convert normalized (nx=top-left x, ny=top-left y) to Leaflet [lat, lng]
-  const lng = loc.x * MAP_SIZE;
-  const lat = (1 - loc.y) * MAP_SIZE;
+  const normX = 0.2 + (Math.abs(hash) % 1000) / 1250;
+  const normY = 0.2 + (Math.abs(hash >> 8) % 1000) / 1250;
+  const lng = normX * MAP_SIZE;
+  const lat = (1 - normY) * MAP_SIZE;
   return [lat, lng];
 }
 
@@ -141,7 +148,7 @@ const pinIcon = L.divIcon({
 export default function GTA5Map({ location, height = 320 }) {
   const [imageError, setImageError] = useState(false);
   const matched = findLocation(location);
-  const pos = matched ? toLeafletCoord(matched) : hashLocation(location);
+  const pos = matched ? gameToLeaflet(matched.x, matched.y) : hashLocation(location);
 
   return (
     <>

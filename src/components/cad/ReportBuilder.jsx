@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { useToast } from "@/components/ui/use-toast";
 import { Plus, Trash2, Pencil, FileText, ChevronUp, ChevronDown, Copy, X } from "lucide-react";
 
-const CATEGORIES = ["Incident", "Arrest", "Traffic Stop", "Field Contact", "Use of Force", "Vehicle Accident", "Evidence", "Medical", "Fire", "Other"];
+import { REPORT_TEMPLATE_CATEGORIES } from "@/lib/reportTypes";
 
 const FIELD_TYPES = [
   { value: "text", label: "Text", group: "Fields" },
@@ -167,7 +167,7 @@ export default function ReportBuilder() {
               <div><Label className="text-slate-300">Category</Label>
                 <Select value={form.category} onValueChange={v => setForm({ ...form, category: v })}>
                   <SelectTrigger className="bg-slate-800 border-slate-700 text-white"><SelectValue /></SelectTrigger>
-                  <SelectContent className="bg-slate-800 border-slate-700">{CATEGORIES.map(c => <SelectItem key={c} value={c} className="text-white">{c}</SelectItem>)}</SelectContent>
+                  <SelectContent className="bg-slate-800 border-slate-700">{REPORT_TEMPLATE_CATEGORIES.map(c => <SelectItem key={c} value={c} className="text-white">{c}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
             </div>

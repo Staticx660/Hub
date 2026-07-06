@@ -115,7 +115,12 @@ export default function SimpleListManager({ entityName, fields, title, descripti
             {fields.map((f) => (
               <div key={f.name}>
                 <Label className="text-slate-300">{f.label}{f.required && <span className="text-red-400 ml-0.5">*</span>}</Label>
-                {f.type === "textarea" ? (
+                {f.type === "color" ? (
+                  <div className="flex items-center gap-2">
+                    <input type="color" value={form[f.name] || "#3b82f6"} onChange={e => setForm({ ...form, [f.name]: e.target.value })} className="w-10 h-9 rounded border border-slate-700 bg-slate-800 cursor-pointer" />
+                    <Input value={form[f.name] || ""} onChange={e => setForm({ ...form, [f.name]: e.target.value })} className="bg-slate-800 border-slate-700 text-white flex-1" />
+                  </div>
+                ) : f.type === "textarea" ? (
                   <Textarea value={form[f.name] || ""} onChange={e => setForm({ ...form, [f.name]: e.target.value })} className="bg-slate-800 border-slate-700 text-white" rows={3} />
                 ) : (
                   <Input type={f.type === "number" ? "number" : "text"} value={form[f.name] || ""} onChange={e => setForm({ ...form, [f.name]: e.target.value })} className="bg-slate-800 border-slate-700 text-white" />
