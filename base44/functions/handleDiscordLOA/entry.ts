@@ -120,7 +120,7 @@ Deno.serve(async (req) => {
                 { name: 'Reason', value: reason, inline: false }
               ],
               timestamp: new Date().toISOString(),
-              footer: { text: 'RPCommand - LOA System' }
+              footer: { text: 'OCRP Hub - LOA System' }
             }]
           }
         });
@@ -188,7 +188,7 @@ Deno.serve(async (req) => {
                 { name: 'Started At', value: new Date().toLocaleString('en-US', { timeZone: 'America/New_York' }), inline: true }
               ],
               timestamp: new Date().toISOString(),
-              footer: { text: 'RPCommand - Shift System' }
+              footer: { text: 'OCRP Hub - Shift System' }
             }]
           }
         });
@@ -237,7 +237,7 @@ Deno.serve(async (req) => {
                 { name: 'Ended', value: endTime.toLocaleString('en-US', { timeZone: 'America/New_York' }), inline: false }
               ],
               timestamp: new Date().toISOString(),
-              footer: { text: 'RPCommand - Shift System' }
+              footer: { text: 'OCRP Hub - Shift System' }
             }]
           }
         });

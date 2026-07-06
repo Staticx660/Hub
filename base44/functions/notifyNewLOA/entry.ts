@@ -54,7 +54,7 @@ Deno.serve(async (req) => {
         { name: 'Reason', value: loaRequest.reason || 'No reason provided', inline: false },
       ],
       timestamp: new Date().toISOString(),
-      footer: { text: 'RPCommand - LOA System' },
+      footer: { text: 'OCRP Hub - LOA System' },
     };
 
     // Send to every department's webhook

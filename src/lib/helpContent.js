@@ -18,7 +18,7 @@ export const HELP_CATEGORIES = [
         summary: "Understand the two main modules and how they connect.",
         tags: ["basics", "introduction"],
         steps: [
-          "RPCommand has two core modules: the Roster System and the CAD System.",
+          "OCRP Hub has two core modules: the Roster System and the CAD System.",
           "The Roster System manages departments, members, shifts, LOA requests, vehicles, uniforms, and documents.",
           "The CAD System is the Computer-Aided Dispatch suite with department-specific dashboards for Police, Fire, EMS, Dispatch, and Civilians.",
           "Both modules share department data — set up departments once and they appear in both systems.",

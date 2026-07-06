@@ -34,7 +34,7 @@ export default function HelpDock() {
     setAiAnswer("");
     try {
       const res = await base44.integrations.Core.InvokeLLM({
-        prompt: `You are a help assistant for RPCommand, a FiveM CAD/Roster management system. Answer this question concisely (max 3 paragraphs). The system has: MDT with Dispatch/Lookups/Records/MyCall/Groups views, keybinds (F1-F5 for views, 1-4 for status, P for panic), Civilian suite (characters, DMV, vehicles, firearms), EMS (PCRs with AI narratives), Fire dashboards, Admin panel (community settings, personnel, penal codes), and Discord integration for role-based access. Question: ${aiQuestion}`,
+        prompt: `You are a help assistant for OCRP Hub, a FiveM CAD/Roster management system. Answer this question concisely (max 3 paragraphs). The system has: MDT with Dispatch/Lookups/Records/MyCall/Groups views, keybinds (F1-F5 for views, 1-4 for status, P for panic), Civilian suite (characters, DMV, vehicles, firearms), EMS (PCRs with AI narratives), Fire dashboards, Admin panel (community settings, personnel, penal codes), and Discord integration for role-based access. Question: ${aiQuestion}`,
         response_json_schema: {
           type: "object",
           properties: {

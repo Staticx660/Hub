@@ -68,7 +68,7 @@ export default function Settings() {
     if (!inviteEmail) return;
     try {
       await base44.users.inviteUser(inviteEmail, inviteRole);
-      const appName = "RPCommand";
+      const appName = "OCRP Hub";
       const roleLabel = inviteRole === "admin" ? "Administrator" : "Staff Member";
       const loginUrl = window.location.origin + "/login";
       await base44.integrations.Core.SendEmail({

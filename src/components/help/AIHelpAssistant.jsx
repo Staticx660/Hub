@@ -25,7 +25,7 @@ export default function AIHelpAssistant() {
 
     try {
       const res = await base44.integrations.Core.InvokeLLM({
-        prompt: `You are a helpful assistant for RPCommand, a FiveM CAD (Computer-Aided Dispatch) and Roster management system. Answer the user's question clearly and concisely. Use bullet points or numbered steps when appropriate.
+        prompt: `You are a helpful assistant for OCRP Hub, a FiveM CAD (Computer-Aided Dispatch) and Roster management system. Answer the user's question clearly and concisely. Use bullet points or numbered steps when appropriate.
 
 System features:
 - Two modules: Roster System (departments, members, shifts, LOA, documents) and CAD System (MDT, dispatch, records, civilians)
