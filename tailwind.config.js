@@ -59,8 +59,22 @@ module.exports = {
   				'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
   				border: 'hsl(var(--sidebar-border))',
   				ring: 'hsl(var(--sidebar-ring))'
+  			},
+  			cad: {
+  				bg: 'hsl(var(--cad-bg))',
+  				'bg-solid': 'hsl(var(--cad-bg-solid))',
+  				surface: 'hsl(var(--cad-surface))',
+  				'surface-2': 'hsl(var(--cad-surface-2))',
+  				'surface-3': 'hsl(var(--cad-surface-3))',
+  				border: 'hsl(var(--cad-border))',
+  				'border-light': 'hsl(var(--cad-border-light))',
+  				text: 'hsl(var(--cad-text))',
+  				muted: 'hsl(var(--cad-text-muted))',
+  				dim: 'hsl(var(--cad-text-dim))',
+  				accent: 'hsl(var(--cad-accent))',
+  				'accent-soft': 'hsl(var(--cad-accent-soft))'
   			}
-  		},
+  			},
   		fontFamily: {
   			heading: ['var(--font-heading)'],
   			body: ['var(--font-body)'],

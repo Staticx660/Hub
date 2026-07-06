@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -29,9 +31,9 @@
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
-    --font-heading: ui-sans-serif, system-ui, sans-serif;
-    --font-body: ui-sans-serif, system-ui, sans-serif;
-    --font-display: ui-sans-serif, system-ui, sans-serif;
+    --font-heading: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    --font-body: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    --font-display: 'Inter', ui-sans-serif, system-ui, sans-serif;
     --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
@@ -90,3 +92,83 @@
     @apply bg-background text-foreground font-body;
   }
 }
+
+/* ===== CAD Theme System ===== */
+:root {
+  --cad-bg: 222 47% 6%;
+  --cad-bg-solid: 222 47% 7%;
+  --cad-surface: 222 40% 11%;
+  --cad-surface-2: 222 35% 14%;
+  --cad-surface-3: 222 30% 17%;
+  --cad-border: 220 20% 20%;
+  --cad-border-light: 220 15% 25%;
+  --cad-text: 210 40% 98%;
+  --cad-text-muted: 215 20% 65%;
+  --cad-text-dim: 220 15% 45%;
+  --cad-accent: 199 89% 48%;
+  --cad-accent-soft: 199 89% 48%;
+  --cad-radius: 0.75rem;
+  --cad-font: 'Inter', ui-sans-serif, system-ui, sans-serif;
+}
+
+[data-cad-theme="retro"] {
+  --cad-bg: 120 8% 5%;
+  --cad-bg-solid: 120 8% 4%;
+  --cad-surface: 120 6% 9%;
+  --cad-surface-2: 120 5% 12%;
+  --cad-surface-3: 120 4% 15%;
+  --cad-border: 120 8% 20%;
+  --cad-border-light: 120 6% 25%;
+  --cad-text: 120 25% 72%;
+  --cad-text-muted: 120 12% 52%;
+  --cad-text-dim: 120 8% 38%;
+  --cad-accent: 45 90% 50%;
+  --cad-accent-soft: 45 90% 50%;
+  --cad-radius: 0.25rem;
+  --cad-font: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+/* CAD utility classes */
+.cad-font { font-family: var(--cad-font); }
+
+.cad-gradient-bg {
+  background:
+    radial-gradient(ellipse 60% 40% at 50% -10%, hsl(var(--cad-accent) / 0.07), transparent 60%),
+    radial-gradient(ellipse 40% 30% at 100% 100%, hsl(var(--cad-accent) / 0.04), transparent 50%),
+    hsl(var(--cad-bg));
+}
+
+.cad-glass {
+  background: hsl(var(--cad-surface) / 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.cad-glass-strong {
+  background: hsl(var(--cad-surface) / 0.92);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+}
+
+.cad-card {
+  background: hsl(var(--cad-surface) / 0.8);
+  border: 1px solid hsl(var(--cad-border) / 0.5);
+  border-radius: var(--cad-radius);
+  transition: all 0.2s ease;
+}
+
+.cad-card-hover:hover {
+  border-color: hsl(var(--cad-accent) / 0.3);
+  background: hsl(var(--cad-surface) / 0.95);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px hsl(var(--cad-bg-solid) / 0.5);
+}
+
+.cad-accent-glow {
+  box-shadow: 0 0 20px hsl(var(--cad-accent) / 0.15);
+}
+
+.cad-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+.cad-scroll::-webkit-scrollbar-track { background: transparent; }
+.cad-scroll::-webkit-scrollbar-thumb { background: hsl(var(--cad-border-light) / 0.4); border-radius: 3px; }
+.cad-scroll::-webkit-scrollbar-thumb:hover { background: hsl(var(--cad-accent) / 0.4); }

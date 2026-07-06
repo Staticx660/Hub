@@ -45,6 +45,7 @@ import Settings from '@/pages/Settings';
 import CivilianDashboard from '@/pages/CivilianDashboard';
 import MyRecords from '@/pages/MyRecords';
 import SystemLogs from '@/pages/SystemLogs';
+import { useCadTheme } from "@/hooks/useCadTheme";
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -128,6 +129,7 @@ const AuthenticatedApp = () => {
 };
 
 function App() {
+  useCadTheme();
   return (
     <AuthProvider>
       <QueryClientProvider client={queryClientInstance}>
