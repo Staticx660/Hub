@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import { base44 } from "@/api/base44Client";
 
 const STORAGE_KEY = "rpc-cad-theme";
 const DEFAULT_THEME = "dark-modern";
@@ -44,9 +45,21 @@ export function useCadTheme() {
     applyTheme(newTheme);
     try { localStorage.setItem(STORAGE_KEY, newTheme); } catch (e) {}
     listeners.forEach(fn => fn(newTheme));
+    // Persist to user profile so it's per-account, not per-browser
+    try { base44.auth.updateMe({ cad_theme: newTheme }); } catch (e) {}
   }, []);
 
   return { theme, setTheme };
+}
+
+// Called after login to load the user's saved theme from their profile
+export function syncThemeFromUser(user) {
+  if (!user || !user.cad_theme || !VALID_THEMES.includes(user.cad_theme)) return;
+  if (currentTheme === user.cad_theme) return;
+  currentTheme = user.cad_theme;
+  applyTheme(user.cad_theme);
+  try { localStorage.setItem(STORAGE_KEY, user.cad_theme); } catch (e) {}
+  listeners.forEach(fn => fn(user.cad_theme));
 }
 
 export const CAD_THEMES = [

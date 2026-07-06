@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
@@ -48,12 +49,16 @@ import MyRecords from '@/pages/MyRecords';
 import SystemLogs from '@/pages/SystemLogs';
 import Help from '@/pages/Help';
 import HelpDock from '@/components/help/HelpDock';
-import { useCadTheme } from "@/hooks/useCadTheme";
+import { useCadTheme, syncThemeFromUser } from "@/hooks/useCadTheme";
 import { useCommunityBranding } from "@/hooks/useCommunityBranding";
 
 const AuthenticatedApp = () => {
-  const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
+  const { user, isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
   useCommunityBranding();
+
+  useEffect(() => {
+    if (user) syncThemeFromUser(user);
+  }, [user]);
 
   if (isLoadingPublicSettings || isLoadingAuth) {
     return (

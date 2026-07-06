@@ -13,6 +13,7 @@ import { useCommunityBranding } from "@/hooks/useCommunityBranding";
 import { useCadTheme } from "@/hooks/useCadTheme";
 import RetroClockInScreen from "@/components/cad/retro/RetroClockInScreen";
 import { Clock, Ambulance, ChevronLeft, ArrowLeft, FileText } from "lucide-react";
+import PanicDialog from "@/components/cad/mdt/PanicDialog";
 
 export default function EMSBoard() {
   const { deptId } = useParams();
@@ -25,6 +26,7 @@ export default function EMSBoard() {
   const [clockInOpen, setClockInOpen] = useState(false);
   const [activeView, setActiveView] = useState("dashboard");
   const [selectedCallId, setSelectedCallId] = useState(null);
+  const [panicOpen, setPanicOpen] = useState(false);
   useCommunityBranding();
   const { theme } = useCadTheme();
   const retro = theme === "retro";
@@ -88,12 +90,15 @@ export default function EMSBoard() {
   };
 
   const handlePanic = async () => {
-    try {
-      const newPanic = !session.panic_active;
-      await base44.entities.CADSession.update(session.id, { panic_active: newPanic, status: newPanic ? "Panic" : "Available" });
-      setSession({ ...session, panic_active: newPanic, status: newPanic ? "Panic" : "Available" });
-      toast({ title: newPanic ? "🚨 PANIC ACTIVATED" : "Panic Cancelled", variant: newPanic ? "destructive" : "default" });
-    } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
+    if (session.panic_active) {
+      try {
+        await base44.entities.CADSession.update(session.id, { panic_active: false, status: "Available" });
+        setSession({ ...session, panic_active: false, status: "Available" });
+        toast({ title: "Panic Cancelled" });
+      } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
+      return;
+    }
+    setPanicOpen(true);
   };
 
   const newCall = async () => {
@@ -163,6 +168,8 @@ export default function EMSBoard() {
           </div>
         )}
       </div>
+
+      <PanicDialog open={panicOpen} department={department} session={session} onClose={() => setPanicOpen(false)} onActivated={(s) => setSession(s)} />
 
       <Taskbar activeView="dispatch" setActiveView={(v) => { if (v !== "dispatch") navigate(`/cad/mdt/${deptId}`, { state: { initialView: v } }); }} session={session} departmentCategory={department.category} onStatusChange={handleStatusChange} onPanic={handlePanic} onClockOut={handleClockOut} onOpenKeybinds={() => {}} />
     </div>
