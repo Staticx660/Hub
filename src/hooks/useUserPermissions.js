@@ -41,11 +41,12 @@ export function useUserPermissions() {
       })
       .catch(() => {
         if (cancelled) return;
+        // On failure, only report platform admin status — CAD perms unknown, default to false
         const isPlatformAdmin = user.role === 'admin';
         setPerms({
           isPlatformAdmin,
-          isCADAdmin: isPlatformAdmin,
-          isSupervisor: isPlatformAdmin,
+          isCADAdmin: false,
+          isSupervisor: false,
           loading: false,
         });
       });

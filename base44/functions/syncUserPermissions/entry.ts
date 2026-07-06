@@ -15,6 +15,16 @@ Deno.serve(async (req) => {
     let personnelId = null;
     let hasDiscordSupervisorRole = false;
 
+    // Look up personnel by discord_id first, then fall back to email
+    let personnel = [];
+    if (discordId) {
+      personnel = await base44.asServiceRole.entities.CADPersonnel.filter({ discord_id: discordId });
+    }
+    if (personnel.length === 0 && email) {
+      personnel = await base44.asServiceRole.entities.CADPersonnel.filter({ email: email });
+    }
+
+    // Check Discord guild roles for supervisor status
     if (discordId) {
       const botToken = Deno.env.get("DISCORD_BOT_TOKEN");
       const guildId = Deno.env.get("DISCORD_GUILD_ID");
@@ -38,28 +48,26 @@ Deno.serve(async (req) => {
           } catch {}
         }
       }
-
-      const personnel = await base44.asServiceRole.entities.CADPersonnel.filter({ discord_id: discordId });
-      if (personnel.length > 0) {
-        const p = personnel[0];
-        personnelId = p.id;
-
-        // Effective supervisor = manual flag OR Discord supervisor role
-        isSupervisor = p.is_supervisor || hasDiscordSupervisorRole;
-        isCADAdmin = p.is_cad_admin || false;
-
-        // Sync email + auto-grant supervisor flag if Discord role says so
-        const updates = { email };
-        if (!p.is_supervisor && hasDiscordSupervisorRole) {
-          updates.is_supervisor = true;
-        }
-        await base44.asServiceRole.entities.CADPersonnel.update(p.id, updates);
-      }
     }
 
-    if (isPlatformAdmin) {
-      isSupervisor = true;
-      isCADAdmin = true;
+    if (personnel.length > 0) {
+      const p = personnel[0];
+      personnelId = p.id;
+
+      // CAD permissions come ONLY from personnel record + Discord roles, NOT platform admin
+      isSupervisor = p.is_supervisor || hasDiscordSupervisorRole;
+      isCADAdmin = p.is_cad_admin || false;
+
+      // Sync email + discord_id + auto-grant supervisor flag if Discord role says so
+      const updates = {};
+      if (email && p.email !== email) updates.email = email;
+      if (discordId && p.discord_id !== discordId) updates.discord_id = discordId;
+      if (!p.is_supervisor && hasDiscordSupervisorRole) {
+        updates.is_supervisor = true;
+      }
+      if (Object.keys(updates).length > 0) {
+        await base44.asServiceRole.entities.CADPersonnel.update(p.id, updates);
+      }
     }
 
     return Response.json({

@@ -73,7 +73,7 @@ export default function PermissionsManager() {
           <h2 className="text-lg font-semibold text-cad-text">Role Permissions</h2>
         </div>
         <p className="text-sm text-cad-muted">
-          Grant CAD-level supervisor or admin permissions to personnel. Platform admins always have full access.
+          Grant CAD-level supervisor or admin permissions to personnel. These flags are synced with Discord supervisor roles on login.
         </p>
       </div>
 
