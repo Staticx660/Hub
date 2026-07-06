@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import UnitsManager from "@/components/cad/UnitsManager";
 import PersonnelManager from "@/components/cad/PersonnelManager";
 import DiscordSettings from "@/components/cad/DiscordSettings";
@@ -12,6 +11,7 @@ import NotificationTonesManager from "@/components/cad/customizer/NotificationTo
 import PenalCodesManager from "@/components/cad/PenalCodesManager";
 import DepartmentsGroupsManager from "@/components/cad/DepartmentsGroupsManager";
 import { Users, IdCard, Settings, FileText, Building2, MapPin, Gavel, ShieldCheck, Bell, Award, AlertTriangle, MessageCircle, ScrollText } from "lucide-react";
+import SystemLogs from "@/pages/SystemLogs";
 
 const SECTIONS = [
   { title: "ACCOUNTS", items: [
@@ -31,13 +31,12 @@ const SECTIONS = [
   ]},
   { title: "ADVANCED", items: [
     { id: "discord", label: "Discord", icon: MessageCircle },
-    { id: "logs", label: "Logs", icon: ScrollText, link: "/system-logs" },
+    { id: "logs", label: "Logs", icon: ScrollText },
   ]},
 ];
 
 export default function CADAdmin() {
   const [active, setActive] = useState("community");
-  const navigate = useNavigate();
 
   const renderPanel = () => {
     switch (active) {
@@ -53,6 +52,7 @@ export default function CADAdmin() {
       case "licenses": return <SimpleListManager entityName="CustomLicense" title="Custom Licenses" description="Create custom license types for civilians" fields={[{ name: "name", label: "License Name", type: "text", required: true }, { name: "description", label: "Description", type: "text" }, { name: "icon", label: "Icon (emoji or text)", type: "text" }]} />;
       case "incidents": return <SimpleListManager entityName="IncidentType" title="Incident Types" description="Customize incident types for reports" fields={[{ name: "name", label: "Type Name", type: "text", required: true }, { name: "category", label: "Category", type: "text" }, { name: "description", label: "Description", type: "text" }, { name: "color", label: "Color", type: "text" }]} />;
       case "discord": return <DiscordSettings />;
+      case "logs": return <SystemLogs />;
       default: return null;
     }
   };
@@ -68,7 +68,7 @@ export default function CADAdmin() {
               <div key={section.title} className="mb-2">
                 <p className="px-4 py-1.5 text-[10px] font-bold text-slate-600 uppercase tracking-wider">{section.title}</p>
                 {section.items.map(item => (
-                  <button key={item.id} onClick={() => item.link ? navigate(item.link) : setActive(item.id)}
+                  <button key={item.id} onClick={() => setActive(item.id)}
                     className={`w-full flex items-center gap-2.5 px-4 py-2 text-sm transition-colors ${active === item.id ? "bg-slate-800 text-white border-l-2 border-cyan-500" : "text-slate-400 hover:bg-slate-800/50 hover:text-white border-l-2 border-transparent"}`}>
                     <item.icon className="w-4 h-4 flex-shrink-0" /> {item.label}
                   </button>
