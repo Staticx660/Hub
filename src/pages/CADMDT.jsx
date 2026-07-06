@@ -15,6 +15,7 @@ import PCRForm from "@/components/cad/mdt/PCRForm";
 import CallViewer from "@/components/cad/mdt/CallViewer";
 import ClockInDialog from "@/components/cad/mdt/ClockInDialog";
 import KeybindsDialog from "@/components/cad/mdt/KeybindsDialog";
+import PanicDialog from "@/components/cad/mdt/PanicDialog";
 import { useKeybinds, loadKeybinds } from "@/hooks/useKeybinds";
 import { useCadTheme } from "@/hooks/useCadTheme";
 import RetroClockInScreen from "@/components/cad/retro/RetroClockInScreen";
@@ -37,6 +38,7 @@ export default function CADMDT() {
   const [accessDenied, setAccessDenied] = useState(false);
   const [keybinds, setKeybinds] = useState(loadKeybinds());
   const [keybindsOpen, setKeybindsOpen] = useState(false);
+  const [panicOpen, setPanicOpen] = useState(false);
   const { theme } = useCadTheme();
   const retro = theme === "retro";
 
@@ -159,18 +161,17 @@ export default function CADMDT() {
   };
 
   const handlePanic = async () => {
-    try {
-      const newPanic = !session.panic_active;
-      await base44.entities.CADSession.update(session.id, { panic_active: newPanic, status: newPanic ? "Panic" : "Available" });
-      setSession({ ...session, panic_active: newPanic, status: newPanic ? "Panic" : "Available" });
-      if (newPanic) {
-        startPanicSound(session.callsign || session.user_name);
-        toast({ title: "🚨 PANIC ACTIVATED", description: "All units have been alerted", variant: "destructive" });
-      } else {
+    if (session.panic_active) {
+      try {
+        await base44.entities.CADSession.update(session.id, { panic_active: false, status: "Available" });
+        setSession({ ...session, panic_active: false, status: "Available" });
         stopPanicSound();
         stopPanicVoice();
-      }
-    } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
+        toast({ title: "Panic Cancelled" });
+      } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
+      return;
+    }
+    setPanicOpen(true);
   };
 
   useKeybinds(keybinds, {
@@ -231,6 +232,7 @@ export default function CADMDT() {
         {activeView === "groups" && <GroupsView department={department} session={session} />}
       </div>
       <Taskbar activeView={activeView} setActiveView={(v) => { if (v === "dispatch" && department.category === "Fire") { navigate(`/cad/fire/${deptId}`); } else if (v === "dispatch" && department.category === "EMS") { navigate(`/cad/ems/${deptId}`); } else { setActiveView(v); } }} session={session} departmentCategory={department.category} onStatusChange={handleStatusChange} onPanic={handlePanic} onClockOut={handleClockOut} onOpenKeybinds={() => setKeybindsOpen(true)} onSessionUpdate={setSession} />
+      <PanicDialog open={panicOpen} department={department} session={session} onClose={() => setPanicOpen(false)} onActivated={(s) => setSession(s)} />
       <KeybindsDialog open={keybindsOpen} onOpenChange={setKeybindsOpen} keybinds={keybinds} setKeybinds={setKeybinds} />
     </div>
   );

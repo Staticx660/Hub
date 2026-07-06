@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 const STORAGE_KEY = "ocrp_keybinds";
 
@@ -42,6 +42,9 @@ export function saveKeybinds(keybinds) {
 }
 
 export function useKeybinds(keybinds, handlers) {
+  const handlersRef = useRef(handlers);
+  handlersRef.current = handlers;
+
   useEffect(() => {
     const handler = (e) => {
       const tag = e.target?.tagName;
@@ -52,12 +55,12 @@ export function useKeybinds(keybinds, handlers) {
       for (const [action, bind] of Object.entries(keybinds)) {
         if (bind && bind.toLowerCase() === key.toLowerCase()) {
           e.preventDefault();
-          handlers[action]?.();
+          handlersRef.current[action]?.();
           break;
         }
       }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [keybinds, handlers]);
+  }, [keybinds]);
 }
