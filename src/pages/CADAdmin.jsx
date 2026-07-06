@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import UnitsManager from "@/components/cad/UnitsManager";
 import PersonnelManager from "@/components/cad/PersonnelManager";
 import DiscordSettings from "@/components/cad/DiscordSettings";
@@ -10,7 +11,7 @@ import UserRestrictionsManager from "@/components/cad/customizer/UserRestriction
 import NotificationTonesManager from "@/components/cad/customizer/NotificationTonesManager";
 import PenalCodesManager from "@/components/cad/PenalCodesManager";
 import DepartmentsGroupsManager from "@/components/cad/DepartmentsGroupsManager";
-import { Users, IdCard, Settings, FileText, Building2, MapPin, Gavel, ShieldCheck, Bell, Award, AlertTriangle, MessageCircle, ScrollText } from "lucide-react";
+import { Users, IdCard, Settings, FileText, Building2, MapPin, Gavel, ShieldCheck, Bell, Award, AlertTriangle, MessageCircle, ScrollText, ArrowLeft } from "lucide-react";
 import SystemLogs from "@/pages/SystemLogs";
 
 const SECTIONS = [
@@ -58,29 +59,32 @@ export default function CADAdmin() {
   };
 
   return (
-    <div className="cad-font">
-      <h1 className="text-2xl font-bold text-cad-text mb-1">CAD Admin Panel</h1>
-      <p className="text-sm text-cad-muted mb-6">Central hub for all CAD management</p>
-      <div className="flex gap-6">
-        <aside className="w-56 flex-shrink-0 sticky top-6 self-start max-h-[calc(100vh-8rem)] overflow-y-auto cad-scroll">
-          <div className="cad-card rounded-2xl py-2">
-            {SECTIONS.map(section => (
-              <div key={section.title} className="mb-2">
-                <p className="px-4 py-1.5 text-[10px] font-bold text-cad-dim uppercase tracking-wider">{section.title}</p>
-                {section.items.map(item => (
-                  <button key={item.id} onClick={() => setActive(item.id)}
-                    className={`w-full flex items-center gap-2.5 px-4 py-2 text-sm transition-colors border-l-2 ${active === item.id ? "bg-cad-accent/10 text-cad-accent border-cad-accent" : "text-cad-muted hover:bg-cad-surface-2/50 hover:text-cad-text border-transparent"}`}>
-                    <item.icon className="w-4 h-4 flex-shrink-0" /> {item.label}
-                  </button>
-                ))}
-              </div>
-            ))}
-          </div>
-        </aside>
-        <main className="flex-1 min-w-0">
-          {renderPanel()}
-        </main>
-      </div>
+    <div className="flex h-screen overflow-hidden cad-gradient-bg cad-font">
+      <aside className="w-60 flex-shrink-0 h-full cad-glass border-r border-cad-border/50 flex flex-col">
+        <div className="p-4 border-b border-cad-border/50">
+          <Link to="/cad" className="flex items-center gap-2 text-sm text-cad-muted hover:text-cad-text transition-colors mb-3">
+            <ArrowLeft className="w-4 h-4" /> Back to CAD
+          </Link>
+          <h1 className="font-bold text-cad-text text-lg">CAD Admin</h1>
+          <p className="text-xs text-cad-dim">Management Panel</p>
+        </div>
+        <nav className="flex-1 overflow-y-auto cad-scroll py-2">
+          {SECTIONS.map(section => (
+            <div key={section.title} className="mb-2">
+              <p className="px-4 py-1.5 text-[10px] font-bold text-cad-dim uppercase tracking-wider">{section.title}</p>
+              {section.items.map(item => (
+                <button key={item.id} onClick={() => setActive(item.id)}
+                  className={`w-full flex items-center gap-2.5 px-4 py-2 text-sm transition-colors border-l-2 ${active === item.id ? "bg-cad-accent/10 text-cad-accent border-cad-accent" : "text-cad-muted hover:bg-cad-surface-2/50 hover:text-cad-text border-transparent"}`}>
+                  <item.icon className="w-4 h-4 flex-shrink-0" /> {item.label}
+                </button>
+              ))}
+            </div>
+          ))}
+        </nav>
+      </aside>
+      <main className="flex-1 overflow-y-auto cad-scroll p-4 lg:p-8">
+        {renderPanel()}
+      </main>
     </div>
   );
 }

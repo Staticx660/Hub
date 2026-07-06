@@ -77,7 +77,7 @@ const AuthenticatedApp = () => {
         {/* Landing - no sidebar */}
         <Route path="/" element={<Landing />} />
 
-        {/* Roster section + Admin pages */}
+        {/* Roster section */}
         <Route element={<AppLayout />}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/loa" element={<LOACalendar />} />
@@ -92,10 +92,6 @@ const AuthenticatedApp = () => {
             <Route path="/departments/:id" element={<DepartmentDetail />} />
             <Route path="/roster" element={<Roster />} />
             <Route path="/discord-sync" element={<DiscordSync />} />
-            <Route path="/cad/admin" element={<CADAdmin />} />
-            <Route path="/cad-settings" element={<CADSettings />} />
-            <Route path="/cad-personnel" element={<CADPersonnel />} />
-            <Route path="/system-logs" element={<SystemLogs />} />
           </Route>
         </Route>
 
@@ -109,6 +105,11 @@ const AuthenticatedApp = () => {
           <Route path="/my-records" element={<MyRecords />} />
           <Route path="/keybinds" element={<KeybindConfig />} />
           <Route path="/department-archive" element={<DepartmentArchive />} />
+          <Route element={<AdminRoute />}>
+            <Route path="/cad-settings" element={<CADSettings />} />
+            <Route path="/cad-personnel" element={<CADPersonnel />} />
+            <Route path="/system-logs" element={<SystemLogs />} />
+          </Route>
         </Route>
 
         {/* Full-screen CAD apps - no sidebar, fills viewport */}
@@ -117,6 +118,11 @@ const AuthenticatedApp = () => {
         <Route path="/cad/ems/:deptId" element={<EMSBoard />} />
         <Route path="/cad/fire/:deptId" element={<FireBoard />} />
         <Route path="/cad/civilian/:deptId" element={<CADCivilian />} />
+
+        {/* Full-screen admin panel - dedicated sidebar */}
+        <Route element={<AdminRoute />}>
+          <Route path="/cad/admin" element={<CADAdmin />} />
+        </Route>
 
         {/* Settings - accessible to all authenticated users */}
         <Route path="/settings" element={<Settings />} />
