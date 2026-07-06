@@ -37,6 +37,14 @@
     },
     "assigned_unit_id": {
       "type": "string"
+    },
+    "is_supervisor": {
+      "type": "boolean",
+      "default": false
+    },
+    "is_cad_admin": {
+      "type": "boolean",
+      "default": false
     }
   },
   "required": [

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { getBranding } from "@/hooks/useCommunityBranding";
 import { useCadTheme } from "@/hooks/useCadTheme";
+import { useUserPermissions } from "@/hooks/useUserPermissions";
 import { Shield, Search, FileText, Radio, Layers, Maximize, Home, UserCog, Keyboard, LogOut, ChevronUp, AlertTriangle, Users, Camera, ChevronDown, ClipboardList } from "lucide-react";
 import SessionEditDialog from "@/components/cad/mdt/SessionEditDialog";
 
@@ -27,6 +28,8 @@ export default function Taskbar({ activeView, setActiveView, session, department
   const navigate = useNavigate();
   const { theme } = useCadTheme();
   const retro = theme === "retro";
+  const { isPlatformAdmin, isCADAdmin, isSupervisor } = useUserPermissions();
+  const canManageGroups = isPlatformAdmin || isCADAdmin || isSupervisor;
 
   useEffect(() => {
     const branding = getBranding();
@@ -87,7 +90,7 @@ export default function Taskbar({ activeView, setActiveView, session, department
         { id: "lookups", label: "Lookup", icon: Search, hasDropdown: false },
         { id: "records", label: "Records", icon: FileText, hasDropdown: true },
         { id: "mycall", label: "My Call", icon: Shield, hasDropdown: false },
-        { id: "groups", label: "Groups", icon: Layers, hasDropdown: false },
+        ...(canManageGroups ? [{ id: "groups", label: "Groups", icon: Layers, hasDropdown: false }] : []),
         { id: "dispatch", label: "Self Dispatch", icon: Radio, hasDropdown: false },
       ];
 

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { useAuth } from "@/lib/AuthContext";
+import { useUserPermissions } from "@/hooks/useUserPermissions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,8 +9,8 @@ import { useToast } from "@/components/ui/use-toast";
 import { Layers, Plus, Trash2, Users } from "lucide-react";
 
 export default function GroupsView({ department, session }) {
-  const { user } = useAuth();
-  const isAdmin = user?.role === "admin";
+  const { isPlatformAdmin, isCADAdmin, isSupervisor } = useUserPermissions();
+  const canManageGroups = isPlatformAdmin || isCADAdmin || isSupervisor;
   const [groups, setGroups] = useState([]);
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -61,7 +61,7 @@ export default function GroupsView({ department, session }) {
       <div className="max-w-4xl mx-auto">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-2"><Layers className="w-4 h-4" /> Active {isFireEMS ? "Apparatus" : "Groups"}</h2>
-          {isAdmin && <Button onClick={() => setDialogOpen(true)} size="sm" className="bg-blue-600 hover:bg-blue-700 gap-1.5"><Plus className="w-3.5 h-3.5" /> Create {groupLabel}</Button>}
+          {canManageGroups && <Button onClick={() => setDialogOpen(true)} size="sm" className="bg-blue-600 hover:bg-blue-700 gap-1.5"><Plus className="w-3.5 h-3.5" /> Create {groupLabel}</Button>}
         </div>
 
         {groups.length === 0 ? (
@@ -74,7 +74,7 @@ export default function GroupsView({ department, session }) {
                 <div key={g.id} className="bg-slate-900/60 border border-slate-800 rounded-xl p-4">
                   <div className="flex items-start justify-between mb-3">
                     <div><h3 className="font-semibold text-white">{g.name}</h3><p className="text-xs text-slate-500">{members.length} members</p></div>
-                    <button onClick={() => disbandGroup(g.id)} className="p-1.5 rounded-lg hover:bg-red-500/10 text-slate-500 hover:text-red-400"><Trash2 className="w-3.5 h-3.5" /></button>
+                    {canManageGroups && <button onClick={() => disbandGroup(g.id)} className="p-1.5 rounded-lg hover:bg-red-500/10 text-slate-500 hover:text-red-400"><Trash2 className="w-3.5 h-3.5" /></button>}
                   </div>
                   {g.description && <p className="text-xs text-slate-400 mb-2">{g.description}</p>}
                   <div className="space-y-1">

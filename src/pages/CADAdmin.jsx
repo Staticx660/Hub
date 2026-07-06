@@ -11,37 +11,56 @@ import UserRestrictionsManager from "@/components/cad/customizer/UserRestriction
 import NotificationTonesManager from "@/components/cad/customizer/NotificationTonesManager";
 import PenalCodesManager from "@/components/cad/PenalCodesManager";
 import DepartmentsGroupsManager from "@/components/cad/DepartmentsGroupsManager";
-import { Users, IdCard, Settings, FileText, Building2, MapPin, Gavel, ShieldCheck, Bell, Award, AlertTriangle, MessageCircle, ScrollText, ArrowLeft } from "lucide-react";
+import PermissionsManager from "@/components/cad/PermissionsManager";
+import { useUserPermissions } from "@/hooks/useUserPermissions";
+import { Users, IdCard, Settings, FileText, Building2, MapPin, Gavel, ShieldCheck, Bell, Award, AlertTriangle, MessageCircle, ScrollText, ArrowLeft, KeyRound } from "lucide-react";
 import SystemLogs from "@/pages/SystemLogs";
 
-const SECTIONS = [
+// access: "supervisor" = visible to supervisors+, "admin" = visible to CAD/platform admins only
+const ALL_SECTIONS = [
   { title: "ACCOUNTS", items: [
-    { id: "members", label: "Members", icon: Users },
-    { id: "identifiers", label: "Identifiers", icon: IdCard },
+    { id: "members", label: "Members", icon: Users, access: "supervisor" },
+    { id: "permissions", label: "Role Permissions", icon: KeyRound, access: "admin" },
+    { id: "identifiers", label: "Identifiers", icon: IdCard, access: "admin" },
   ]},
   { title: "CUSTOMIZATION", items: [
-    { id: "community", label: "Community Info", icon: Settings },
-    { id: "records", label: "Custom Records", icon: FileText },
-    { id: "departments", label: "Departments", icon: Building2 },
-    { id: "addresses", label: "Addresses", icon: MapPin },
-    { id: "penal", label: "Penal Codes", icon: Gavel },
-    { id: "restrictions", label: "User Restrictions", icon: ShieldCheck },
-    { id: "tones", label: "Notification Tones", icon: Bell },
-    { id: "licenses", label: "Licenses", icon: Award },
-    { id: "incidents", label: "Incident Types", icon: AlertTriangle },
+    { id: "community", label: "Community Info", icon: Settings, access: "admin" },
+    { id: "records", label: "Custom Records", icon: FileText, access: "admin" },
+    { id: "departments", label: "Departments", icon: Building2, access: "supervisor" },
+    { id: "addresses", label: "Addresses", icon: MapPin, access: "supervisor" },
+    { id: "penal", label: "Penal Codes", icon: Gavel, access: "admin" },
+    { id: "restrictions", label: "User Restrictions", icon: ShieldCheck, access: "admin" },
+    { id: "tones", label: "Notification Tones", icon: Bell, access: "admin" },
+    { id: "licenses", label: "Licenses", icon: Award, access: "admin" },
+    { id: "incidents", label: "Incident Types", icon: AlertTriangle, access: "supervisor" },
   ]},
   { title: "ADVANCED", items: [
-    { id: "discord", label: "Discord", icon: MessageCircle },
-    { id: "logs", label: "Logs", icon: ScrollText },
+    { id: "discord", label: "Discord", icon: MessageCircle, access: "admin" },
+    { id: "logs", label: "Logs", icon: ScrollText, access: "admin" },
   ]},
 ];
 
 export default function CADAdmin() {
-  const [active, setActive] = useState("community");
+  const { isPlatformAdmin, isCADAdmin, isSupervisor } = useUserPermissions();
+  const canSeeAdminSections = isPlatformAdmin || isCADAdmin;
+  const [active, setActive] = useState(null);
+
+  const visibleSections = ALL_SECTIONS.map((section) => ({
+    ...section,
+    items: section.items.filter((item) => {
+      if (item.access === "admin") return canSeeAdminSections;
+      return canSeeAdminSections || isSupervisor;
+    }),
+  })).filter((s) => s.items.length > 0);
+
+  // Auto-select first visible item if nothing selected yet or current selection is now hidden
+  const allVisibleIds = visibleSections.flatMap((s) => s.items.map((i) => i.id));
+  const effectiveActive = active && allVisibleIds.includes(active) ? active : (allVisibleIds[0] || null);
 
   const renderPanel = () => {
-    switch (active) {
+    switch (effectiveActive) {
       case "members": return <PersonnelManager />;
+      case "permissions": return <PermissionsManager />;
       case "identifiers": return <UnitsManager />;
       case "community": return <CommunityInfoManager />;
       case "records": return <ReportBuilder />;
@@ -66,15 +85,17 @@ export default function CADAdmin() {
             <ArrowLeft className="w-4 h-4" /> Back to CAD
           </Link>
           <h1 className="font-bold text-cad-text text-lg">CAD Admin</h1>
-          <p className="text-xs text-cad-dim">Management Panel</p>
+          <p className="text-xs text-cad-dim">
+            {canSeeAdminSections ? "Admin Panel" : "Supervisor Panel"}
+          </p>
         </div>
         <nav className="flex-1 overflow-y-auto cad-scroll py-2">
-          {SECTIONS.map(section => (
+          {visibleSections.map(section => (
             <div key={section.title} className="mb-2">
               <p className="px-4 py-1.5 text-[10px] font-bold text-cad-dim uppercase tracking-wider">{section.title}</p>
               {section.items.map(item => (
                 <button key={item.id} onClick={() => setActive(item.id)}
-                  className={`w-full flex items-center gap-2.5 px-4 py-2 text-sm transition-colors border-l-2 ${active === item.id ? "bg-cad-accent/10 text-cad-accent border-cad-accent" : "text-cad-muted hover:bg-cad-surface-2/50 hover:text-cad-text border-transparent"}`}>
+                  className={`w-full flex items-center gap-2.5 px-4 py-2 text-sm transition-colors border-l-2 ${effectiveActive === item.id ? "bg-cad-accent/10 text-cad-accent border-cad-accent" : "text-cad-muted hover:bg-cad-surface-2/50 hover:text-cad-text border-transparent"}`}>
                   <item.icon className="w-4 h-4 flex-shrink-0" /> {item.label}
                 </button>
               ))}

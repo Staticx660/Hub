@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/lib/AuthContext";
+import { useUserPermissions } from "@/hooks/useUserPermissions";
 import {
   Radio, ChevronLeft, ChevronRight, LogOut, Menu, X, Home, Building2, Shield,
   Settings, Keyboard
@@ -11,21 +12,27 @@ import { useCommunityBranding } from "@/hooks/useCommunityBranding";
 const navItems = [
   { label: "Departments", path: "/cad", icon: Building2 },
   { label: "Keybinds", path: "/keybinds", icon: Keyboard },
-  { label: "CAD Settings", path: "/cad-settings", icon: Settings, adminOnly: true },
-  { label: "Admin Panel", path: "/cad/admin", icon: Shield, adminOnly: true },
+  { label: "CAD Settings", path: "/cad-settings", icon: Settings, platformAdminOnly: true },
+  { label: "Admin Panel", path: "/cad/admin", icon: Shield, supervisorOrAbove: true },
 ];
 
 export default function CADSidebar() {
   const location = useLocation();
   const { user } = useAuth();
-  const isAdmin = user?.role === "admin";
+  const { isPlatformAdmin, isCADAdmin, isSupervisor } = useUserPermissions();
+  const canSeeAdmin = isPlatformAdmin || isCADAdmin;
+  const canSeeSupervisor = canSeeAdmin || isSupervisor;
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const { branding } = useCommunityBranding();
   const logoUrl = branding?.logo_url || "";
   const communityName = branding?.community_name || "";
 
-  const visibleNavItems = navItems.filter(item => !item.adminOnly || isAdmin);
+  const visibleNavItems = navItems.filter(item => {
+    if (item.supervisorOrAbove) return canSeeSupervisor;
+    if (item.platformAdminOnly) return isPlatformAdmin;
+    return true;
+  });
 
   const handleLogout = () => {
     base44.auth.logout("/login");

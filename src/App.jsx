@@ -8,6 +8,7 @@ import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import ScrollToTop from './components/ScrollToTop';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import AdminRoute from '@/components/AdminRoute';
+import CADAdminRoute from '@/components/CADAdminRoute';
 import Login from '@/pages/Login';
 import Register from '@/pages/Register';
 import ForgotPassword from '@/pages/ForgotPassword';
@@ -120,7 +121,7 @@ const AuthenticatedApp = () => {
         <Route path="/cad/civilian/:deptId" element={<CADCivilian />} />
 
         {/* Full-screen admin panel - dedicated sidebar */}
-        <Route element={<AdminRoute />}>
+        <Route element={<CADAdminRoute />}>
           <Route path="/cad/admin" element={<CADAdmin />} />
         </Route>
 
