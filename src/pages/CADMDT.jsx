@@ -182,29 +182,29 @@ export default function CADMDT() {
     panic: () => session && handlePanic(),
   });
 
-  if (loading) return <div className="flex justify-center items-center h-screen bg-slate-950"><div className="w-8 h-8 border-4 border-slate-700 border-t-blue-500 rounded-full animate-spin" /></div>;
+  if (loading) return <div className="flex justify-center items-center h-screen cad-gradient-bg cad-font"><div className="w-8 h-8 border-4 border-cad-border border-t-blue-500 rounded-full animate-spin" /></div>;
   if (accessDenied) return (
-    <div className="flex flex-col items-center justify-center h-screen bg-slate-950 gap-4">
-      <Lock className="w-16 h-16 text-slate-600" />
-      <h1 className="text-2xl font-bold text-white">Access Denied</h1>
-      <p className="text-slate-400">You don't have the Discord role required for this department.</p>
-      <Button onClick={() => window.history.back()} variant="outline" className="border-slate-700 text-slate-300">Go Back</Button>
+    <div className="flex flex-col items-center justify-center h-screen cad-gradient-bg cad-font gap-4">
+      <Lock className="w-16 h-16 text-cad-dim" />
+      <h1 className="text-2xl font-bold text-cad-text">Access Denied</h1>
+      <p className="text-cad-muted">You don't have the Discord role required for this department.</p>
+      <Button onClick={() => window.history.back()} variant="outline" className="border-cad-border text-cad-muted hover:bg-cad-surface-2/50">Go Back</Button>
     </div>
   );
-  if (!department) return <div className="flex justify-center items-center h-screen bg-slate-950 text-slate-400">Department not found</div>;
+  if (!department) return <div className="flex justify-center items-center h-screen cad-gradient-bg cad-font text-cad-muted">Department not found</div>;
 
   if (!session) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen bg-slate-950 gap-6">
-        <img src={OCRP_LOGO} alt="OCRP" className="w-24 h-24 rounded-2xl shadow-xl" />
+      <div className="flex flex-col items-center justify-center h-screen cad-gradient-bg cad-font gap-6">
+        <img src={OCRP_LOGO} alt="OCRP" className="w-24 h-24 rounded-2xl shadow-xl cad-accent-glow" />
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-white mb-1">{department.name}</h1>
-          <p className="text-slate-400">{department.category} · MDT System</p>
-          <p className="text-slate-500 text-sm mt-2">You are not currently on duty</p>
+          <h1 className="text-2xl font-bold text-cad-text mb-1">{department.name}</h1>
+          <p className="text-cad-muted">{department.category} · MDT System</p>
+          <p className="text-cad-dim text-sm mt-2">You are not currently on duty</p>
         </div>
         <div className="flex gap-3">
-          <Button onClick={() => navigate("/cad")} variant="outline" className="border-slate-700 text-slate-300 hover:bg-slate-800 gap-2 px-6"><ChevronLeft className="w-4 h-4" /> Back to Departments</Button>
-          <Button onClick={() => setClockInOpen(true)} className="bg-blue-600 hover:bg-blue-700 gap-2 px-8"><Clock className="w-4 h-4" /> Clock In & Start MDT</Button>
+          <Button onClick={() => navigate("/cad")} variant="outline" className="border-cad-border text-cad-muted hover:bg-cad-surface-2/50 gap-2 px-6"><ChevronLeft className="w-4 h-4" /> Back to Departments</Button>
+          <Button onClick={() => setClockInOpen(true)} className="bg-blue-600 hover:bg-blue-700 gap-2 px-8 cad-accent-glow"><Clock className="w-4 h-4" /> Clock In & Start MDT</Button>
         </div>
         <ClockInDialog open={clockInOpen} onOpenChange={setClockInOpen} department={department} user={user} onClockIn={handleClockIn} />
       </div>
@@ -212,7 +212,7 @@ export default function CADMDT() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-slate-950 overflow-hidden">
+    <div className="flex flex-col h-screen cad-gradient-bg cad-font overflow-hidden">
       {session.panic_active && <div className="bg-red-500/20 border-y border-red-500 text-red-400 text-center py-1.5 text-sm font-bold animate-pulse">🚨 PANIC ACTIVE — {session.callsign || session.user_name} — ALL UNITS RESPOND</div>}
       <div className="flex-1 overflow-hidden">
         {activeView === "dispatch" && <DispatchView department={department} session={session} setSession={setSession} setActiveView={setActiveView} setSelectedCallId={setSelectedCallId} />}
