@@ -7,6 +7,20 @@ Deno.serve(async (req) => {
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
     if (user.role !== 'admin') return Response.json({ error: 'Forbidden — Admin only' }, { status: 403 });
 
+    // Secondary check: re-verify the caller's role from the current database record
+    // (not just the token claims) before allowing mass deletion via service role.
+    const freshUser = await base44.asServiceRole.entities.User.get(user.id);
+    if (!freshUser || freshUser.role !== 'admin') {
+      return Response.json({ error: 'Forbidden — Admin only' }, { status: 403 });
+    }
+
+    // Require explicit confirmation phrase in the request body
+    let body = {};
+    try { body = await req.json(); } catch {}
+    if (body.confirm !== 'WIPE') {
+      return Response.json({ error: 'Confirmation required — pass { confirm: "WIPE" }' }, { status: 400 });
+    }
+
     const entitiesToWipe = [
       'ActiveCall',
       'BOLO',

@@ -79,9 +79,9 @@ Deno.serve(async (req) => {
       if (hasDiscordSupervisorRole && !p.is_supervisor) {
         updates.is_supervisor = true;
       }
-      if (isPlatformAdmin && !p.is_cad_admin) {
-        updates.is_cad_admin = true;
-      }
+      // NOTE: is_cad_admin is intentionally never written here. Platform admins get
+      // effective CAD admin access via the computed response value below, but the
+      // persistent flag can only be granted by an admin through the admin panel.
 
       // Sync departments from Discord roles (set to match when user has matched depts)
       if (matchedDepts.length > 0) {

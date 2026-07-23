@@ -26,7 +26,7 @@ export default function DangerZoneManager() {
     if (confirmText !== "WIPE") return;
     setWiping(true);
     try {
-      const res = await base44.functions.invoke("wipeSystemData", {});
+      const res = await base44.functions.invoke("wipeSystemData", { confirm: "WIPE" });
       if (res.data?.error) {
         toast({ title: "Wipe failed", description: res.data.error, variant: "destructive" });
       } else {

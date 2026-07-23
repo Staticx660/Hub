@@ -42,8 +42,9 @@ Deno.serve(async (req) => {
       if (batch.length < 1000) hasMore = false;
     }
 
-    // Get all registered users to cross-reference
-    const registeredUsers = await base44.asServiceRole.entities.User.filter({});
+    // Get all registered users to cross-reference (user-scoped: built-in security already
+    // restricts listing users to admins, and the caller has been verified as admin above)
+    const registeredUsers = await base44.entities.User.filter({});
     const usersByDiscordId = {};
     for (const u of registeredUsers) {
       if (u.discord_id) usersByDiscordId[u.discord_id] = u;

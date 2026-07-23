@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
 import ReactQuill from "react-quill";
+import { sanitizeHtml } from "@/lib/sanitizeHtml";
 
 const docCategories = ["SOP", "Policy", "Training", "Guide", "Form", "Other"];
 
@@ -152,7 +153,7 @@ export default function Documents() {
             <p className="text-xs text-slate-500">{viewDoc?.category} · {getDeptName(viewDoc?.department_id)}</p>
           </DialogHeader>
           {viewDoc?.content && (
-            <div className="prose prose-sm prose-invert max-w-none mt-4" dangerouslySetInnerHTML={{ __html: viewDoc.content }} />
+            <div className="prose prose-sm prose-invert max-w-none mt-4" dangerouslySetInnerHTML={{ __html: sanitizeHtml(viewDoc.content) }} />
           )}
           {viewDoc?.file_url && (
             <a href={viewDoc.file_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300 text-sm mt-4">
