@@ -3,9 +3,9 @@ import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { useToast } from "@/components/ui/use-toast";
 import { Building2 } from "lucide-react";
-import MenuStrip from "@/components/mdt/shell/MenuStrip";
-import StatusBar from "@/components/mdt/shell/StatusBar";
 import { Btn } from "@/components/mdt/ui/primitives";
+import StationCommandBar from "@/components/dispatch/station/StationCommandBar";
+import StationStatusStrip from "@/components/dispatch/station/StationStatusStrip";
 import StationHeader from "@/components/dispatch/station/StationHeader";
 import CallQueuePane from "@/components/dispatch/station/CallQueuePane";
 import IncidentPane from "@/components/dispatch/station/IncidentPane";
@@ -141,26 +141,16 @@ export default function CAD() {
   const selectedCall = activeCalls.find((c) => c.id === selectedId) || null;
   const availableUnits = units.filter((u) => u.status === "Available" || u.status === "Off Duty");
 
-  const menus = [
-    { label: "Dispatch", items: [
-      { label: "New Call", shortcut: "Ctrl+N", onSelect: openCreateCall },
-      { label: "Refresh Board", shortcut: "F5", onSelect: load },
-      { separator: true },
-      { label: "Close Selected Call", disabled: !selectedCall, danger: true, onSelect: () => selectedCall && closeCall(selectedCall.id) },
-    ]},
-    { label: "View", items: [
-      { label: logCollapsed ? "Show Activity Log" : "Hide Activity Log", onSelect: () => setLogCollapsed(v => !v) },
-      { label: "Clear Selection", disabled: !selectedCall, onSelect: () => setSelectedId(null) },
-    ]},
-    { label: "Go", items: [
-      { label: "CAD Home", onSelect: () => { window.location.href = "/cad"; } },
-      { label: "Admin Panel", onSelect: () => { window.location.href = "/cad/admin"; } },
-    ]},
-  ];
-
   return (
     <div className="mdt fixed inset-0 flex flex-col bg-mdt-bg text-mdt-text">
-      <MenuStrip menus={menus} onSearch={openCreateCall} />
+      <StationCommandBar
+        onNewCall={openCreateCall}
+        onRefresh={load}
+        onCloseCall={() => selectedCall && closeCall(selectedCall.id)}
+        canClose={!!selectedCall}
+        logCollapsed={logCollapsed}
+        onToggleLog={() => setLogCollapsed(v => !v)}
+      />
       <StationHeader
         pending={activeCalls.filter(c => c.status === "Pending").length}
         active={activeCalls.filter(c => c.status === "Active").length}
@@ -208,11 +198,14 @@ export default function CAD() {
         </div>
       )}
 
-      <StatusBar collapsed={logCollapsed} onToggle={() => setLogCollapsed(v => !v)}>
-        <span className="text-[11.5px] text-mdt-dim">{activeCalls.length} calls in queue</span>
-        <span className="text-[11.5px] text-mdt-dim">·</span>
-        <span className="text-[11.5px] text-mdt-dim">{selectedCall ? `Viewing ${selectedCall.run_number || selectedCall.id.slice(-6).toUpperCase()}` : "No incident selected"}</span>
-      </StatusBar>
+      <StationStatusStrip
+        items={[
+          `${activeCalls.length} calls in queue`,
+          `${activeCalls.filter(c => c.priority?.startsWith("1")).length} priority 1`,
+          `${units.filter(u => u.status === "Available").length}/${units.length} units available`,
+          selectedCall ? `Incident ${selectedCall.run_number || selectedCall.id.slice(-6).toUpperCase()}` : "No incident selected",
+        ]}
+      />
 
       <NewCallModal
         open={dialogOpen}
