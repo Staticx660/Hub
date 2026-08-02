@@ -1,13 +1,27 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
-import { Plus, Pencil, Trash2, FileText, Upload, Search, Gavel } from "lucide-react";
+import { Plus, Pencil, Trash2, Upload, Search, Gavel, Loader2 } from "lucide-react";
+import { MInput } from "@/components/mdt/ui/formFields";
+import { Btn, Panel, EmptyState } from "@/components/mdt/ui/primitives";
+import PenalCodeDialog from "@/components/cad/penal/PenalCodeDialog";
+import TypeListManager from "@/components/cad/penal/TypeListManager";
+
+const emptyForm = { code: "", title: "", category: "", charge_type: "", bond_type: "", description: "", fine_amount: 0, jail_time_months: 0, is_active: true };
+
+function parseCsvLine(line) {
+  const result = [];
+  let current = "";
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    if (char === '"') { inQuotes = !inQuotes; }
+    else if (char === ',' && !inQuotes) { result.push(current); current = ""; }
+    else { current += char; }
+  }
+  result.push(current);
+  return result;
+}
 
 export default function PenalCodesManager() {
   const [tab, setTab] = useState("penal");
@@ -18,7 +32,7 @@ export default function PenalCodesManager() {
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState(null);
-  const [form, setForm] = useState({ code: "", title: "", category: "", charge_type: "", bond_type: "", description: "", fine_amount: 0, jail_time_months: 0, is_active: true });
+  const [form, setForm] = useState(emptyForm);
   const [importing, setImporting] = useState(false);
   const { toast } = useToast();
 
@@ -36,8 +50,8 @@ export default function PenalCodesManager() {
 
   useEffect(() => { load(); }, []);
 
-  const openCreate = () => { setEditing(null); setForm({ code: "", title: "", category: "", charge_type: "", bond_type: "", description: "", fine_amount: 0, jail_time_months: 0, is_active: true }); setDialogOpen(true); };
-  const openEdit = (item) => { setEditing(item); setForm({ code: item.code || "", title: item.title || "", category: item.category || "", charge_type: item.charge_type || "", bond_type: item.bond_type || "", description: item.description || "", fine_amount: item.fine_amount || 0, jail_time_months: item.jail_time_months || 0, is_active: item.is_active !== false }); setDialogOpen(true); };
+  const openCreate = () => { setEditing(null); setForm(emptyForm); setDialogOpen(true); };
+  const openEdit = (item) => { setEditing(item); setForm({ ...emptyForm, ...item, is_active: item.is_active !== false }); setDialogOpen(true); };
 
   const handleSave = async () => {
     if (!form.code?.trim() || !form.title?.trim()) { toast({ title: "Code and Title are required", variant: "destructive" }); return; }
@@ -95,251 +109,99 @@ export default function PenalCodesManager() {
     return !q || pc.code?.toLowerCase().includes(q) || pc.title?.toLowerCase().includes(q) || pc.category?.toLowerCase().includes(q);
   });
 
-  if (loading) return <div className="flex justify-center py-8"><div className="w-6 h-6 border-2 border-slate-700 border-t-cyan-500 rounded-full animate-spin" /></div>;
+  if (loading) return <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-mdt-accent" /></div>;
+
+  const tabs = [
+    { id: "penal", label: `Penal Codes (${penalCodes.length})` },
+    { id: "charge", label: `Charge Types (${chargeTypes.length})` },
+    { id: "bond", label: `Bond Types (${bondTypes.length})` },
+  ];
 
   return (
-    <div>
-      <h2 className="text-lg font-semibold text-white mb-1">Penal Codes & Charges</h2>
-      <p className="text-sm text-slate-400 mb-4">Manage penal codes, charge types, and bond types</p>
-
-      <div className="flex gap-2 mb-4">
-        <button onClick={() => setTab("penal")} className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${tab === "penal" ? "bg-cyan-600 text-white" : "bg-slate-800 text-slate-400 hover:text-white"}`}>Penal Codes ({penalCodes.length})</button>
-        <button onClick={() => setTab("charge")} className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${tab === "charge" ? "bg-cyan-600 text-white" : "bg-slate-800 text-slate-400 hover:text-white"}`}>Charge Types ({chargeTypes.length})</button>
-        <button onClick={() => setTab("bond")} className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${tab === "bond" ? "bg-cyan-600 text-white" : "bg-slate-800 text-slate-400 hover:text-white"}`}>Bond Types ({bondTypes.length})</button>
+    <div className="max-w-4xl space-y-2.5">
+      <div className="flex items-center gap-1">
+        {tabs.map(t => (
+          <button
+            key={t.id}
+            onClick={() => setTab(t.id)}
+            className={`h-7 px-2.5 border text-[11.5px] font-medium ${tab === t.id ? "bg-mdt-accent text-white border-mdt-accent" : "bg-mdt-surface-3 text-mdt-muted border-mdt-line-2 hover:text-mdt-text"}`}
+          >
+            {t.label}
+          </button>
+        ))}
       </div>
 
       {tab === "penal" && (
-        <div>
-          <div className="flex justify-between items-center mb-4">
-            <div className="relative flex-1 max-w-sm">
-              <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
-              <Input value={search} onChange={e => setSearch(e.target.value)} className="bg-slate-800 border-slate-700 text-white pl-9" placeholder="Search penal codes..." />
+        <div className="space-y-2.5">
+          <div className="flex items-center gap-1.5">
+            <div className="relative flex-1 max-w-xs">
+              <Search className="w-3 h-3 text-mdt-dim absolute left-1.5 top-1/2 -translate-y-1/2" />
+              <MInput value={search} onChange={e => setSearch(e.target.value)} className="pl-6" placeholder="Search penal codes…" />
             </div>
-            <div className="flex gap-2">
-              <label>
+            <div className="ml-auto flex items-center gap-1.5">
+              <label className="cursor-pointer">
                 <input type="file" accept=".csv" className="hidden" onChange={handleImport} disabled={importing} />
-                <span className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm cursor-pointer disabled:opacity-50">
-                  <Upload className="w-4 h-4" /> {importing ? "Importing..." : "Import CSV"}
+                <span className="inline-flex items-center gap-1.5 h-7 px-2 border border-mdt-line-2 bg-mdt-surface-3 text-[11.5px] text-mdt-text hover:bg-mdt-surface-4">
+                  {importing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />} Import CSV
                 </span>
               </label>
-              <Button onClick={openCreate} className="bg-cyan-600 hover:bg-cyan-700"><Plus className="w-4 h-4 mr-2" /> Add Code</Button>
+              <Btn variant="primary" icon={Plus} onClick={openCreate}>Add Code</Btn>
             </div>
           </div>
 
-          {filtered.length === 0 ? (
-            <div className="text-center py-12 text-slate-500">
-              <Gavel className="w-12 h-12 mx-auto mb-3 opacity-50" />
-              <p>No penal codes yet.</p>
-              <p className="text-xs mt-1">Add manually or import a CSV file.</p>
-            </div>
-          ) : (
-            <div className="bg-slate-900/60 border border-slate-800 rounded-xl overflow-hidden">
-              <div className="max-h-[60vh] overflow-y-auto">
-                <table className="w-full text-sm">
-                  <thead className="bg-slate-800/80 sticky top-0">
-                    <tr className="text-left text-slate-400">
-                      <th className="px-4 py-2 font-medium">Code</th>
-                      <th className="px-4 py-2 font-medium">Title</th>
-                      <th className="px-4 py-2 font-medium">Category</th>
-                      <th className="px-4 py-2 font-medium text-right">Fine</th>
-                      <th className="px-4 py-2 font-medium text-right">Jail (mo)</th>
-                      <th className="px-4 py-2"></th>
+          <Panel title={`Penal Codes — ${filtered.length}`} className="max-h-[62vh]">
+            {filtered.length === 0 ? (
+              <EmptyState icon={Gavel} title="No penal codes yet" hint="Add manually or import a CSV file" />
+            ) : (
+              <table className="w-full text-[12px]">
+                <thead className="sticky top-0 bg-mdt-surface-2">
+                  <tr className="text-left text-[9.5px] font-semibold uppercase tracking-[0.09em] text-mdt-dim">
+                    <th className="px-2.5 h-7">Code</th>
+                    <th className="px-2.5 h-7">Title</th>
+                    <th className="px-2.5 h-7">Category</th>
+                    <th className="px-2.5 h-7 text-right">Fine</th>
+                    <th className="px-2.5 h-7 text-right">Jail (mo)</th>
+                    <th className="px-2.5 h-7"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map(pc => (
+                    <tr key={pc.id} className="border-t border-mdt-line hover:bg-mdt-surface-3">
+                      <td className="px-2.5 h-7 font-mono text-mdt-accent">{pc.code}</td>
+                      <td className="px-2.5 h-7 text-mdt-text">{pc.title}</td>
+                      <td className="px-2.5 h-7 text-mdt-muted">{pc.category || "—"}</td>
+                      <td className="px-2.5 h-7 text-right font-mono text-mdt-muted">${pc.fine_amount || 0}</td>
+                      <td className="px-2.5 h-7 text-right font-mono text-mdt-muted">{pc.jail_time_months || 0}</td>
+                      <td className="px-2.5 h-7 text-right whitespace-nowrap">
+                        <button onClick={() => openEdit(pc)} className="p-1 text-mdt-dim hover:text-mdt-text"><Pencil className="w-3.5 h-3.5" /></button>
+                        <button onClick={() => handleDelete(pc.id)} className="p-1 text-mdt-dim hover:text-red-400"><Trash2 className="w-3.5 h-3.5" /></button>
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {filtered.map(pc => (
-                      <tr key={pc.id} className="border-t border-slate-800 hover:bg-slate-800/30">
-                        <td className="px-4 py-2 text-cyan-400 font-mono">{pc.code}</td>
-                        <td className="px-4 py-2 text-white">{pc.title}</td>
-                        <td className="px-4 py-2 text-slate-400">{pc.category || "—"}</td>
-                        <td className="px-4 py-2 text-slate-400 text-right">${pc.fine_amount || 0}</td>
-                        <td className="px-4 py-2 text-slate-400 text-right">{pc.jail_time_months || 0}</td>
-                        <td className="px-4 py-2 text-right">
-                          <button onClick={() => openEdit(pc)} className="p-1 rounded hover:bg-slate-700 text-slate-400 hover:text-white mr-1"><Pencil className="w-3.5 h-3.5" /></button>
-                          <button onClick={() => handleDelete(pc.id)} className="p-1 rounded hover:bg-red-500/10 text-slate-400 hover:text-red-400"><Trash2 className="w-3.5 h-3.5" /></button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </Panel>
         </div>
       )}
 
-      {tab === "charge" && <ChargeTypeManager chargeTypes={chargeTypes} onLoad={load} />}
-      {tab === "bond" && <BondTypeManager bondTypes={bondTypes} onLoad={load} />}
+      {tab === "charge" && (
+        <TypeListManager entityName="ChargeType" items={chargeTypes} onLoad={load} title="Charge Types" hint="Misdemeanor, Felony, etc." defaultColor="#ef4444" />
+      )}
+      {tab === "bond" && (
+        <TypeListManager entityName="BondType" items={bondTypes} onLoad={load} title="Bond Types" hint="Cash Bail, Surety, etc." withAmount />
+      )}
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="bg-slate-900 border-slate-700 max-w-lg">
-          <DialogHeader><DialogTitle className="text-white">{editing ? "Edit Penal Code" : "New Penal Code"}</DialogTitle></DialogHeader>
-          <div className="space-y-3">
-            <div className="grid grid-cols-2 gap-3">
-              <div><Label className="text-slate-300">Code *</Label><Input value={form.code} onChange={e => setForm({ ...form, code: e.target.value })} className="bg-slate-800 border-slate-700 text-white font-mono" placeholder="e.g. A0.0.0.1" /></div>
-              <div><Label className="text-slate-300">Category</Label><Input value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} className="bg-slate-800 border-slate-700 text-white" placeholder="e.g. Felony" /></div>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div><Label className="text-slate-300">Charge Type</Label>
-                <Select value={form.charge_type || "_none"} onValueChange={v => setForm({ ...form, charge_type: v === "_none" ? "" : v })}>
-                  <SelectTrigger className="bg-slate-800 border-slate-700 text-white"><SelectValue placeholder="None" /></SelectTrigger>
-                  <SelectContent className="bg-slate-800 border-slate-700">
-                    <SelectItem value="_none" className="text-white">— None —</SelectItem>
-                    {chargeTypes.map(ct => <SelectItem key={ct.id} value={ct.name} className="text-white">{ct.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div><Label className="text-slate-300">Bond Type</Label>
-                <Select value={form.bond_type || "_none"} onValueChange={v => setForm({ ...form, bond_type: v === "_none" ? "" : v })}>
-                  <SelectTrigger className="bg-slate-800 border-slate-700 text-white"><SelectValue placeholder="None" /></SelectTrigger>
-                  <SelectContent className="bg-slate-800 border-slate-700">
-                    <SelectItem value="_none" className="text-white">— None —</SelectItem>
-                    {bondTypes.map(bt => <SelectItem key={bt.id} value={bt.name} className="text-white">{bt.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div><Label className="text-slate-300">Title *</Label><Input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} className="bg-slate-800 border-slate-700 text-white" placeholder="e.g. Murder" /></div>
-            <div><Label className="text-slate-300">Description</Label><Textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} className="bg-slate-800 border-slate-700 text-white" rows={3} /></div>
-            <div className="grid grid-cols-2 gap-3">
-              <div><Label className="text-slate-300">Fine Amount ($)</Label><Input type="number" value={form.fine_amount} onChange={e => setForm({ ...form, fine_amount: Number(e.target.value) })} className="bg-slate-800 border-slate-700 text-white" /></div>
-              <div><Label className="text-slate-300">Jail Time (months)</Label><Input type="number" value={form.jail_time_months} onChange={e => setForm({ ...form, jail_time_months: Number(e.target.value) })} className="bg-slate-800 border-slate-700 text-white" /></div>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)} className="border-slate-700 text-slate-300">Cancel</Button>
-            <Button onClick={handleSave} className="bg-cyan-600 hover:bg-cyan-700">{editing ? "Update" : "Create"}</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <PenalCodeDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        editing={editing}
+        form={form}
+        setForm={setForm}
+        onSave={handleSave}
+        chargeTypes={chargeTypes}
+        bondTypes={bondTypes}
+      />
     </div>
-  );
-}
-
-function parseCsvLine(line) {
-  const result = [];
-  let current = "";
-  let inQuotes = false;
-  for (let i = 0; i < line.length; i++) {
-    const char = line[i];
-    if (char === '"') { inQuotes = !inQuotes; }
-    else if (char === ',' && !inQuotes) { result.push(current); current = ""; }
-    else { current += char; }
-  }
-  result.push(current);
-  return result;
-}
-
-function ChargeTypeManager({ chargeTypes, onLoad }) {
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editing, setEditing] = useState(null);
-  const [form, setForm] = useState({ name: "", description: "", color: "#ef4444", is_active: true });
-  const { toast } = useToast();
-
-  const openCreate = () => { setEditing(null); setForm({ name: "", description: "", color: "#ef4444", is_active: true }); setDialogOpen(true); };
-  const openEdit = (item) => { setEditing(item); setForm({ name: item.name || "", description: item.description || "", color: item.color || "#ef4444", is_active: item.is_active !== false }); setDialogOpen(true); };
-  const handleSave = async () => {
-    if (!form.name?.trim()) { toast({ title: "Name required", variant: "destructive" }); return; }
-    try { if (editing) { await base44.entities.ChargeType.update(editing.id, form); } else { await base44.entities.ChargeType.create(form); } toast({ title: "Saved" }); setDialogOpen(false); onLoad(); }
-    catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
-  };
-  const handleDelete = async (id) => { if (!confirm("Delete?")) return; await base44.entities.ChargeType.delete(id); toast({ title: "Deleted" }); onLoad(); };
-
-  return (
-    <div>
-      <div className="flex justify-between items-center mb-4">
-        <p className="text-sm text-slate-400">Misdemeanor, Felony, etc.</p>
-        <Button onClick={openCreate} className="bg-cyan-600 hover:bg-cyan-700"><Plus className="w-4 h-4 mr-2" /> Add</Button>
-      </div>
-      <div className="space-y-2">
-        {chargeTypes.map(ct => (
-          <div key={ct.id} className="bg-slate-900/60 border border-slate-800 rounded-xl p-4 flex items-center justify-between">
-            <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: ct.color }} /><span className="text-white font-medium">{ct.name}</span></div>
-            <div className="flex gap-1">
-              <button onClick={() => openEdit(ct)} className="p-1.5 rounded-lg hover:bg-slate-700 text-slate-400 hover:text-white"><Pencil className="w-3.5 h-3.5" /></button>
-              <button onClick={() => handleDelete(ct.id)} className="p-1.5 rounded-lg hover:bg-red-500/10 text-slate-400 hover:text-red-400"><Trash2 className="w-3.5 h-3.5" /></button>
-            </div>
-          </div>
-        ))}
-        {chargeTypes.length === 0 && <p className="text-center text-slate-500 py-8">No charge types yet.</p>}
-      </div>
-      <SimpleDialog open={dialogOpen} onOpenChange={setDialogOpen} editing={editing} form={form} setForm={setForm} onSave={handleSave} title="Charge Type" fields={[
-        { name: "name", label: "Name", required: true },
-        { name: "description", label: "Description" },
-        { name: "color", label: "Color", type: "color" },
-      ]} />
-    </div>
-  );
-}
-
-function BondTypeManager({ bondTypes, onLoad }) {
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editing, setEditing] = useState(null);
-  const [form, setForm] = useState({ name: "", description: "", color: "#3b82f6", default_amount: 0, is_active: true });
-  const { toast } = useToast();
-
-  const openCreate = () => { setEditing(null); setForm({ name: "", description: "", color: "#3b82f6", default_amount: 0, is_active: true }); setDialogOpen(true); };
-  const openEdit = (item) => { setEditing(item); setForm({ name: item.name || "", description: item.description || "", color: item.color || "#3b82f6", default_amount: item.default_amount || 0, is_active: item.is_active !== false }); setDialogOpen(true); };
-  const handleSave = async () => {
-    if (!form.name?.trim()) { toast({ title: "Name required", variant: "destructive" }); return; }
-    try { if (editing) { await base44.entities.BondType.update(editing.id, form); } else { await base44.entities.BondType.create(form); } toast({ title: "Saved" }); setDialogOpen(false); onLoad(); }
-    catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
-  };
-  const handleDelete = async (id) => { if (!confirm("Delete?")) return; await base44.entities.BondType.delete(id); toast({ title: "Deleted" }); onLoad(); };
-
-  return (
-    <div>
-      <div className="flex justify-between items-center mb-4">
-        <p className="text-sm text-slate-400">Cash Bail, Surety, etc.</p>
-        <Button onClick={openCreate} className="bg-cyan-600 hover:bg-cyan-700"><Plus className="w-4 h-4 mr-2" /> Add</Button>
-      </div>
-      <div className="space-y-2">
-        {bondTypes.map(bt => (
-          <div key={bt.id} className="bg-slate-900/60 border border-slate-800 rounded-xl p-4 flex items-center justify-between">
-            <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: bt.color || "#3b82f6" }} /><span className="text-white font-medium">{bt.name}</span>{bt.default_amount ? <span className="text-xs text-slate-500 ml-2">${bt.default_amount}</span> : null}</div>
-            <div className="flex gap-1">
-              <button onClick={() => openEdit(bt)} className="p-1.5 rounded-lg hover:bg-slate-700 text-slate-400 hover:text-white"><Pencil className="w-3.5 h-3.5" /></button>
-              <button onClick={() => handleDelete(bt.id)} className="p-1.5 rounded-lg hover:bg-red-500/10 text-slate-400 hover:text-red-400"><Trash2 className="w-3.5 h-3.5" /></button>
-            </div>
-          </div>
-        ))}
-        {bondTypes.length === 0 && <p className="text-center text-slate-500 py-8">No bond types yet.</p>}
-      </div>
-      <SimpleDialog open={dialogOpen} onOpenChange={setDialogOpen} editing={editing} form={form} setForm={setForm} onSave={handleSave} title="Bond Type" fields={[
-        { name: "name", label: "Name", required: true },
-        { name: "description", label: "Description" },
-        { name: "color", label: "Color", type: "color" },
-        { name: "default_amount", label: "Default Amount ($)", type: "number" },
-      ]} />
-    </div>
-  );
-}
-
-function SimpleDialog({ open, onOpenChange, editing, form, setForm, onSave, title, fields }) {
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-slate-900 border-slate-700 max-w-md">
-        <DialogHeader><DialogTitle className="text-white">{editing ? "Edit" : "Add"} {title}</DialogTitle></DialogHeader>
-        <div className="space-y-3">
-          {fields.map(f => (
-            <div key={f.name}>
-              <Label className="text-slate-300">{f.label}{f.required && <span className="text-red-400 ml-0.5">*</span>}</Label>
-              {f.type === "color" ? (
-                <div className="flex items-center gap-2">
-                  <input type="color" value={form[f.name] || "#3b82f6"} onChange={e => setForm({ ...form, [f.name]: e.target.value })} className="w-10 h-9 rounded border border-slate-700 bg-slate-800 cursor-pointer" />
-                  <Input value={form[f.name] || ""} onChange={e => setForm({ ...form, [f.name]: e.target.value })} className="bg-slate-800 border-slate-700 text-white flex-1" />
-                </div>
-              ) : (
-                <Input type={f.type === "number" ? "number" : "text"} value={form[f.name] ?? ""} onChange={e => setForm({ ...form, [f.name]: f.type === "number" ? Number(e.target.value) : e.target.value })} className="bg-slate-800 border-slate-700 text-white" />
-              )}
-            </div>
-          ))}
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} className="border-slate-700 text-slate-300">Cancel</Button>
-          <Button onClick={onSave} className="bg-cyan-600 hover:bg-cyan-700">{editing ? "Update" : "Create"}</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
   );
 }

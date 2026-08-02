@@ -1,13 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
-import { Save, Upload } from "lucide-react";
+import { Save, Upload, Loader2 } from "lucide-react";
 import { refreshBranding } from "@/hooks/useCommunityBranding";
+import { MSection, MField, MInput, MTextarea, MSelect } from "@/components/mdt/ui/formFields";
+import { Btn } from "@/components/mdt/ui/primitives";
 
 const TIMEZONES = [
   "America/New_York", "America/Chicago", "America/Denver", "America/Los_Angeles",
@@ -70,65 +67,60 @@ export default function CommunityInfoManager() {
     } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
   };
 
-  if (loading) return <div className="flex justify-center py-8"><div className="w-6 h-6 border-2 border-slate-700 border-t-cyan-500 rounded-full animate-spin" /></div>;
+  if (loading) return <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-mdt-accent" /></div>;
 
   return (
-    <div>
-      <h2 className="text-lg font-semibold text-white mb-1">Community Info</h2>
-      <p className="text-sm text-slate-400 mb-4">Set your server name, logo, branding, and links</p>
-      <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-5 space-y-4 max-w-xl">
-        <div>
-          <Label className="text-slate-300">Server Name *</Label>
-          <Input value={form.community_name || ""} onChange={e => setForm({ ...form, community_name: e.target.value })} className="bg-slate-800 border-slate-700 text-white" placeholder="e.g. OCRP" />
+    <div className="max-w-2xl space-y-2.5">
+      <p className="text-[11.5px] text-mdt-dim">Server name, logo, branding and links used across the system.</p>
+
+      <MSection title="Identity">
+        <div className="space-y-2.5">
+          <MField label="Server Name *">
+            <MInput value={form.community_name} onChange={e => setForm({ ...form, community_name: e.target.value })} placeholder="e.g. OCRP" />
+          </MField>
+          <MField label="Logo">
+            <div className="flex items-center gap-2.5">
+              {form.logo_url ? (
+                <img src={form.logo_url} alt="Logo" className="w-14 h-14 object-cover border border-mdt-line-2" />
+              ) : (
+                <div className="w-14 h-14 border border-mdt-line-2 bg-mdt-surface-3 flex items-center justify-center text-[10px] text-mdt-dim">No logo</div>
+              )}
+              <label className="cursor-pointer">
+                <span className="inline-flex items-center gap-1.5 h-7 px-2 border border-mdt-line-2 bg-mdt-surface-3 text-[11.5px] text-mdt-text hover:bg-mdt-surface-4">
+                  <Upload className="w-3.5 h-3.5" /> {uploading ? "Uploading…" : "Upload Logo"}
+                </span>
+                <input type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} disabled={uploading} />
+              </label>
+            </div>
+            <MInput value={form.logo_url} onChange={e => setForm({ ...form, logo_url: e.target.value })} className="mt-1.5" placeholder="Or paste an image URL…" />
+          </MField>
+          <MField label="Accent Color">
+            <div className="flex items-center gap-1.5">
+              <input type="color" value={form.accent_color || "#3b82f6"} onChange={e => setForm({ ...form, accent_color: e.target.value })} className="w-9 h-7 border border-mdt-line-2 bg-mdt-surface cursor-pointer" />
+              <MInput value={form.accent_color} onChange={e => setForm({ ...form, accent_color: e.target.value })} className="font-mono" />
+            </div>
+          </MField>
         </div>
-        <div>
-          <Label className="text-slate-300">Logo</Label>
-          <div className="flex items-center gap-3">
-            {form.logo_url ? (
-              <img src={form.logo_url} alt="Logo" className="w-16 h-16 rounded-lg object-cover border border-slate-700" />
-            ) : (
-              <div className="w-16 h-16 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-600 text-xs">No logo</div>
-            )}
-            <label>
-              <span className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-800 text-slate-300 text-sm hover:bg-slate-700 border border-slate-700 cursor-pointer">
-                <Upload className="w-4 h-4" /> {uploading ? "Uploading..." : "Upload Logo"}
-              </span>
-              <input type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} disabled={uploading} />
-            </label>
-          </div>
-          <p className="text-xs text-slate-500 mt-1">Or paste a URL below</p>
-          <Input value={form.logo_url || ""} onChange={e => setForm({ ...form, logo_url: e.target.value })} className="bg-slate-800 border-slate-700 text-white mt-1" placeholder="https://..." />
+      </MSection>
+
+      <MSection title="Links & Locale">
+        <div className="grid grid-cols-2 gap-2.5">
+          <MField label="Discord Link">
+            <MInput value={form.discord_invite_url} onChange={e => setForm({ ...form, discord_invite_url: e.target.value })} placeholder="https://discord.gg/…" />
+          </MField>
+          <MField label="Website Link">
+            <MInput value={form.website_url} onChange={e => setForm({ ...form, website_url: e.target.value })} placeholder="https://…" />
+          </MField>
+          <MField label="Time Zone" className="col-span-2">
+            <MSelect options={TIMEZONES} value={form.timezone} onChange={e => setForm({ ...form, timezone: e.target.value })} />
+          </MField>
+          <MField label="Description" className="col-span-2">
+            <MTextarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} rows={3} />
+          </MField>
         </div>
-        <div>
-          <Label className="text-slate-300">Accent Color</Label>
-          <div className="flex items-center gap-2">
-            <input type="color" value={form.accent_color || "#3b82f6"} onChange={e => setForm({ ...form, accent_color: e.target.value })} className="w-10 h-9 rounded border border-slate-700 bg-slate-800" />
-            <Input value={form.accent_color || ""} onChange={e => setForm({ ...form, accent_color: e.target.value })} className="bg-slate-800 border-slate-700 text-white flex-1" />
-          </div>
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <Label className="text-slate-300">Discord Link</Label>
-            <Input value={form.discord_invite_url || ""} onChange={e => setForm({ ...form, discord_invite_url: e.target.value })} className="bg-slate-800 border-slate-700 text-white" placeholder="https://discord.gg/..." />
-          </div>
-          <div>
-            <Label className="text-slate-300">Website Link</Label>
-            <Input value={form.website_url || ""} onChange={e => setForm({ ...form, website_url: e.target.value })} className="bg-slate-800 border-slate-700 text-white" placeholder="https://..." />
-          </div>
-        </div>
-        <div>
-          <Label className="text-slate-300">Time Zone</Label>
-          <Select value={form.timezone || "America/New_York"} onValueChange={v => setForm({ ...form, timezone: v })}>
-            <SelectTrigger className="bg-slate-800 border-slate-700 text-white"><SelectValue /></SelectTrigger>
-            <SelectContent className="bg-slate-800 border-slate-700">{TIMEZONES.map(tz => <SelectItem key={tz} value={tz} className="text-white">{tz}</SelectItem>)}</SelectContent>
-          </Select>
-        </div>
-        <div>
-          <Label className="text-slate-300">Description</Label>
-          <Textarea value={form.description || ""} onChange={e => setForm({ ...form, description: e.target.value })} className="bg-slate-800 border-slate-700 text-white" rows={3} />
-        </div>
-        <Button onClick={handleSave} className="bg-cyan-600 hover:bg-cyan-700"><Save className="w-4 h-4 mr-2" /> Save Settings</Button>
-      </div>
+      </MSection>
+
+      <Btn variant="primary" icon={Save} onClick={handleSave}>Save Settings</Btn>
     </div>
   );
 }

@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
-import { Save, Upload, Play, Bell } from "lucide-react";
+import { Save, Upload, Play, Loader2 } from "lucide-react";
 import { setTonesCache } from "@/components/cad/mdt/panicSound";
+import { MSection, MInput } from "@/components/mdt/ui/formFields";
+import { Btn } from "@/components/mdt/ui/primitives";
 
 const TONES = [
   { key: "new_dispatch", label: "New Dispatch" },
@@ -17,6 +16,8 @@ const TONES = [
   { key: "panic", label: "Panic" },
   { key: "timers", label: "Timers" },
 ];
+
+const iconBtn = "inline-flex items-center justify-center w-7 h-7 border border-mdt-line-2 bg-mdt-surface-3 text-mdt-muted hover:text-mdt-text hover:bg-mdt-surface-4 disabled:opacity-30";
 
 export default function NotificationTonesManager() {
   const [setting, setSetting] = useState(null);
@@ -64,32 +65,31 @@ export default function NotificationTonesManager() {
     } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
   };
 
-  if (loading) return <div className="flex justify-center py-8"><div className="w-6 h-6 border-2 border-slate-700 border-t-cyan-500 rounded-full animate-spin" /></div>;
+  if (loading) return <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-mdt-accent" /></div>;
 
   return (
-    <div>
-      <h2 className="text-lg font-semibold text-white mb-1">Notification Tones</h2>
-      <p className="text-sm text-slate-400 mb-4">Upload MP3 files or paste links for dispatch and alert sounds</p>
-      <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-5 max-w-2xl space-y-3">
-        {TONES.map(tone => (
-          <div key={tone.key} className="flex items-center gap-3">
-            <div className="w-40 flex-shrink-0">
-              <Label className="text-slate-300 text-sm flex items-center gap-1.5"><Bell className="w-3.5 h-3.5 text-slate-500" /> {tone.label}</Label>
+    <div className="max-w-3xl space-y-2.5">
+      <p className="text-[11.5px] text-mdt-dim">Upload MP3 files or paste links for dispatch and alert sounds.</p>
+      <MSection title="Alert Tones">
+        <div className="space-y-1.5">
+          {TONES.map(tone => (
+            <div key={tone.key} className="flex items-center gap-1.5">
+              <span className="w-36 flex-shrink-0 text-[10px] font-semibold uppercase tracking-[0.09em] text-mdt-dim">{tone.label}</span>
+              <MInput value={tones[tone.key] || ""} onChange={e => setTones(prev => ({ ...prev, [tone.key]: e.target.value }))} placeholder="Paste MP3 URL or upload a file…" />
+              <label className="cursor-pointer flex-shrink-0">
+                <input type="file" accept="audio/*" className="hidden" onChange={e => e.target.files[0] && handleUpload(tone.key, e.target.files[0])} disabled={uploading === tone.key} />
+                <span className={iconBtn}>
+                  {uploading === tone.key ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+                </span>
+              </label>
+              <button onClick={() => playTone(tones[tone.key])} disabled={!tones[tone.key]} className={`${iconBtn} flex-shrink-0`}>
+                <Play className="w-3.5 h-3.5" />
+              </button>
             </div>
-            <Input value={tones[tone.key] || ""} onChange={e => setTones(prev => ({ ...prev, [tone.key]: e.target.value }))} className="bg-slate-800 border-slate-700 text-white flex-1" placeholder="Paste MP3 URL or upload file..." />
-            <label className="cursor-pointer">
-              <input type="file" accept="audio/*" className="hidden" onChange={e => e.target.files[0] && handleUpload(tone.key, e.target.files[0])} disabled={uploading === tone.key} />
-              <span className={`inline-flex items-center justify-center w-9 h-9 rounded-lg bg-slate-800 border border-slate-700 text-slate-400 hover:text-white hover:bg-slate-700 ${uploading === tone.key ? "opacity-50" : ""}`}>
-                {uploading === tone.key ? <div className="w-4 h-4 border-2 border-slate-600 border-t-cyan-400 rounded-full animate-spin" /> : <Upload className="w-4 h-4" />}
-              </span>
-            </label>
-            <button onClick={() => playTone(tones[tone.key])} disabled={!tones[tone.key]} className="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-slate-800 border border-slate-700 text-slate-400 hover:text-white hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed">
-              <Play className="w-4 h-4" />
-            </button>
-          </div>
-        ))}
-        <Button onClick={handleSave} className="bg-cyan-600 hover:bg-cyan-700 mt-4"><Save className="w-4 h-4 mr-2" /> Save Tones</Button>
-      </div>
+          ))}
+        </div>
+      </MSection>
+      <Btn variant="primary" icon={Save} onClick={handleSave}>Save Tones</Btn>
     </div>
   );
 }

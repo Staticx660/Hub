@@ -1,13 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
-import { RefreshCw, Users, Loader2, CheckCircle2, Server, Webhook, KeyRound } from "lucide-react";
+import { RefreshCw, Users, Loader2, CheckCircle2 } from "lucide-react";
+import { MSection } from "@/components/mdt/ui/formFields";
+import { Btn, Field } from "@/components/mdt/ui/primitives";
 
 export default function DiscordSettings() {
   const [guild, setGuild] = useState(null);
@@ -55,101 +51,71 @@ export default function DiscordSettings() {
     setSyncingPersonnel(false);
   };
 
-  if (loading) return <div className="flex justify-center py-8"><div className="w-6 h-6 border-2 border-slate-700 border-t-cyan-500 rounded-full animate-spin" /></div>;
+  if (loading) return <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-mdt-accent" /></div>;
 
   return (
-    <div className="space-y-6 max-w-3xl">
-      {/* Guild Info & Configuration */}
-      <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-5">
-        <h2 className="text-lg font-semibold text-white mb-1">Discord Guild</h2>
-        <p className="text-sm text-slate-400 mb-4">Global Discord settings for the CAD system. The Guild ID is configured via environment variables.</p>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
-          <div className="bg-slate-800/50 rounded-lg p-3">
-            <div className="flex items-center gap-2 mb-1"><Server className="w-4 h-4 text-slate-500" /><span className="text-xs text-slate-500 uppercase">Guild ID</span></div>
-            <p className="text-sm text-slate-300 font-mono">{guild ? guild.id : "—"}</p>
-          </div>
-          <div className="bg-slate-800/50 rounded-lg p-3">
-            <div className="flex items-center gap-2 mb-1"><Webhook className="w-4 h-4 text-slate-500" /><span className="text-xs text-slate-500 uppercase">Bot Token</span></div>
-            <p className="text-sm text-green-400">✓ Active</p>
-          </div>
-          <div className="bg-slate-800/50 rounded-lg p-3">
-            <div className="flex items-center gap-2 mb-1"><KeyRound className="w-4 h-4 text-slate-500" /><span className="text-xs text-slate-500 uppercase">Public Key</span></div>
-            <p className="text-sm text-green-400">✓ Set</p>
-          </div>
+    <div className="max-w-3xl space-y-2.5">
+      <MSection title="Discord Guild">
+        <div className="grid grid-cols-3 gap-2.5">
+          <Field label="Guild ID" value={<span className="font-mono">{guild ? guild.id : "—"}</span>} />
+          <Field label="Bot Token" value={<span className="text-emerald-300">Active</span>} />
+          <Field label="Public Key" value={<span className="text-emerald-300">Set</span>} />
         </div>
-        <p className="text-xs text-slate-500">Discord secrets are managed in the app dashboard under Environment Variables. The Guild ID, Bot Token, and Public Key are used for all Discord integrations across the CAD system.</p>
+        <p className="text-[11px] text-mdt-dim mt-2">Discord secrets are managed in the app dashboard under Environment Variables and are used for all Discord integrations.</p>
         {guild ? (
-          <div className="space-y-2 mt-4 pt-4 border-t border-slate-800">
-            <div className="flex items-center gap-3">
-              {guild.icon && <img src={`https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.png`} alt="" className="w-12 h-12 rounded-full" />}
-              <div>
-                <p className="text-white font-medium">{guild.name}</p>
-                <p className="text-xs text-slate-500">Members: {guild.approximate_member_count || "—"} · Online: {guild.approximate_presence_count || "—"} · Roles: {roles.length}</p>
-              </div>
+          <div className="flex items-center gap-2.5 mt-2.5 pt-2.5 border-t border-mdt-line">
+            {guild.icon && <img src={`https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.png`} alt="" className="w-10 h-10 border border-mdt-line-2" />}
+            <div>
+              <p className="text-[12.5px] text-mdt-text">{guild.name}</p>
+              <p className="text-[11px] text-mdt-dim">Members: {guild.approximate_member_count || "—"} · Online: {guild.approximate_presence_count || "—"} · Roles: {roles.length}</p>
             </div>
           </div>
         ) : (
-          <p className="text-sm text-red-400 mt-4 pt-4 border-t border-slate-800">Could not load guild data. Make sure DISCORD_GUILD_ID and DISCORD_BOT_TOKEN are set.</p>
+          <p className="text-[11.5px] text-red-300 mt-2.5 pt-2.5 border-t border-mdt-line">Could not load guild data. Make sure DISCORD_GUILD_ID and DISCORD_BOT_TOKEN are set.</p>
         )}
-      </div>
+      </MSection>
 
-      {/* Sync Roster */}
-      <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-5">
-        <div className="flex items-center justify-between mb-2">
-          <div>
-            <h3 className="text-white font-medium flex items-center gap-2"><Users className="w-4 h-4 text-cyan-400" /> Sync Roster from Discord</h3>
-            <p className="text-sm text-slate-400">Pulls all Discord members with department roles into the Roster</p>
-          </div>
-          <Button onClick={syncRoster} disabled={syncingRoster} className="bg-cyan-600 hover:bg-cyan-700 gap-2">
-            {syncingRoster ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />} Sync
-          </Button>
-        </div>
+      <MSection title="Sync Roster from Discord" actions={<Btn variant="primary" icon={syncingRoster ? Loader2 : RefreshCw} disabled={syncingRoster} onClick={syncRoster}>Sync</Btn>}>
+        <p className="text-[11.5px] text-mdt-muted">Pulls all Discord members with department roles into the Roster.</p>
         {rosterReport && (
-          <div className="mt-3 text-sm text-slate-400 bg-slate-800/50 rounded-lg p-3">
-            <CheckCircle2 className="w-4 h-4 inline mr-1 text-green-400" />
+          <div className="mt-2 flex items-center gap-1.5 border border-mdt-line bg-mdt-bg/40 p-2 text-[11.5px] text-mdt-muted">
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-300" />
             Added: {rosterReport.added} · Updated: {rosterReport.updated} · Skipped: {rosterReport.skipped}
-            {rosterReport.errors?.length > 0 && <p className="text-red-400 mt-1">{rosterReport.errors.length} errors</p>}
+            {rosterReport.errors?.length > 0 && <span className="text-red-300">· {rosterReport.errors.length} errors</span>}
           </div>
         )}
-      </div>
+      </MSection>
 
-      {/* Sync Personnel */}
-      <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-5">
-        <div className="flex items-center justify-between mb-2">
-          <div>
-            <h3 className="text-white font-medium flex items-center gap-2"><Users className="w-4 h-4 text-blue-400" /> Sync CAD Personnel from Roster</h3>
-            <p className="text-sm text-slate-400">Creates/updates CAD personnel records from the Roster. Roster departments are matched to CAD departments by their Discord Role ID — make sure both have the same role ID set.</p>
-          </div>
-          <Button onClick={syncPersonnel} disabled={syncingPersonnel} className="bg-blue-600 hover:bg-blue-700 gap-2">
-            {syncingPersonnel ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />} Sync
-          </Button>
-        </div>
+      <MSection title="Sync CAD Personnel from Roster" actions={<Btn variant="primary" icon={syncingPersonnel ? Loader2 : RefreshCw} disabled={syncingPersonnel} onClick={syncPersonnel}>Sync</Btn>}>
+        <p className="text-[11.5px] text-mdt-muted">Creates and updates CAD personnel from the Roster. Roster departments are matched to CAD departments by Discord Role ID — both must have the same role ID set.</p>
         {personnelReport && (
-          <div className="mt-3 text-sm text-slate-400 bg-slate-800/50 rounded-lg p-3">
-            <CheckCircle2 className="w-4 h-4 inline mr-1 text-green-400" />
+          <div className="mt-2 flex items-center gap-1.5 border border-mdt-line bg-mdt-bg/40 p-2 text-[11.5px] text-mdt-muted">
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-300" />
             Added: {personnelReport.added} · Updated: {personnelReport.updated} · Skipped: {personnelReport.skipped || 0} · Total roster members: {personnelReport.total}
           </div>
         )}
-      </div>
+      </MSection>
 
-      {/* Available Roles */}
       {roles.length > 0 && (
-        <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-5">
-          <h3 className="text-white font-medium mb-3">Available Roles</h3>
-          <p className="text-sm text-slate-400 mb-3">Copy these Role IDs into your department settings to restrict access</p>
-          <div className="space-y-1 max-h-48 overflow-y-auto">
+        <MSection title={`Available Roles — ${roles.length}`}>
+          <p className="text-[11.5px] text-mdt-muted mb-1.5">Copy these Role IDs into your department settings to restrict access.</p>
+          <div className="max-h-56 overflow-auto mdt-scroll border border-mdt-line divide-y divide-mdt-line">
             {roles.map(r => (
-              <div key={r.id} className="flex items-center justify-between text-sm bg-slate-800/50 rounded px-3 py-1.5">
-                <span className="flex items-center gap-2">
-                  <span className="w-3 h-3 rounded-full" style={{ background: r.color ? `#${r.color.toString(16).padStart(6, '0')}` : '#64748b' }} />
-                  <span className="text-slate-300">{r.name}</span>
+              <div key={r.id} className="flex items-center justify-between px-2 h-7">
+                <span className="flex items-center gap-1.5 min-w-0">
+                  <span className="w-2 h-2 flex-shrink-0" style={{ background: r.color ? `#${r.color.toString(16).padStart(6, '0')}` : '#64748b' }} />
+                  <span className="text-[12px] text-mdt-text truncate">{r.name}</span>
                 </span>
-                <span className="text-xs font-mono text-slate-500">{r.id}</span>
+                <span className="text-[10.5px] font-mono text-mdt-dim">{r.id}</span>
               </div>
             ))}
           </div>
-        </div>
+        </MSection>
       )}
+
+      <div className="flex justify-end">
+        <Btn icon={Users} onClick={load}>Reload Guild Data</Btn>
+      </div>
     </div>
   );
 }

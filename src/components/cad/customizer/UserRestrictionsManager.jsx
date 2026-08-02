@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
-import { Save, Users } from "lucide-react";
+import { Save, Loader2 } from "lucide-react";
+import { MSection, MField, MInput } from "@/components/mdt/ui/formFields";
+import { Btn } from "@/components/mdt/ui/primitives";
 
 export default function UserRestrictionsManager() {
   const [setting, setSetting] = useState(null);
@@ -33,26 +33,20 @@ export default function UserRestrictionsManager() {
     } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
   };
 
-  if (loading) return <div className="flex justify-center py-8"><div className="w-6 h-6 border-2 border-slate-700 border-t-cyan-500 rounded-full animate-spin" /></div>;
+  if (loading) return <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-mdt-accent" /></div>;
 
   return (
-    <div>
-      <h2 className="text-lg font-semibold text-white mb-1">User Account Restrictions</h2>
-      <p className="text-sm text-slate-400 mb-4">Limit how many civilian characters each user can create</p>
-      <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-5 max-w-md">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-12 h-12 rounded-lg bg-slate-800 flex items-center justify-center"><Users className="w-6 h-6 text-cyan-400" /></div>
-          <div>
-            <p className="text-sm font-medium text-white">Civilian Limit Per User</p>
-            <p className="text-xs text-slate-500">Maximum number of civilian characters a user can create</p>
-          </div>
+    <div className="max-w-md space-y-2.5">
+      <p className="text-[11.5px] text-mdt-dim">Limit how many civilian characters each user can create.</p>
+      <MSection title="Civilian Limit Per User">
+        <div className="flex items-end gap-2">
+          <MField label="Maximum Characters" className="w-28">
+            <MInput type="number" min={1} value={limit} onChange={e => setLimit(e.target.value)} />
+          </MField>
+          <span className="text-[11.5px] text-mdt-muted pb-1.5">civilians per user</span>
         </div>
-        <div className="flex items-center gap-3">
-          <Input type="number" min={1} value={limit} onChange={e => setLimit(e.target.value)} className="bg-slate-800 border-slate-700 text-white w-24" />
-          <span className="text-sm text-slate-400">civilians per user</span>
-        </div>
-        <Button onClick={handleSave} className="bg-cyan-600 hover:bg-cyan-700 mt-4"><Save className="w-4 h-4 mr-2" /> Save</Button>
-      </div>
+      </MSection>
+      <Btn variant="primary" icon={Save} onClick={handleSave}>Save</Btn>
     </div>
   );
 }

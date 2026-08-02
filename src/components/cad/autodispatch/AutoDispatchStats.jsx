@@ -1,13 +1,14 @@
 import { Activity, CheckCircle2, Timer, CalendarDays, Send, SkipForward } from "lucide-react";
+import { MSection } from "@/components/mdt/ui/formFields";
 
 function Stat({ icon: Icon, label, value, sub }) {
   return (
-    <div className="cad-card p-4">
-      <div className="flex items-center gap-2 text-cad-muted text-xs font-semibold uppercase tracking-wider">
-        <Icon className="w-3.5 h-3.5 text-cad-accent" /> {label}
+    <div className="border border-mdt-line bg-mdt-surface p-2.5">
+      <div className="flex items-center gap-1.5 text-[9.5px] font-semibold uppercase tracking-[0.09em] text-mdt-dim">
+        <Icon className="w-3 h-3 text-mdt-accent" /> {label}
       </div>
-      <p className="text-2xl font-bold text-cad-text mt-1.5">{value}</p>
-      {sub && <p className="text-xs text-cad-dim mt-0.5">{sub}</p>}
+      <p className="text-[19px] font-semibold text-mdt-text mt-1 leading-none">{value}</p>
+      {sub && <p className="text-[10.5px] text-mdt-dim mt-1">{sub}</p>}
     </div>
   );
 }
@@ -38,8 +39,8 @@ export default function AutoDispatchStats({ logs, closedCallIds }) {
   const peak = Math.max(1, ...last7.map((d) => d.count));
 
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+    <div className="space-y-2.5">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
         <Stat icon={Activity} label="Calls Logged" value={logs.length} sub={`${failed.length} failed`} />
         <Stat icon={Send} label="Auto-Dispatched" value={dispatched.length} sub={logs.length ? `${Math.round((dispatched.length / logs.length) * 100)}% of all calls` : ""} />
         <Stat icon={CheckCircle2} label="Cleared" value={cleared.length} sub={dispatched.length ? `${Math.round((cleared.length / dispatched.length) * 100)}% of dispatches closed` : ""} />
@@ -53,21 +54,17 @@ export default function AutoDispatchStats({ logs, closedCallIds }) {
         <Stat icon={SkipForward} label="Handled by Dispatchers" value={skipped.length} sub="automation stood down" />
       </div>
 
-      <div className="cad-card p-4">
-        <p className="text-cad-muted text-xs font-semibold uppercase tracking-wider mb-3">Last 7 Days</p>
+      <MSection title="Last 7 Days">
         <div className="flex items-end gap-2 h-24">
           {last7.map((d, i) => (
             <div key={i} className="flex-1 flex flex-col items-center gap-1">
-              <span className="text-[10px] text-cad-dim">{d.count || ""}</span>
-              <div
-                className="w-full rounded-t bg-cad-accent/70 min-h-[2px]"
-                style={{ height: `${(d.count / peak) * 100}%` }}
-              />
-              <span className="text-[10px] text-cad-muted">{d.label}</span>
+              <span className="text-[10px] text-mdt-dim">{d.count || ""}</span>
+              <div className="w-full bg-mdt-accent/70 min-h-[2px]" style={{ height: `${(d.count / peak) * 100}%` }} />
+              <span className="text-[10px] text-mdt-muted">{d.label}</span>
             </div>
           ))}
         </div>
-      </div>
+      </MSection>
     </div>
   );
 }

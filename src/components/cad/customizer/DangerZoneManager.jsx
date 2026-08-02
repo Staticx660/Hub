@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Loader2, AlertTriangle, Trash2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { MInput } from "@/components/mdt/ui/formFields";
+import { Btn } from "@/components/mdt/ui/primitives";
 
 const WIPED_ENTITIES = [
   "Active Calls",
@@ -42,61 +42,45 @@ export default function DangerZoneManager() {
   };
 
   return (
-    <div className="max-w-2xl">
-      <div className="flex items-center gap-2 mb-2">
-        <AlertTriangle className="w-5 h-5 text-red-400" />
-        <h2 className="text-xl font-bold text-cad-text">Danger Zone</h2>
-      </div>
-      <p className="text-sm text-cad-muted mb-6">
-        Permanently delete all operational data from the system. Configuration data (departments, penal codes, templates, settings, personnel) will be preserved.
+    <div className="max-w-2xl space-y-2.5">
+      <p className="text-[11.5px] text-mdt-dim">
+        Permanently delete all operational data. Configuration (departments, penal codes, templates, settings, personnel) is preserved.
       </p>
 
-      <div className="border border-red-500/30 rounded-lg bg-red-500/5 p-5">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h3 className="text-sm font-semibold text-red-400">Wipe All System Data</h3>
-            <p className="text-xs text-cad-muted mt-1">
-              Deletes all calls, BOLOs, warrants, civilians, vehicles, reports, PCRs, sessions, groups, and firearms. This cannot be undone.
-            </p>
-          </div>
-          <Button onClick={() => setConfirmOpen(true)} variant="outline" className="border-red-500/40 text-red-400 hover:bg-red-500/10 flex-shrink-0">
-            <Trash2 className="w-4 h-4 mr-2" /> Wipe Data
-          </Button>
+      <section className="border border-red-500/30 bg-red-500/5">
+        <header className="flex items-center gap-1.5 h-7 px-2.5 border-b border-red-500/30 bg-red-500/10">
+          <AlertTriangle className="w-3.5 h-3.5 text-red-300" />
+          <h3 className="text-[10.5px] font-semibold uppercase tracking-[0.09em] text-red-300">Wipe All System Data</h3>
+        </header>
+        <div className="p-2.5 flex items-start justify-between gap-3">
+          <p className="text-[11.5px] text-mdt-muted">
+            Deletes all calls, BOLOs, warrants, civilians, vehicles, reports, PCRs, sessions, groups and firearms. This cannot be undone.
+          </p>
+          <Btn variant="danger" icon={Trash2} className="flex-shrink-0" onClick={() => setConfirmOpen(true)}>Wipe Data</Btn>
         </div>
-      </div>
+      </section>
 
       <Dialog open={confirmOpen} onOpenChange={(open) => { setConfirmOpen(open); if (!open) setConfirmText(""); }}>
-        <DialogContent className="bg-cad-surface border-red-500/30">
-          <DialogHeader>
-            <DialogTitle className="text-red-400 flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5" /> Confirm System Wipe
-            </DialogTitle>
-            <DialogDescription className="text-cad-muted">
-              You are about to permanently delete ALL operational data:
-              <ul className="mt-2 space-y-1 text-xs">
-                {WIPED_ENTITIES.map((e) => <li key={e}>• {e}</li>)}
-              </ul>
-              <span className="block mt-3 font-medium text-red-400">This cannot be undone.</span>
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-2">
-            <p className="text-sm text-cad-text mb-2">Type <span className="font-mono font-bold text-red-400">WIPE</span> to confirm:</p>
-            <Input
-              value={confirmText}
-              onChange={(e) => setConfirmText(e.target.value)}
-              placeholder="WIPE"
-              className="bg-cad-surface-2/50 border-cad-border/50 text-cad-text font-mono"
-            />
+        <DialogContent className="mdt p-0 gap-0 max-w-md bg-mdt-surface border border-red-500/40 text-mdt-text rounded-none">
+          <div className="h-9 px-2.5 flex items-center gap-1.5 border-b border-red-500/40 bg-red-500/10">
+            <AlertTriangle className="w-3.5 h-3.5 text-red-300" />
+            <span className="text-[12.5px] font-semibold text-red-300">Confirm System Wipe</span>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => { setConfirmOpen(false); setConfirmText(""); }} className="border-cad-border/50 text-cad-muted">
-              Cancel
-            </Button>
-            <Button onClick={handleWipe} disabled={wiping || confirmText !== "WIPE"} className="bg-red-600 hover:bg-red-700 text-white">
-              {wiping ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Trash2 className="w-4 h-4 mr-2" />}
-              Wipe All Data
-            </Button>
-          </DialogFooter>
+          <div className="p-2.5 space-y-2">
+            <p className="text-[11.5px] text-mdt-muted">You are about to permanently delete ALL operational data:</p>
+            <ul className="text-[11.5px] text-mdt-muted space-y-0.5">
+              {WIPED_ENTITIES.map((e) => <li key={e}>• {e}</li>)}
+            </ul>
+            <p className="text-[11.5px] font-semibold text-red-300">This cannot be undone.</p>
+            <div>
+              <p className="text-[11.5px] text-mdt-text mb-1">Type <span className="font-mono font-bold text-red-300">WIPE</span> to confirm:</p>
+              <MInput value={confirmText} onChange={(e) => setConfirmText(e.target.value)} placeholder="WIPE" className="font-mono" />
+            </div>
+          </div>
+          <div className="flex items-center justify-end gap-1.5 h-10 px-2.5 border-t border-mdt-line bg-mdt-surface-2">
+            <Btn onClick={() => { setConfirmOpen(false); setConfirmText(""); }}>Cancel</Btn>
+            <Btn variant="danger" icon={wiping ? Loader2 : Trash2} disabled={wiping || confirmText !== "WIPE"} onClick={handleWipe}>Wipe All Data</Btn>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
