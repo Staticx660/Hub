@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { countOnlineDispatchers, recommendUnits, resolveDepartments } from '../../shared/autoDispatch.js';
+import { requireCADAccess } from '../../shared/authGuards.js';
 
 export default async function (req) {
   try {
@@ -7,6 +8,19 @@ export default async function (req) {
     const svc = base44.asServiceRole;
 
     const payload = await req.json().catch(() => ({}));
+
+    // ── Trust boundary: only the internal automation (shared token) or an
+    // authenticated CAD user / admin may trigger dispatch. ──
+    const settingsList = await svc.entities.AutoDispatchSetting.list();
+    const storedToken = settingsList[0]?.trigger_token;
+    const providedToken = payload?.trigger_token || req.headers.get('x-autodispatch-token');
+    const internalCall = Boolean(storedToken) && providedToken === storedToken;
+
+    if (!internalCall) {
+      const guard = await requireCADAccess(base44);
+      if (guard.error) return guard.error;
+    }
+
     const callId = payload?.event?.entity_id || payload?.call_id;
     if (!callId) return Response.json({ error: 'No call id in payload' }, { status: 400 });
 
@@ -17,7 +31,6 @@ export default async function (req) {
     if (!call) return Response.json({ error: 'Call not found' }, { status: 404 });
 
     // ── Settings (single record, created on first run) ──
-    const settingsList = await svc.entities.AutoDispatchSetting.list();
     let settings = settingsList[0];
     if (!settings) settings = await svc.entities.AutoDispatchSetting.create({ enabled: true });
 
