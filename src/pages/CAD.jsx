@@ -14,13 +14,14 @@ import ActivityPane from "@/components/dispatch/station/ActivityPane";
 import NewCallModal from "@/components/dispatch/station/NewCallModal";
 import LookupPane from "@/components/dispatch/station/LookupPane";
 
-const emptyCallForm = { call_type: "", priority: "3 - Low", location: "", description: "", caller_name: "", caller_phone: "", department_id: "" };
+const emptyCallForm = { call_type: "", priority: "3 - Low", status: "Active", location: "", cross_streets: "", postal: "", block: "", call_origin: "", run_number: "", description: "", cad_notes: "", notes: "", caller_name: "", caller_phone: "", department_id: "" };
 
 export default function CAD() {
   const [calls, setCalls] = useState([]);
   const [units, setUnits] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [groups, setGroups] = useState([]);
+  const [dispatchers, setDispatchers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [callForm, setCallForm] = useState(emptyCallForm);
@@ -31,13 +32,16 @@ export default function CAD() {
 
   const load = async () => {
     try {
-      const [c, u, d, g] = await Promise.all([
+      const [c, u, d, g, s] = await Promise.all([
         base44.entities.ActiveCall.list("-created_date"),
         base44.entities.CADUnit.list(),
         base44.entities.CADDepartment.list(),
         base44.entities.CADUnitGroup.list(),
+        base44.entities.CADSession.filter({ is_active: true }),
       ]);
       setCalls(c); setUnits(u); setDepartments(d); setGroups(g);
+      const dispatchDeptIds = d.filter(x => x.category === "Dispatch").map(x => x.id);
+      setDispatchers(s.filter(x => dispatchDeptIds.includes(x.department_id)));
     } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
     finally { setLoading(false); }
   };
@@ -50,7 +54,7 @@ export default function CAD() {
 
   const handleCreateCall = async () => {
     try {
-      await base44.entities.ActiveCall.create({ ...callForm, status: "Active" });
+      await base44.entities.ActiveCall.create({ ...callForm, status: callForm.status || "Active" });
       const dept = departments.find(d => d.id === callForm.department_id);
       if (dept?.discord_webhook_url) {
         try {
@@ -216,6 +220,7 @@ export default function CAD() {
           `${units.filter(u => u.status === "Available").length}/${units.length} units available`,
           selectedCall ? `Incident ${selectedCall.run_number || selectedCall.id.slice(-6).toUpperCase()}` : "No incident selected",
         ]}
+        dispatchers={dispatchers}
       />
 
       <NewCallModal
