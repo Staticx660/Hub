@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Users, Search, UserPlus, Mail, Loader2, Crown, Eye } from "lucide-react";
+import { Users, Search, UserPlus, Mail, Loader2, Crown, Eye, Trash2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { Btn, StatusPill, EmptyState } from "@/components/mdt/ui/primitives";
 import DataTable from "@/components/mdt/ui/DataTable";
@@ -74,6 +74,22 @@ export default function RegisteredUsersManager() {
     finally { setUpdatingIds(prev => { const n = new Set(prev); n.delete(user.id); return n; }); }
   };
 
+  const removeUser = async (user) => {
+    const cp = user.discord_id ? personnelByDiscordId[user.discord_id] : null;
+    if (!window.confirm(`Remove ${user.email} from the system?\n\nThis deletes their account${cp ? " and their CAD personnel record" : ""}. This cannot be undone.`)) return;
+    setUpdatingIds(prev => new Set(prev).add(user.id));
+    try {
+      if (cp) {
+        await base44.entities.CADPersonnel.delete(cp.id);
+        setPersonnel(prev => prev.filter(p => p.id !== cp.id));
+      }
+      await base44.entities.User.delete(user.id);
+      setUsers(prev => prev.filter(u => u.id !== user.id));
+      toast({ title: "User removed", description: user.email });
+    } catch (e) { toast({ title: "Remove failed", description: e.message, variant: "destructive" }); }
+    finally { setUpdatingIds(prev => { const n = new Set(prev); n.delete(user.id); return n; }); }
+  };
+
   const filtered = users.filter(u => {
     const matchSearch = !search ||
       u.email?.toLowerCase().includes(search.toLowerCase()) ||
@@ -113,6 +129,9 @@ export default function RegisteredUsersManager() {
       <StatusPill tone={u.discord_id ? "ok" : "neutral"}>{u.discord_id ? "Linked" : "None"}</StatusPill>
     )},
     { key: "created_date", label: "Joined", width: 100, mono: true, render: (u) => u.created_date ? new Date(u.created_date).toLocaleDateString() : "—" },
+    { key: "remove", label: "", width: 70, sortable: false, render: (u) => (
+      <Btn variant="danger" icon={Trash2} disabled={updatingIds.has(u.id)} onClick={() => removeUser(u)} className="h-6 px-1.5">Remove</Btn>
+    )},
   ];
 
   return (
