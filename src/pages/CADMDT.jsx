@@ -27,6 +27,9 @@ import UnitControls from "@/components/mdt/shell/UnitControls";
 import { Radio as RadioIcon, Search as SearchIcon, FileText, PhoneCall, Users } from "lucide-react";
 import CallQueueWorkspace from "@/components/mdt/workspaces/police/CallQueueWorkspace";
 import UnitBoardWorkspace from "@/components/mdt/workspaces/police/UnitBoardWorkspace";
+import LookupsWorkspace from "@/components/mdt/workspaces/police/LookupsWorkspace";
+import RecordsWorkspace from "@/components/mdt/workspaces/police/RecordsWorkspace";
+import MyCallWorkspace from "@/components/mdt/workspaces/police/MyCallWorkspace";
 
 const OCRP_LOGO = "https://media.base44.com/images/public/6a441f279b9d3cd678958799/5a43a1b46_OCRP20.png";
 
@@ -271,7 +274,7 @@ export default function CADMDT() {
             { key: "lookups", label: "Lookups", icon: SearchIcon },
             { key: "records", label: "Records", icon: FileText },
           ]}
-          active={activeView === "callviewer" ? "dispatch" : activeView}
+          active={activeView === "callviewer" ? "mycall" : activeView}
           onNavigate={setActiveView}
           tabs={[{ key: department.id, label: department.name }]}
           activeTab={department.id}
@@ -298,6 +301,19 @@ export default function CADMDT() {
               />
             ) : activeView === "units" ? (
               <UnitBoardWorkspace session={session} setSession={setSession} />
+            ) : activeView === "lookups" ? (
+              <LookupsWorkspace session={session} />
+            ) : activeView === "records" ? (
+              <RecordsWorkspace department={department} session={session} />
+            ) : activeView === "mycall" || activeView === "callviewer" ? (
+              <MyCallWorkspace
+                department={department}
+                session={session}
+                setSession={setSession}
+                selectedCallId={selectedCallId}
+                setSelectedCallId={setSelectedCallId}
+                setActiveView={setActiveView}
+              />
             ) : (
               <div className="flex-1 min-h-0 overflow-hidden">{views}</div>
             )
