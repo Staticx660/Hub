@@ -5,7 +5,7 @@ import { useAuth } from "@/lib/AuthContext";
 import { useToast } from "@/components/ui/use-toast";
 import { AlertTriangle, ChevronLeft, UserPlus } from "lucide-react";
 import CharacterForm from "@/components/cad/civilian/CharacterForm";
-import CivilianDMV from "@/components/cad/civilian/CivilianDMV";
+import DMVPane from "@/components/cad/civilian/terminal/DMVPane";
 import Call911Dialog from "@/components/cad/civilian/Call911Dialog";
 import CharacterRail from "@/components/cad/civilian/terminal/CharacterRail";
 import IdentityPane from "@/components/cad/civilian/terminal/IdentityPane";
@@ -163,7 +163,7 @@ export default function CADCivilian() {
           ) : panel === "records" ? (
             <RecordsPane fullName={fullName} warrants={warrants} bolos={bolos} reports={reports} />
           ) : panel === "dmv" ? (
-            <CivilianDMV character={selectedChar} department={department} user={user} onUpdate={reloadCharacter} />
+            <DMVPane character={selectedChar} department={department} user={user} onUpdate={reloadCharacter} />
           ) : (
             <IdentityPane character={selectedChar} fullName={fullName} />
           )}

@@ -1,6 +1,7 @@
 import React from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { ConsoleBtn, ConsoleInput, ConsoleTextarea, ConsoleSelect, ConsoleLabel } from "@/components/cad/console/ConsoleUI";
+import { MField, MInput, MTextarea, MSelect } from "@/components/mdt/ui/formFields";
+import { Btn } from "@/components/mdt/ui/primitives";
 import AddressSearch from "@/components/cad/mdt/AddressSearch";
 import { Phone } from "lucide-react";
 
@@ -11,34 +12,36 @@ export default function Call911Dialog({ open, onOpenChange, form, setForm, calle
   const set = (k, v) => setForm({ ...form, [k]: v });
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="cad-font bg-cad-surface border-cad-border">
+      <DialogContent className="mdt bg-mdt-surface border-mdt-line text-mdt-text">
         <DialogHeader>
-          <DialogTitle className="text-cad-text flex items-center gap-2 text-base"><Phone className="w-4 h-4 text-red-400" /> Place 911 Call</DialogTitle>
+          <DialogTitle className="flex items-center gap-2 text-[13px] font-semibold uppercase tracking-[0.09em] text-mdt-muted">
+            <Phone className="w-3.5 h-3.5 text-red-400" /> Place 911 Call
+          </DialogTitle>
         </DialogHeader>
-        <p className="text-[12.5px] text-cad-muted">Calling as: <span className="text-cad-text font-medium">{callerLabel}</span></p>
-        <div className="space-y-3">
-          <div className="grid grid-cols-2 gap-3">
-            <ConsoleLabel label="Call Type *"><ConsoleSelect value={form.call_type} onChange={(e) => set("call_type", e.target.value)} options={CALL_TYPES} /></ConsoleLabel>
-            <ConsoleLabel label="Priority"><ConsoleSelect value={form.priority} onChange={(e) => set("priority", e.target.value)} options={PRIORITIES} /></ConsoleLabel>
+        <p className="text-[11.5px] text-mdt-dim">Calling as <span className="text-mdt-text">{callerLabel}</span></p>
+        <div className="space-y-2.5">
+          <div className="grid grid-cols-2 gap-2.5">
+            <MField label="Call Type *"><MSelect value={form.call_type} options={CALL_TYPES} onChange={(e) => set("call_type", e.target.value)} /></MField>
+            <MField label="Priority"><MSelect value={form.priority} options={PRIORITIES} onChange={(e) => set("priority", e.target.value)} /></MField>
           </div>
-          <ConsoleLabel label="Address *">
+          <MField label="Address *">
             <AddressSearch
               value={form.location}
               onChange={(v) => set("location", v)}
-              className="h-8 pl-9 pr-2 w-full bg-cad-surface-2 border border-cad-border rounded-[calc(var(--cad-radius)*0.6)] text-[12.5px] text-cad-text focus-visible:outline-none focus:border-cad-accent"
+              className="h-7 pl-8 pr-2 w-full bg-mdt-surface border border-mdt-line-2 text-[12.5px] text-mdt-text placeholder:text-mdt-dim focus:outline-none focus:border-mdt-accent"
               placeholder="Search for a road..."
             />
-          </ConsoleLabel>
-          <div className="grid grid-cols-3 gap-3">
-            <ConsoleLabel label="Postal"><ConsoleInput value={form.postal} onChange={(e) => set("postal", e.target.value)} placeholder="e.g. 1234" /></ConsoleLabel>
-            <ConsoleLabel label="Block"><ConsoleInput value={form.block} onChange={(e) => set("block", e.target.value)} placeholder="e.g. 100" /></ConsoleLabel>
-            <ConsoleLabel label="Cross Streets"><ConsoleInput value={form.cross_streets} onChange={(e) => set("cross_streets", e.target.value)} placeholder="e.g. Vinewood & Power" /></ConsoleLabel>
+          </MField>
+          <div className="grid grid-cols-3 gap-2.5">
+            <MField label="Postal"><MInput value={form.postal} onChange={(e) => set("postal", e.target.value)} placeholder="1234" /></MField>
+            <MField label="Block"><MInput value={form.block} onChange={(e) => set("block", e.target.value)} placeholder="100" /></MField>
+            <MField label="Cross Streets"><MInput value={form.cross_streets} onChange={(e) => set("cross_streets", e.target.value)} placeholder="Vinewood & Power" /></MField>
           </div>
-          <ConsoleLabel label="Description"><ConsoleTextarea value={form.description} onChange={(e) => set("description", e.target.value)} rows={3} placeholder="Describe the emergency..." /></ConsoleLabel>
+          <MField label="Description"><MTextarea value={form.description} onChange={(e) => set("description", e.target.value)} rows={3} placeholder="Describe the emergency..." /></MField>
         </div>
         <DialogFooter>
-          <ConsoleBtn variant="ghost" onClick={() => onOpenChange(false)}>Cancel</ConsoleBtn>
-          <ConsoleBtn variant="danger" icon={Phone} onClick={onSubmit} disabled={!form.location}>Call 911</ConsoleBtn>
+          <Btn variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Btn>
+          <Btn variant="danger" icon={Phone} onClick={onSubmit} disabled={!form.location}>Call 911</Btn>
         </DialogFooter>
       </DialogContent>
     </Dialog>
