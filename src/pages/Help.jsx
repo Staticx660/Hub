@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { useSearchParams, Link } from "react-router-dom";
+import { useSearchParams, Link, useNavigate } from "react-router-dom";
 import {
   Home, BookOpen, CheckSquare, Lightbulb, Keyboard, HelpCircle, Sparkles, ChevronLeft
 } from "lucide-react";
@@ -18,6 +18,7 @@ const TABS = [
 ];
 
 export default function Help() {
+  const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const activeTab = params.get("tab") || "guides";
   const initialCategory = params.get("cat");
@@ -43,9 +44,13 @@ export default function Help() {
       <header className="border-b border-cad-border/50 cad-glass sticky top-0 z-30">
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Link to="/" className="p-2 rounded-lg hover:bg-cad-surface-2/50 text-cad-muted hover:text-cad-text transition-all">
+            <button
+              onClick={() => (window.history.length > 1 ? navigate(-1) : navigate("/"))}
+              className="p-2 rounded-lg hover:bg-cad-surface-2/50 text-cad-muted hover:text-cad-text transition-all"
+              title="Back"
+            >
               <ChevronLeft className="w-5 h-5" />
-            </Link>
+            </button>
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-lg bg-cad-accent/15 flex items-center justify-center">
                 <HelpCircle className="w-4 h-4 text-cad-accent" />
