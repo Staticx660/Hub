@@ -109,7 +109,6 @@ const AuthenticatedApp = () => {
         {/* CAD section - with sidebar */}
         <Route element={<CADLayout />}>
           <Route path="/cad" element={<CADDepartments />} />
-          <Route path="/cad/dispatch" element={<CAD />} />
           <Route path="/cad/departments/:id" element={<CADDepartmentDetail />} />
           <Route path="/cad/reports" element={<CADReports />} />
           <Route path="/civilian-dashboard" element={<CivilianDashboard />} />
@@ -124,6 +123,7 @@ const AuthenticatedApp = () => {
         </Route>
 
         {/* Full-screen CAD apps - no sidebar, fills viewport */}
+        <Route path="/cad/dispatch" element={<CAD />} />
         <Route path="/cad/mdt/:deptId" element={<CADMDT />} />
         <Route path="/cad/board/:deptId" element={<DepartmentBoard />} />
         <Route path="/cad/ems/:deptId" element={<EMSBoard />} />

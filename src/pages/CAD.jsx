@@ -1,12 +1,18 @@
 import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { useToast } from "@/components/ui/use-toast";
-import { Plus, Building2 } from "lucide-react";
-import { ConsolePanel, ConsoleBtn, Tag } from "@/components/cad/console/ConsoleUI";
-import ConsoleTable from "@/components/cad/console/ConsoleTable";
-import NewCallDialog from "@/components/dispatch/NewCallDialog";
-import CallDetailPane from "@/components/dispatch/CallDetailPane";
-import UnitsRosterPanel from "@/components/dispatch/UnitsRosterPanel";
+import { Building2 } from "lucide-react";
+import MenuStrip from "@/components/mdt/shell/MenuStrip";
+import StatusBar from "@/components/mdt/shell/StatusBar";
+import { Btn } from "@/components/mdt/ui/primitives";
+import StationHeader from "@/components/dispatch/station/StationHeader";
+import CallQueuePane from "@/components/dispatch/station/CallQueuePane";
+import IncidentPane from "@/components/dispatch/station/IncidentPane";
+import UnitsPane from "@/components/dispatch/station/UnitsPane";
+import ActivityPane from "@/components/dispatch/station/ActivityPane";
+import NewCallModal from "@/components/dispatch/station/NewCallModal";
+
 const emptyCallForm = { call_type: "", priority: "3 - Low", location: "", description: "", caller_name: "", caller_phone: "", department_id: "" };
 
 export default function CAD() {
@@ -18,6 +24,7 @@ export default function CAD() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [callForm, setCallForm] = useState(emptyCallForm);
   const [selectedId, setSelectedId] = useState(null);
+  const [logCollapsed, setLogCollapsed] = useState(false);
   const { toast } = useToast();
 
   const load = async () => {
@@ -37,9 +44,7 @@ export default function CAD() {
 
   const activeCalls = calls.filter(c => c.status !== "Closed");
   const deptName = (id) => departments.find(d => d.id === id)?.name || "Unassigned";
-  const deptColor = (id) => departments.find(d => d.id === id)?.color || "#64748b";
   const unitName = (id) => units.find(u => u.id === id)?.name || "Unknown";
-  const unitsByDept = (deptId) => units.filter(u => u.department_id === deptId);
 
   const handleCreateCall = async () => {
     try {
@@ -96,6 +101,7 @@ export default function CAD() {
         base44.entities.CADUnit.update(uid, { status: "Available", assigned_call_id: "" })
       ));
       toast({ title: "Call closed" });
+      setSelectedId(null);
       load();
     } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
   };
@@ -117,17 +123,17 @@ export default function CAD() {
 
   const openCreateCall = () => { setCallForm({ ...emptyCallForm, department_id: departments[0]?.id || "" }); setDialogOpen(true); };
 
-  if (loading) return <div className="flex justify-center py-16"><div className="w-8 h-8 border-2 border-cad-border border-t-cad-accent rounded-full animate-spin" /></div>;
+  if (loading) {
+    return <div className="mdt fixed inset-0 bg-mdt-bg flex items-center justify-center"><div className="w-8 h-8 border-2 border-mdt-line border-t-mdt-accent rounded-full animate-spin" /></div>;
+  }
 
   if (departments.length === 0) {
     return (
-      <div className="cad-font text-center py-16">
-        <Building2 className="w-14 h-14 mx-auto mb-4 text-cad-dim" />
-        <h2 className="text-lg font-semibold text-cad-text mb-1">No CAD Departments</h2>
-        <p className="text-[13px] text-cad-muted mb-4">Create departments in the Admin Panel to start dispatching.</p>
-        <div className="flex justify-center">
-          <ConsoleBtn variant="primary" onClick={() => window.location.href = "/cad/admin"}>Go to Admin Panel</ConsoleBtn>
-        </div>
+      <div className="mdt fixed inset-0 bg-mdt-bg flex flex-col items-center justify-center gap-3 text-center px-6">
+        <Building2 className="w-10 h-10 text-mdt-dim" />
+        <h2 className="text-[15px] font-semibold text-mdt-text">No CAD Departments</h2>
+        <p className="text-[12.5px] text-mdt-muted">Create departments in the Admin Panel to start dispatching.</p>
+        <Link to="/cad/admin"><Btn variant="primary">Go to Admin Panel</Btn></Link>
       </div>
     );
   }
@@ -135,63 +141,82 @@ export default function CAD() {
   const selectedCall = activeCalls.find((c) => c.id === selectedId) || null;
   const availableUnits = units.filter((u) => u.status === "Available" || u.status === "Off Duty");
 
-  const columns = [
-    { key: "priority", label: "Pri", width: 80, render: (c) => <Tag tone={c.priority === "1 - High" ? "crit" : c.priority === "2 - Medium" ? "warn" : "info"}>P{c.priority.split(" ")[0]}</Tag> },
-    { key: "call_type", label: "Type" },
-    { key: "location", label: "Location" },
-    { key: "department_id", label: "Department", width: 160, render: (c) => deptName(c.department_id) },
-    { key: "units", label: "Units", width: 70, align: "right", sortable: false, render: (c) => (c.assigned_unit_ids || []).length },
-    { key: "status", label: "Status", width: 90 },
+  const menus = [
+    { label: "Dispatch", items: [
+      { label: "New Call", shortcut: "Ctrl+N", onSelect: openCreateCall },
+      { label: "Refresh Board", shortcut: "F5", onSelect: load },
+      { separator: true },
+      { label: "Close Selected Call", disabled: !selectedCall, danger: true, onSelect: () => selectedCall && closeCall(selectedCall.id) },
+    ]},
+    { label: "View", items: [
+      { label: logCollapsed ? "Show Activity Log" : "Hide Activity Log", onSelect: () => setLogCollapsed(v => !v) },
+      { label: "Clear Selection", disabled: !selectedCall, onSelect: () => setSelectedId(null) },
+    ]},
+    { label: "Go", items: [
+      { label: "CAD Home", onSelect: () => { window.location.href = "/cad"; } },
+      { label: "Admin Panel", onSelect: () => { window.location.href = "/cad/admin"; } },
+    ]},
   ];
 
   return (
-    <div className="cad-font">
-      <div className="flex items-center justify-between gap-3 mb-4">
-        <div>
-          <h1 className="text-2xl font-bold text-cad-text tracking-tight">Dispatch Console</h1>
-          <p className="text-[13px] text-cad-muted">{activeCalls.length} active calls · {units.filter(u => u.status === "Available").length} units available</p>
+    <div className="mdt fixed inset-0 flex flex-col bg-mdt-bg text-mdt-text">
+      <MenuStrip menus={menus} onSearch={openCreateCall} />
+      <StationHeader
+        pending={activeCalls.filter(c => c.status === "Pending").length}
+        active={activeCalls.filter(c => c.status === "Active").length}
+        available={units.filter(u => u.status === "Available").length}
+        onDuty={units.filter(u => u.status !== "Off Duty").length}
+        unitsTotal={units.length}
+      />
+
+      <div className="flex-1 min-h-0 grid grid-cols-12 gap-px bg-mdt-line p-px">
+        <div className="col-span-5 min-h-0 flex [&>section]:flex-1 [&>section]:min-w-0">
+          <CallQueuePane
+            calls={activeCalls}
+            selectedId={selectedId}
+            onSelect={setSelectedId}
+            deptName={deptName}
+            onNewCall={openCreateCall}
+          />
         </div>
-        <ConsoleBtn variant="primary" icon={Plus} onClick={openCreateCall}>New Call</ConsoleBtn>
+        <div className="col-span-4 min-h-0 flex [&>section]:flex-1 [&>section]:min-w-0">
+          <IncidentPane
+            call={selectedCall}
+            deptName={deptName}
+            unitName={unitName}
+            availableUnits={availableUnits}
+            onAssign={assignUnit}
+            onUnassign={unassignUnit}
+            onCloseCall={closeCall}
+          />
+        </div>
+        <div className="col-span-3 min-h-0 flex [&>section]:flex-1 [&>section]:min-w-0">
+          <UnitsPane
+            departments={departments}
+            units={units}
+            groups={groups}
+            deptName={deptName}
+            selectedCallId={selectedId}
+            onDispatchGroup={dispatchGroup}
+          />
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 items-start">
-        <div className="lg:col-span-2 space-y-3">
-          <ConsolePanel title="Call Queue" subtitle={`${activeCalls.length} active`} bodyClassName="max-h-[45vh]">
-            <ConsoleTable
-              columns={columns}
-              rows={activeCalls}
-              selectedKey={selectedId}
-              onRowClick={(c) => setSelectedId(c.id)}
-              rowTone={(c) => (c.priority === "1 - High" ? "#ef4444" : c.priority === "2 - Medium" ? "#f59e0b" : "#3b82f6")}
-              emptyMessage="No active calls"
-            />
-          </ConsolePanel>
-          <ConsolePanel title="Call Detail">
-            <CallDetailPane
-              call={selectedCall}
-              deptName={deptName}
-              unitName={unitName}
-              availableUnits={availableUnits}
-              onAssign={assignUnit}
-              onUnassign={unassignUnit}
-              onClose={(id) => { closeCall(id); setSelectedId(null); }}
-            />
-          </ConsolePanel>
+      {!logCollapsed && (
+        <div className="h-[168px] flex-shrink-0 border-t border-mdt-line">
+          <ActivityPane calls={activeCalls} deptName={deptName} />
         </div>
+      )}
 
-        <UnitsRosterPanel
-          departments={departments}
-          units={units}
-          groups={groups}
-          activeCalls={activeCalls}
-          deptName={deptName}
-          onDispatchGroup={dispatchGroup}
-        />
-      </div>
+      <StatusBar collapsed={logCollapsed} onToggle={() => setLogCollapsed(v => !v)}>
+        <span className="text-[11.5px] text-mdt-dim">{activeCalls.length} calls in queue</span>
+        <span className="text-[11.5px] text-mdt-dim">·</span>
+        <span className="text-[11.5px] text-mdt-dim">{selectedCall ? `Viewing ${selectedCall.run_number || selectedCall.id.slice(-6).toUpperCase()}` : "No incident selected"}</span>
+      </StatusBar>
 
-      <NewCallDialog
+      <NewCallModal
         open={dialogOpen}
-        onOpenChange={setDialogOpen}
+        onClose={() => setDialogOpen(false)}
         form={callForm}
         setForm={setCallForm}
         departments={departments}
