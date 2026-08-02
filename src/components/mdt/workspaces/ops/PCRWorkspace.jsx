@@ -3,11 +3,11 @@ import { base44 } from "@/api/base44Client";
 import { useToast } from "@/components/ui/use-toast";
 import DataTable from "@/components/mdt/ui/DataTable";
 import { Btn, StatusPill } from "@/components/mdt/ui/primitives";
-import PCRPatientTab from "@/components/cad/pcr/PCRPatientTab";
-import PCRHistoryTab from "@/components/cad/pcr/PCRHistoryTab";
-import PCRAssessmentTab from "@/components/cad/pcr/PCRAssessmentTab";
-import PCRVitalsTab from "@/components/cad/pcr/PCRVitalsTab";
-import PCRTreatmentTab from "@/components/cad/pcr/PCRTreatmentTab";
+import PatientTab from "@/components/mdt/workspaces/ops/pcr/PatientTab";
+import HistoryTab from "@/components/mdt/workspaces/ops/pcr/HistoryTab";
+import AssessmentTab from "@/components/mdt/workspaces/ops/pcr/AssessmentTab";
+import VitalsTab from "@/components/mdt/workspaces/ops/pcr/VitalsTab";
+import TreatmentTab from "@/components/mdt/workspaces/ops/pcr/TreatmentTab";
 import { generatePCRNarrative } from "@/lib/aiNarrative";
 import { Plus, ArrowLeft, Save, Sparkles, Loader2 } from "lucide-react";
 
@@ -40,7 +40,7 @@ export default function PCRWorkspace({ department, session }) {
     setForm({
       pcr_number: `PCR-${Date.now().toString().slice(-6)}`,
       patient_name: "", patient_dob: "", patient_age: "", patient_gender: "Unknown",
-      incident_type: department.category === "Fire" ? "Fire" : "Medical",
+      incident_type: "Medical",
       allergies: [], food_allergies: [], medications: [], medical_history: [],
       loc: "Alert", gcs_eye: "4", gcs_verbal: "5", gcs_motor: "6",
       airway_patency: "Open", breathing_effort: "Normal", traumatic: false,
@@ -112,11 +112,11 @@ export default function PCRWorkspace({ department, session }) {
         </div>
 
         <div className="flex-1 min-h-0 overflow-auto mdt-scroll p-3">
-          {tab === "patient" && <PCRPatientTab form={form} update={update} />}
-          {tab === "history" && <PCRHistoryTab form={form} update={update} />}
-          {tab === "assessment" && <PCRAssessmentTab form={form} update={update} />}
-          {tab === "vitals" && <PCRVitalsTab form={form} update={update} />}
-          {tab === "treatment" && <PCRTreatmentTab form={form} update={update} />}
+          {tab === "patient" && <PatientTab form={form} update={update} />}
+          {tab === "history" && <HistoryTab form={form} update={update} />}
+          {tab === "assessment" && <AssessmentTab form={form} update={update} />}
+          {tab === "vitals" && <VitalsTab form={form} update={update} />}
+          {tab === "treatment" && <TreatmentTab form={form} update={update} />}
           {tab === "disposition" && (
             <div className="max-w-2xl space-y-3">
               <div>

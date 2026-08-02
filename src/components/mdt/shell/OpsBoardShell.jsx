@@ -26,6 +26,8 @@ export default function OpsBoardShell({
   const [openTabs, setOpenTabs] = useState(["incidents"]);
   const [activeView, setActiveView] = useState("incidents");
   const [newFileRequest, setNewFileRequest] = useState(0);
+  const hasPCR = department.category === "EMS";
+  const viewLabels = Object.fromEntries(Object.entries(VIEW_LABELS).filter(([k]) => hasPCR || k !== "pcr"));
 
   const openView = (key) => {
     setOpenTabs((tabs) => (tabs.includes(key) ? tabs : [...tabs, key]));
@@ -47,7 +49,7 @@ export default function OpsBoardShell({
       items: [
         { label: "New Call…", onSelect: () => { openView("mycall"); onNewCall(); } },
         { label: "New Report…", shortcut: "Ctrl+N", onSelect: () => { openView("reports"); setNewFileRequest((n) => n + 1); } },
-        { label: "New PCR…", onSelect: () => openView("pcr") },
+        ...(hasPCR ? [{ label: "New PCR…", onSelect: () => openView("pcr") }] : []),
         { label: "Global Search…", shortcut: "Ctrl+K", onSelect: openSearch },
         { separator: true },
         { label: "Clock Out & End Shift", onSelect: onClockOut, danger: true },
@@ -69,7 +71,7 @@ export default function OpsBoardShell({
     {
       label: "View",
       items: [
-        ...Object.keys(VIEW_LABELS).map((k) => ({ label: VIEW_LABELS[k], onSelect: () => openView(k) })),
+        ...Object.keys(viewLabels).map((k) => ({ label: viewLabels[k], onSelect: () => openView(k) })),
         { separator: true },
         { label: detailCollapsed ? "Show Status Detail" : "Hide Status Detail", onSelect: toggleDetail },
         { label: "Reload Workspace", onSelect: () => window.location.reload() },
@@ -100,17 +102,17 @@ export default function OpsBoardShell({
         { key: "mycall", label: "My Call", icon: PhoneCall },
         { key: "apparatus", label: "Apparatus", icon: Truck },
         { key: "reports", label: "Reports", icon: FileText },
-        { key: "pcr", label: "PCR", icon: ClipboardList },
+        ...(hasPCR ? [{ key: "pcr", label: "PCR", icon: ClipboardList }] : []),
       ]}
       active={activeView}
       onNavigate={openView}
       menus={buildMenus}
-      tabs={openTabs.map((k) => ({ key: k, label: VIEW_LABELS[k] }))}
+      tabs={openTabs.map((k) => ({ key: k, label: viewLabels[k] || VIEW_LABELS[k] }))}
       activeTab={activeView}
       onSelectTab={setActiveView}
       onAddTab={openView}
       onCloseTab={closeTab}
-      tabAddOptions={Object.keys(VIEW_LABELS).filter((k) => !openTabs.includes(k)).map((k) => ({ key: k, label: VIEW_LABELS[k] }))}
+      tabAddOptions={Object.keys(viewLabels).filter((k) => !openTabs.includes(k)).map((k) => ({ key: k, label: viewLabels[k] }))}
       banner={session.panic_active ? <AlertBanner>PANIC ACTIVE — {session.callsign || session.user_name} — ALL UNITS RESPOND</AlertBanner> : null}
       headerRight={
         <UnitControls
@@ -137,7 +139,7 @@ export default function OpsBoardShell({
           <ApparatusWorkspace department={department} session={session} />
         ) : activeView === "reports" ? (
           <RecordsWorkspace department={department} session={session} newFileRequest={newFileRequest} />
-        ) : activeView === "pcr" ? (
+        ) : activeView === "pcr" && hasPCR ? (
           <PCRWorkspace department={department} session={session} />
         ) : (
           <MyCallWorkspace
