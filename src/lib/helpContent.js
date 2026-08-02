@@ -101,6 +101,33 @@ export const HELP_CATEGORIES = [
         ],
       },
       {
+        id: "sign-on-terminal",
+        title: "Unified Sign-On Terminal",
+        summary: "One enterprise sign-on screen for every department.",
+        tags: ["signon", "login", "terminal", "shift"],
+        steps: [
+          "Every department — Police, Fire, EMS, Dispatch, and Civilian — now uses the same full-screen sign-on terminal. The old pop-up login windows have been removed.",
+          "The terminal looks you up on the roster automatically using your linked Discord account, then pre-fills your name, rank, callsign, and badge number.",
+          "You can search the roster manually by name or Discord ID if auto-match doesn't find you.",
+          "Fire and EMS sign-ons also let you pick your apparatus or unit group before going on duty.",
+          "Once signed on, your unit appears live on the Dispatch station status strip and unit boards.",
+        ],
+      },
+      {
+        id: "auto-dispatch",
+        title: "Automated AI Dispatch",
+        summary: "Calls get dispatched automatically when no dispatcher is online.",
+        tags: ["dispatch", "automation", "ai", "calls"],
+        steps: [
+          "When a new 911 call is created and no dispatcher is signed on, the Automated Dispatch System takes over.",
+          "It resolves the right departments for the call type, scores nearby available units by postal distance and status, and assigns the best matches.",
+          "An AI narrative and reasoning summary are written onto the call so responding units know what they're walking into.",
+          "A Discord notification is sent to the relevant department channels.",
+          "If a dispatcher IS online, auto-dispatch stands down and leaves the call in the queue for them.",
+          "Every run is recorded — see Admin Panel → Auto-Dispatch for the log, outcome, dispatch time, and recommended units.",
+        ],
+      },
+      {
         id: "panic",
         title: "Using the Panic Button",
         summary: "Emergency alert for officer-down situations.",
@@ -135,6 +162,20 @@ export const HELP_CATEGORIES = [
           "Assign units by dragging them onto a call, or clicking 'Assign' next to a unit.",
           "Each assignment is logged with a timestamp in the call's assignment log.",
           "Close calls by changing their status to 'Closed' — all units are released.",
+        ],
+      },
+      {
+        id: "dispatch-station",
+        title: "The Dispatch Station",
+        summary: "A static, always-on command workstation.",
+        tags: ["dispatch", "station", "console"],
+        steps: [
+          "Dispatch is a stationary command station, not a tabbed MDT — every board stays visible at once.",
+          "Fixed operational bar across the top: new call, sync, and station controls.",
+          "Always-on status strip shows signed-on dispatchers, unit counts, and pending call totals.",
+          "Panes: Call Queue, Units roster, Incident detail, and Activity log — all updating live.",
+          "A persistent lookup dock lets you query civilian and vehicle records without leaving the station.",
+          "Locations and cross streets use type-in dropdown fields that match against your configured street list.",
         ],
       },
       {
@@ -356,6 +397,34 @@ export const HELP_CATEGORIES = [
         ],
       },
       {
+        id: "auto-dispatch-admin",
+        title: "Auto-Dispatch Configuration",
+        summary: "Control and audit the automated dispatch system.",
+        tags: ["admin", "dispatch", "automation", "ai"],
+        steps: [
+          "Open Admin Panel → Auto-Dispatch to configure the system.",
+          "Toggles: enable/disable the system, auto-assign units, AI narratives, and Discord notifications.",
+          "Set the maximum number of units auto-dispatch is allowed to recommend per call.",
+          "Stats show total auto-dispatched calls, skip reasons, and average dispatch time.",
+          "The log lists every run with its outcome (Auto-Dispatched, Skipped — Dispatcher Online, Skipped — Disabled, or Failed).",
+          "The automation runs on a private internal trigger token — outside requests cannot fire it.",
+        ],
+      },
+      {
+        id: "security",
+        title: "Security & Access Control",
+        summary: "How the system protects records and admin actions.",
+        tags: ["admin", "security", "permissions"],
+        steps: [
+          "All backend operations run through centralized authorization guards — no endpoint falls back to elevated access for anonymous callers.",
+          "Record search requires verified CAD personnel status; unauthenticated queries are rejected outright.",
+          "Discord and personnel sync functions are admin-only.",
+          "Auto-dispatch requires either the internal trigger token or a signed-in CAD user.",
+          "Discord linking is verified by Bot DM code or Discord OAuth so identities can't be spoofed.",
+          "The Admin Console header shows the current system version; check it when reporting issues.",
+        ],
+      },
+      {
         id: "danger-zone",
         title: "Danger Zone",
         summary: "Wipe operational data with caution.",
@@ -489,6 +558,27 @@ export const TIPS_AND_TRICKS = [
     category: "Troubleshooting",
   },
   {
+    id: "auto-dispatch-tip",
+    title: "Dispatch Runs Without a Dispatcher",
+    description: "No dispatcher online? New 911 calls are auto-triaged, assigned to the closest available units, and pushed to Discord automatically.",
+    icon: Siren,
+    category: "Dispatch",
+  },
+  {
+    id: "street-combo",
+    title: "Type-Ahead Street Fields",
+    description: "Location and cross-street fields are type-in dropdowns — start typing and pick from your community's configured street list for consistent call data.",
+    icon: MapPin,
+    category: "Dispatch",
+  },
+  {
+    id: "lookup-dock",
+    title: "Lookups Without Leaving Dispatch",
+    description: "The Dispatch station has a persistent lookup dock — run civilian and vehicle checks while keeping the call queue in view.",
+    icon: Car,
+    category: "Dispatch",
+  },
+  {
     id: "resync",
     title: "Re-Sync After Role Changes",
     description: "If your Discord roles change, log out and back in to trigger a permission re-sync. Your department access updates automatically.",
@@ -538,6 +628,18 @@ export const FAQ_ITEMS = [
   {
     question: "How do I create a civilian character?",
     answer: "Go to the Civilian Dashboard, click 'Create Character', fill in the required personal details, and save. You can then manage licenses, vehicles, and firearms from the dashboard. Each user gets 5 character slots by default.",
+  },
+  {
+    question: "Who dispatches calls when nobody is on dispatch?",
+    answer: "The Automated Dispatch System does. If a 911 call comes in with no dispatcher signed on, it picks the responsible departments, assigns the closest available units, writes an AI incident narrative, and notifies Discord. If a dispatcher is online, it stays out of the way. Admins can tune or disable it in Admin Panel → Auto-Dispatch.",
+  },
+  {
+    question: "Why did the department login pop-up disappear?",
+    answer: "All departments now share one full-screen sign-on terminal. It auto-matches you to the roster via your linked Discord account and pre-fills your rank, callsign, and badge — Fire and EMS can also pick their apparatus there.",
+  },
+  {
+    question: "Is Dispatch still an MDT?",
+    answer: "No. Dispatch is its own stationary command station with a fixed operations bar, always-on status strip, live call/unit/incident/activity panes, and a persistent lookup dock. The tabbed MDT workstation remains for Police units.",
   },
   {
     question: "Can police officers edit civilian licenses?",
