@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { Radio, Plus, RotateCw, XCircle, PanelBottom, Home, Shield } from "lucide-react";
+import { Radio, Plus, RotateCw, XCircle, PanelBottom, Home, Shield, Search } from "lucide-react";
 import { Btn } from "@/components/mdt/ui/primitives";
 
 /** Permanent command bar for the dispatch station — fixed actions, no menus, no tabs. */
-export default function StationCommandBar({ onNewCall, onRefresh, onCloseCall, canClose, logCollapsed, onToggleLog }) {
+export default function StationCommandBar({ onNewCall, onRefresh, onCloseCall, canClose, logCollapsed, onToggleLog, onLookups }) {
   const [now, setNow] = useState(new Date());
   useEffect(() => {
     const t = setInterval(() => setNow(new Date()), 1000);
@@ -22,6 +22,7 @@ export default function StationCommandBar({ onNewCall, onRefresh, onCloseCall, c
         <Btn variant="primary" icon={Plus} onClick={onNewCall}>New Call</Btn>
         <Btn icon={RotateCw} onClick={onRefresh}>Refresh</Btn>
         <Btn variant="danger" icon={XCircle} disabled={!canClose} onClick={onCloseCall}>Close Call</Btn>
+        <Btn icon={Search} onClick={onLookups}>Lookups</Btn>
         <Btn icon={PanelBottom} onClick={onToggleLog}>{logCollapsed ? "Show Log" : "Hide Log"}</Btn>
       </div>
 

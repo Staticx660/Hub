@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
 import RegisteredUsersManager from "@/components/cad/RegisteredUsersManager";
 import DiscordMembersManager from "@/components/cad/DiscordMembersManager";
 import DiscordSettings from "@/components/cad/DiscordSettings";
@@ -13,7 +12,8 @@ import DepartmentsGroupsManager from "@/components/cad/DepartmentsGroupsManager"
 import PermissionsManager from "@/components/cad/PermissionsManager";
 import AutoDispatchManager from "@/components/cad/AutoDispatchManager";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
-import { Users, IdCard, Settings, Building2, MapPin, Gavel, ShieldCheck, Bell, MessageCircle, ScrollText, ArrowLeft, KeyRound, Crown, Trash2, Bot } from "lucide-react";
+import AdminRail from "@/components/cad/admin/AdminRail";
+import { Users, IdCard, Settings, Building2, MapPin, Gavel, ShieldCheck, Bell, MessageCircle, ScrollText, KeyRound, Trash2, Bot } from "lucide-react";
 import SystemLogs from "@/pages/SystemLogs";
 
 // access: "supervisor" = visible to supervisors+, "admin" = visible to CAD/platform admins only
@@ -75,36 +75,26 @@ export default function CADAdmin() {
     }
   };
 
+  const activeLabel = visibleSections.flatMap(s => s.items).find(i => i.id === effectiveActive)?.label || "";
+
   return (
-    <div className="flex h-screen overflow-hidden cad-gradient-bg cad-font">
-      <aside className="w-60 flex-shrink-0 h-full cad-glass border-r border-cad-border/50 flex flex-col">
-        <div className="p-4 border-b border-cad-border/50">
-          <Link to="/cad" className="flex items-center gap-2 text-sm text-cad-muted hover:text-cad-text transition-colors mb-3">
-            <ArrowLeft className="w-4 h-4" /> Back to CAD
-          </Link>
-          <h1 className="font-bold text-cad-text text-lg">CAD Admin</h1>
-          <div className="flex flex-wrap gap-1.5 mt-1.5">
-            {isPlatformAdmin && <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-purple-500/15 text-purple-400 border border-purple-500/20"><Crown className="w-2.5 h-2.5" /> Platform Admin</span>}
-            {isCADAdmin && <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-blue-500/15 text-blue-400 border border-blue-500/20"><ShieldCheck className="w-2.5 h-2.5" /> CAD Admin</span>}
-            {isSupervisor && <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/20"><ShieldCheck className="w-2.5 h-2.5" /> Supervisor</span>}
-          </div>
+    <div className="mdt fixed inset-0 flex bg-mdt-bg text-mdt-text">
+      <AdminRail
+        sections={visibleSections}
+        active={effectiveActive}
+        onSelect={setActive}
+        isPlatformAdmin={isPlatformAdmin}
+        isCADAdmin={isCADAdmin}
+        isSupervisor={isSupervisor}
+      />
+      <main className="flex-1 min-w-0 flex flex-col min-h-0">
+        <div className="flex items-center gap-2 h-11 px-3 border-b border-mdt-line bg-mdt-surface-2 flex-shrink-0">
+          <span className="text-[12.5px] font-semibold truncate">{activeLabel}</span>
+          <span className="ml-auto text-[11px] font-mono uppercase tracking-wide text-mdt-dim">Admin Console</span>
         </div>
-        <nav className="flex-1 overflow-y-auto cad-scroll py-2">
-          {visibleSections.map(section => (
-            <div key={section.title} className="mb-2">
-              <p className="px-4 py-1.5 text-[10px] font-bold text-cad-dim uppercase tracking-wider">{section.title}</p>
-              {section.items.map(item => (
-                <button key={item.id} onClick={() => setActive(item.id)}
-                  className={`w-full flex items-center gap-2.5 px-4 py-2 text-sm transition-colors border-l-2 ${effectiveActive === item.id ? "bg-cad-accent/10 text-cad-accent border-cad-accent" : "text-cad-muted hover:bg-cad-surface-2/50 hover:text-cad-text border-transparent"}`}>
-                  <item.icon className="w-4 h-4 flex-shrink-0" /> {item.label}
-                </button>
-              ))}
-            </div>
-          ))}
-        </nav>
-      </aside>
-      <main className="flex-1 overflow-y-auto cad-scroll p-4 lg:p-8">
-        {renderPanel()}
+        <div className="flex-1 min-h-0 overflow-auto mdt-scroll p-3">
+          {renderPanel()}
+        </div>
       </main>
     </div>
   );

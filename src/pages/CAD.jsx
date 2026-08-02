@@ -12,6 +12,7 @@ import IncidentPane from "@/components/dispatch/station/IncidentPane";
 import UnitsPane from "@/components/dispatch/station/UnitsPane";
 import ActivityPane from "@/components/dispatch/station/ActivityPane";
 import NewCallModal from "@/components/dispatch/station/NewCallModal";
+import LookupPane from "@/components/dispatch/station/LookupPane";
 
 const emptyCallForm = { call_type: "", priority: "3 - Low", location: "", description: "", caller_name: "", caller_phone: "", department_id: "" };
 
@@ -25,6 +26,7 @@ export default function CAD() {
   const [callForm, setCallForm] = useState(emptyCallForm);
   const [selectedId, setSelectedId] = useState(null);
   const [logCollapsed, setLogCollapsed] = useState(false);
+  const [dockTab, setDockTab] = useState("activity");
   const { toast } = useToast();
 
   const load = async () => {
@@ -150,6 +152,7 @@ export default function CAD() {
         canClose={!!selectedCall}
         logCollapsed={logCollapsed}
         onToggleLog={() => setLogCollapsed(v => !v)}
+        onLookups={() => { setLogCollapsed(false); setDockTab("lookups"); }}
       />
       <StationHeader
         pending={activeCalls.filter(c => c.status === "Pending").length}
@@ -193,8 +196,16 @@ export default function CAD() {
       </div>
 
       {!logCollapsed && (
-        <div className="h-[168px] flex-shrink-0 border-t border-mdt-line">
-          <ActivityPane calls={activeCalls} deptName={deptName} />
+        <div className="h-[300px] flex-shrink-0 border-t border-mdt-line flex flex-col min-h-0">
+          <div className="flex items-center gap-1.5 h-8 px-2 border-b border-mdt-line bg-mdt-surface-2 flex-shrink-0">
+            <Btn variant={dockTab === "activity" ? "primary" : "ghost"} onClick={() => setDockTab("activity")}>Activity Log</Btn>
+            <Btn variant={dockTab === "lookups" ? "primary" : "ghost"} onClick={() => setDockTab("lookups")}>Lookups</Btn>
+          </div>
+          <div className="flex-1 min-h-0">
+            {dockTab === "activity"
+              ? <ActivityPane calls={activeCalls} deptName={deptName} />
+              : <LookupPane />}
+          </div>
         </div>
       )}
 

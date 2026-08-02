@@ -10,6 +10,7 @@ import CallViewer from "@/components/cad/mdt/CallViewer";
 import GroupsView from "@/components/cad/mdt/GroupsView";
 import EMSDashboard from "@/components/cad/ems/EMSDashboard";
 import OpsBoardShell from "@/components/mdt/shell/OpsBoardShell";
+import StationSignOn from "@/components/mdt/shell/StationSignOn";
 import { useCommunityBranding } from "@/hooks/useCommunityBranding";
 import { useCadTheme } from "@/hooks/useCadTheme";
 import RetroClockInScreen from "@/components/cad/retro/RetroClockInScreen";
@@ -157,27 +158,16 @@ export default function EMSBoard() {
 
   const enterprise = !retro && department && session;
 
-  if (loading) return <div className="flex justify-center items-center h-screen cad-gradient-bg cad-font"><div className="w-8 h-8 border-4 border-cad-border border-t-green-500 rounded-full animate-spin" /></div>;
-  if (!department) return <div className="flex justify-center items-center h-screen cad-gradient-bg cad-font text-cad-muted">Department not found</div>;
+  if (loading) return <div className="mdt fixed inset-0 bg-mdt-bg flex items-center justify-center"><div className="w-7 h-7 border-2 border-mdt-line border-t-mdt-accent rounded-full animate-spin" /></div>;
+  if (!department) return <div className="mdt fixed inset-0 bg-mdt-bg flex items-center justify-center text-[12.5px] text-mdt-muted">Department not found</div>;
 
   if (!session) {
     if (retro) return <RetroClockInScreen department={department} user={user} onClockIn={handleClockIn} clockInOpen={clockInOpen} setClockInOpen={setClockInOpen} subtitle="EMS OPERATIONS BOARD" clockInLabel="Clock In" onBack={() => navigate("/cad")} icon={Ambulance} accentColor="#22c55e" />;
     return (
-      <div className="flex flex-col items-center justify-center h-screen cad-gradient-bg cad-font gap-6">
-        <div className="w-20 h-20 rounded-2xl flex items-center justify-center bg-green-500/10 cad-accent-glow">
-          <Ambulance className="w-10 h-10 text-green-400" />
-        </div>
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-cad-text mb-1">{department.name}</h1>
-          <p className="text-cad-muted">EMS Operations Board</p>
-          <p className="text-cad-dim text-sm mt-2">You are not currently on duty</p>
-        </div>
-        <div className="flex gap-3">
-          <Button onClick={() => navigate("/cad")} variant="outline" className="border-cad-border text-cad-muted hover:bg-cad-surface-2/50 gap-2 px-6"><ChevronLeft className="w-4 h-4" /> Back</Button>
-          <Button onClick={() => setClockInOpen(true)} className="bg-green-600 hover:bg-green-700 gap-2 px-8 cad-accent-glow"><Clock className="w-4 h-4" /> Clock In</Button>
-        </div>
+      <>
+        <StationSignOn department={department} subtitle="EMS Operations" icon={Ambulance} onBack={() => navigate("/cad")} onClockIn={() => setClockInOpen(true)} />
         <ClockInDialog open={clockInOpen} onOpenChange={setClockInOpen} department={department} user={user} onClockIn={handleClockIn} />
-      </div>
+      </>
     );
   }
 
