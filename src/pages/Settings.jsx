@@ -11,7 +11,6 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/lib/AuthContext";
-import ThemeSelector from "@/components/cad/ThemeSelector";
 import DiscordLinker from "@/components/cad/DiscordLinker";
 
 export default function Settings() {
@@ -169,9 +168,6 @@ export default function Settings() {
               </Button>
             </div>
           </div>
-
-          {/* CAD Theme */}
-          <ThemeSelector />
 
           {/* Admin: Invite Users */}
           {isAdmin && (

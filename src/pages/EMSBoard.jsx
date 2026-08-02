@@ -12,8 +12,6 @@ import EMSDashboard from "@/components/cad/ems/EMSDashboard";
 import OpsBoardShell from "@/components/mdt/shell/OpsBoardShell";
 import StationSignOn from "@/components/mdt/shell/StationSignOn";
 import { useCommunityBranding } from "@/hooks/useCommunityBranding";
-import { useCadTheme } from "@/hooks/useCadTheme";
-import RetroClockInScreen from "@/components/cad/retro/RetroClockInScreen";
 import { Clock, Ambulance, ChevronLeft, ArrowLeft, FileText } from "lucide-react";
 import PanicDialog from "@/components/cad/mdt/PanicDialog";
 import { useKeybinds, loadKeybinds } from "@/hooks/useKeybinds";
@@ -33,8 +31,6 @@ export default function EMSBoard() {
   const [selectedCallId, setSelectedCallId] = useState(null);
   const [panicOpen, setPanicOpen] = useState(false);
   useCommunityBranding();
-  const { theme } = useCadTheme();
-  const retro = theme === "retro";
 
   useEffect(() => {
     loadNotificationTones();
@@ -156,13 +152,12 @@ export default function EMSBoard() {
 
   const openCall = (callId) => { setSelectedCallId(callId); setActiveView("callviewer"); };
 
-  const enterprise = !retro && department && session;
+  const enterprise = department && session;
 
   if (loading) return <div className="mdt fixed inset-0 bg-mdt-bg flex items-center justify-center"><div className="w-7 h-7 border-2 border-mdt-line border-t-mdt-accent rounded-full animate-spin" /></div>;
   if (!department) return <div className="mdt fixed inset-0 bg-mdt-bg flex items-center justify-center text-[12.5px] text-mdt-muted">Department not found</div>;
 
   if (!session) {
-    if (retro) return <RetroClockInScreen department={department} user={user} onClockIn={handleClockIn} clockInOpen={clockInOpen} setClockInOpen={setClockInOpen} subtitle="EMS OPERATIONS BOARD" clockInLabel="Clock In" onBack={() => navigate("/cad")} icon={Ambulance} accentColor="#22c55e" />;
     return (
       <>
         <StationSignOn department={department} subtitle="EMS Operations" icon={Ambulance} onBack={() => navigate("/cad")} onClockIn={() => setClockInOpen(true)} />
@@ -192,7 +187,7 @@ export default function EMSBoard() {
   }
 
   return (
-    <div className={`flex flex-col h-screen cad-gradient-bg cad-font overflow-hidden ${retro ? "retro-shell" : ""}`}>
+    <div className="flex flex-col h-screen cad-gradient-bg cad-font overflow-hidden">
       {session.panic_active && <div className="bg-red-500/20 border-y border-red-500 text-red-400 text-center py-1.5 text-sm font-bold animate-pulse">🚨 PANIC ACTIVE — {session.callsign || session.user_name}</div>}
 
       {activeView === "callviewer" && (

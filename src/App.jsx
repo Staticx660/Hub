@@ -49,16 +49,11 @@ import MyRecords from '@/pages/MyRecords';
 import SystemLogs from '@/pages/SystemLogs';
 import Help from '@/pages/Help';
 import MDTPreview from '@/pages/MDTPreview';
-import { useCadTheme, syncThemeFromUser } from "@/hooks/useCadTheme";
 import { useCommunityBranding } from "@/hooks/useCommunityBranding";
 
 const AuthenticatedApp = () => {
   const { user, isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
   useCommunityBranding();
-
-  useEffect(() => {
-    if (user) syncThemeFromUser(user);
-  }, [user]);
 
   if (isLoadingPublicSettings || isLoadingAuth) {
     return (
@@ -147,7 +142,6 @@ const AuthenticatedApp = () => {
 };
 
 function App() {
-  useCadTheme();
   return (
     <AuthProvider>
       <QueryClientProvider client={queryClientInstance}>

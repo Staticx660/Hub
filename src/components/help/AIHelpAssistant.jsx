@@ -37,7 +37,7 @@ System features:
 - Police: 13 report types, charges auto-populate from penal codes
 - Admin panel: community settings, personnel management, penal codes, Discord sync
 - Discord integration: role-based department access, verified linking via Bot DM or OAuth
-- Themes: Modern Dark and Retro Terminal
+- Interface: a single Enterprise Graphite theme across the whole CAD
 - Real-time WebSocket updates for calls and units
 
 User question: ${questionText}`,

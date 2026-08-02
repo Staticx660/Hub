@@ -11,7 +11,6 @@ import CharacterRail from "@/components/cad/civilian/terminal/CharacterRail";
 import IdentityPane from "@/components/cad/civilian/terminal/IdentityPane";
 import RecordsPane from "@/components/cad/civilian/terminal/RecordsPane";
 import { Btn, EmptyState } from "@/components/mdt/ui/primitives";
-import { useCadTheme } from "@/hooks/useCadTheme";
 
 export default function CADCivilian() {
   const { deptId } = useParams();
@@ -24,8 +23,6 @@ export default function CADCivilian() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [panel, setPanel] = useState(null);
-  const { theme } = useCadTheme();
-  const retro = theme === "retro";
   const [charFormOpen, setCharFormOpen] = useState(false);
   const [editingChar, setEditingChar] = useState(null);
   const [call911Open, setCall911Open] = useState(false);
@@ -135,7 +132,7 @@ export default function CADCivilian() {
   const fullName = selectedChar ? `${selectedChar.first_name} ${selectedChar.middle_name ? selectedChar.middle_name + " " : ""}${selectedChar.last_name}` : "";
 
   return (
-    <div className={`mdt fixed inset-0 flex flex-col bg-mdt-bg text-mdt-text ${retro ? "retro-shell" : ""}`}>
+    <div className="mdt fixed inset-0 flex flex-col bg-mdt-bg text-mdt-text">
       <div className="flex items-center gap-3 h-11 px-3 border-b border-mdt-line bg-mdt-surface-2 flex-shrink-0">
         <div className="min-w-0">
           <div className="text-[12.5px] font-semibold text-mdt-text truncate leading-tight">Civilian Device</div>

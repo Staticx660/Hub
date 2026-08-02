@@ -18,8 +18,6 @@ import KeybindsDialog from "@/components/cad/mdt/KeybindsDialog";
 import PanicDialog from "@/components/cad/mdt/PanicDialog";
 import { useKeybinds, loadKeybinds } from "@/hooks/useKeybinds";
 import { clearPanic } from "@/lib/panic";
-import { useCadTheme } from "@/hooks/useCadTheme";
-import RetroClockInScreen from "@/components/cad/retro/RetroClockInScreen";
 import { startPanicSound, stopPanicSound, playStatusBeep, stopPanicVoice, loadNotificationTones } from "@/components/cad/mdt/panicSound";
 import StationSignOn from "@/components/mdt/shell/StationSignOn";
 import { Btn } from "@/components/mdt/ui/primitives";
@@ -64,8 +62,6 @@ export default function CADMDT() {
   const [newFileRequest, setNewFileRequest] = useState(0);
   const { tabs, activeId, activeView, setActiveId, setView: setActiveView, addTab, closeTab } = useWorkspaceTabs(location.state?.initialView || "dispatch");
   const openView = setActiveView;
-  const { theme } = useCadTheme();
-  const retro = theme === "retro";
 
   useEffect(() => {
     loadNotificationTones();
@@ -242,9 +238,6 @@ export default function CADMDT() {
   if (!department) return <div className="mdt fixed inset-0 bg-mdt-bg flex items-center justify-center text-[12.5px] text-mdt-muted">Department not found</div>;
 
   if (!session) {
-    if (retro) return (
-      <RetroClockInScreen department={department} user={user} onClockIn={handleClockIn} clockInOpen={clockInOpen} setClockInOpen={setClockInOpen} subtitle={`${department.category} · MDT SYSTEM`} clockInLabel="Clock In & Start MDT" onBack={() => navigate("/cad")} icon={Radio} accentColor="#3b82f6" />
-    );
     return (
       <>
         <StationSignOn department={department} subtitle={`${department.category} · MDT`} icon={Radio} onBack={() => navigate("/cad")} onClockIn={() => setClockInOpen(true)} />
@@ -330,7 +323,7 @@ export default function CADMDT() {
   ];
 
   // Police MDT runs on the new Windows-style workspace shell
-  if (department.category === "Police" && !retro) {
+  if (department.category === "Police") {
     return (
       <>
         <MDTShell
@@ -401,7 +394,7 @@ export default function CADMDT() {
   }
 
   return (
-    <div className={`flex flex-col h-screen cad-gradient-bg cad-font overflow-hidden ${retro ? "retro-shell" : ""}`}>
+    <div className="flex flex-col h-screen cad-gradient-bg cad-font overflow-hidden">
       {session.panic_active && <div className="bg-red-500/20 border-y border-red-500 text-red-400 text-center py-1.5 text-sm font-bold animate-pulse">🚨 PANIC ACTIVE — {session.callsign || session.user_name} — ALL UNITS RESPOND</div>}
       <div className="flex-1 overflow-hidden">{views}</div>
       <Taskbar activeView={activeView} setActiveView={(v) => { if (v === "dispatch" && department.category === "Fire") { navigate(`/cad/fire/${deptId}`); } else if (v === "dispatch" && department.category === "EMS") { navigate(`/cad/ems/${deptId}`); } else { setActiveView(v); } }} session={session} departmentCategory={department.category} onStatusChange={handleStatusChange} onPanic={handlePanic} onClockOut={handleClockOut} onOpenKeybinds={() => setKeybindsOpen(true)} onSessionUpdate={setSession} />

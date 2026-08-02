@@ -41,15 +41,13 @@ export const HELP_CATEGORIES = [
       },
       {
         id: "themes",
-        title: "Customizing Your Theme",
-        summary: "Switch between Modern Dark and Retro Terminal themes.",
+        title: "Interface Appearance",
+        summary: "The CAD runs on a single Enterprise Graphite interface.",
         tags: ["theme", "appearance", "customization"],
         steps: [
-          "Open CAD Settings from the sidebar or Settings page.",
-          "Choose between 'Modern Dark' (sleek, glassmorphic) and 'Retro Terminal' (CRT scanlines, monospace, ASCII frames).",
-          "The Retro theme features a command-line navigation bar and terminal-style panels.",
-          "Theme selection persists across sessions on your device.",
+          "The entire CAD uses one flat, dense Enterprise Graphite interface — no theme switching required.",
           "Community admins can set a global accent color in the Admin Panel → Community Info.",
+          "Community logo and branding also propagate from Admin Panel → Community Info.",
         ],
       },
     ],
@@ -417,13 +415,6 @@ export const SETUP_STEPS = [
     adminOnly: false,
     link: "/keybinds",
   },
-  {
-    id: "theme",
-    title: "Pick Your Theme",
-    description: "Choose between Modern Dark and Retro Terminal in CAD Settings.",
-    adminOnly: false,
-    link: "/cad-settings",
-  },
 ];
 
 export const TIPS_AND_TRICKS = [
@@ -475,13 +466,6 @@ export const TIPS_AND_TRICKS = [
     description: "When selecting charges in a report, the fine amount, jail time, and bond type auto-populate from your penal code database.",
     icon: FileText,
     category: "Reports",
-  },
-  {
-    id: "retro-nav",
-    title: "Retro Theme Navigation",
-    description: "In Retro Terminal theme, use the command-line nav bar at the top. Type or click commands to navigate — it's keyboard-first by design.",
-    icon: Keyboard,
-    category: "Theme",
   },
   {
     id: "civilian-limit",

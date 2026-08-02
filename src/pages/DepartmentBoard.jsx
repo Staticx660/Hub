@@ -12,8 +12,6 @@ import Taskbar from "@/components/cad/mdt/Taskbar";
 import ClockInDialog from "@/components/cad/mdt/ClockInDialog";
 import AddressSearch from "@/components/cad/mdt/AddressSearch";
 import { useCommunityBranding } from "@/hooks/useCommunityBranding";
-import { useCadTheme } from "@/hooks/useCadTheme";
-import RetroClockInScreen from "@/components/cad/retro/RetroClockInScreen";
 import { Clock, Siren, Users, PhoneCall, Activity, Flame, Ambulance, Radio, Plus, X, MapPin, AlertTriangle, CheckCircle, Building2, Stethoscope, ChevronLeft } from "lucide-react";
 import PanicDialog from "@/components/cad/mdt/PanicDialog";
 import { useKeybinds, loadKeybinds } from "@/hooks/useKeybinds";
@@ -37,8 +35,6 @@ export default function DepartmentBoard() {
   const [showIntake, setShowIntake] = useState(false);
   const [panicOpen, setPanicOpen] = useState(false);
   useCommunityBranding();
-  const { theme } = useCadTheme();
-  const retro = theme === "retro";
 
   useEffect(() => {
     loadNotificationTones();
@@ -170,10 +166,6 @@ export default function DepartmentBoard() {
   if (!department) return <div className="flex justify-center items-center h-screen cad-gradient-bg cad-font text-cad-muted">Department not found</div>;
 
   if (!session) {
-    if (retro) {
-      const BoardIcon = department.category === "Fire" ? Flame : department.category === "EMS" ? Ambulance : Radio;
-      return <RetroClockInScreen department={department} user={user} onClockIn={handleClockIn} clockInOpen={clockInOpen} setClockInOpen={setClockInOpen} subtitle={`${department.category} · COMMAND BOARD`} clockInLabel="Clock In & Start Board" onBack={() => navigate("/cad")} icon={BoardIcon} accentColor={department.color || "#3b82f6"} />;
-    }
     return (
       <div className="flex flex-col items-center justify-center h-screen cad-gradient-bg cad-font gap-6">
         <div className="w-20 h-20 rounded-2xl flex items-center justify-center" style={{ background: (department.color || "#3b82f6") + "20" }}>
@@ -210,7 +202,7 @@ export default function DepartmentBoard() {
   }, {})) : [];
 
   return (
-    <div className={`flex flex-col h-screen cad-gradient-bg cad-font overflow-hidden ${retro ? "retro-shell" : ""}`}>
+    <div className="flex flex-col h-screen cad-gradient-bg cad-font overflow-hidden">
       {session.panic_active && <div className="bg-red-500/20 border-y border-red-500 text-red-400 text-center py-1.5 text-sm font-bold animate-pulse">🚨 PANIC ACTIVE — {session.callsign || session.user_name}</div>}
       
       <div className="flex-1 overflow-hidden flex">

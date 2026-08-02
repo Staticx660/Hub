@@ -2,7 +2,6 @@ import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { getBranding } from "@/hooks/useCommunityBranding";
-import { useCadTheme } from "@/hooks/useCadTheme";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
 import { Shield, Search, FileText, Radio, Layers, Maximize, Home, UserCog, Keyboard, LogOut, ChevronUp, AlertTriangle, Users, Camera, ChevronDown, ClipboardList } from "lucide-react";
 import SessionEditDialog from "@/components/cad/mdt/SessionEditDialog";
@@ -26,8 +25,6 @@ export default function Taskbar({ activeView, setActiveView, session, department
   const logoRef = useRef(null);
   const statusRef = useRef(null);
   const navigate = useNavigate();
-  const { theme } = useCadTheme();
-  const retro = theme === "retro";
   const { isPlatformAdmin, isCADAdmin, isSupervisor } = useUserPermissions();
   const canManageGroups = isPlatformAdmin || isCADAdmin || isSupervisor;
 
@@ -52,7 +49,6 @@ export default function Taskbar({ activeView, setActiveView, session, department
 
   const currentStatus = statusOptions.find((s) => s.value === session?.status) || statusOptions[0];
   const isPanic = session?.panic_active;
-  const activeGlow = "border border-green-400/50 shadow-[0_0_8px_rgba(74,222,128,0.25)]";
 
   const handleLogoAction = (action) => {
     setLogoMenu(false);
@@ -94,42 +90,21 @@ export default function Taskbar({ activeView, setActiveView, session, department
         { id: "dispatch", label: "Self Dispatch", icon: Radio, hasDropdown: false },
       ];
 
-  // Theme-aware class sets
   const c = {
-    bar: retro
-      ? `h-12 border-t border-cad-border-light bg-cad-bg-solid/95 cad-font flex items-center px-2 gap-1 ${isPanic ? "border-red-500 animate-pulse" : ""}`
-      : `h-14 bg-[#131519] border-t border-[#2c2f36] flex items-center px-2 gap-1 ${isPanic ? "border-red-500 animate-pulse" : ""}`,
-    logoBtn: retro
-      ? "flex items-center gap-2 px-2 h-9 hover:bg-cad-surface-2/50 transition-colors"
-      : "flex items-center gap-2 px-2 h-10 rounded-lg hover:bg-slate-800 transition-colors",
-    menu: retro
-      ? "absolute bottom-12 left-0 w-48 retro-frame shadow-xl py-1 z-50"
-      : "absolute bottom-11 left-0 w-48 bg-slate-800 border border-slate-700 rounded-lg shadow-xl py-1 z-50",
-    menuItem: retro
-      ? "w-full flex items-center gap-2 px-3 py-2 text-xs text-cad-muted hover:bg-cad-surface-2/50 hover:text-cad-text uppercase tracking-wider"
-      : "w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:bg-slate-700",
-    menuDiv: retro ? "border-t border-cad-border my-1" : "border-t border-slate-700 my-1",
-    navBtn: (active) => retro
-      ? `flex items-center gap-1.5 px-3 h-9 text-xs font-bold uppercase tracking-wider transition-colors whitespace-nowrap ${active ? "text-cad-accent border-b-2 border-cad-accent" : "text-cad-muted hover:text-cad-text"}`
-      : `flex items-center gap-1.5 px-3 h-9 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${active ? `bg-slate-800 text-white ${activeGlow}` : "text-slate-400 hover:bg-slate-800 hover:text-white"}`,
-    divider: retro ? "w-px h-6 bg-cad-border-light/50 mx-1" : "w-px h-7 bg-[#2c2f36] mx-1",
-    statusBtn: retro
-      ? `flex items-center gap-1.5 px-3 h-9 text-xs font-bold uppercase tracking-wider transition-colors border border-cad-border-light ${currentStatus.bg} ${currentStatus.color}`
-      : `flex items-center gap-1.5 px-3 h-9 rounded-lg text-xs font-bold transition-colors ${currentStatus.bg} ${currentStatus.color}`,
-    statusMenu: retro
-      ? "absolute bottom-12 right-0 w-44 retro-frame shadow-xl py-1 z-50"
-      : "absolute bottom-11 right-0 w-44 bg-slate-800 border border-slate-700 rounded-lg shadow-xl py-1 z-50",
-    statusItem: retro
-      ? "w-full flex items-center gap-2 px-3 py-2 text-xs hover:bg-cad-surface-2/50 uppercase tracking-wider"
-      : "w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-slate-700",
-    panic: retro
-      ? `flex items-center justify-center w-10 h-9 text-xs font-bold uppercase transition-colors border border-red-500/50 ${isPanic ? "bg-red-500 text-white animate-pulse" : "bg-red-500/10 text-red-400 hover:bg-red-500/20"}`
-      : `flex items-center justify-center w-10 h-10 rounded-lg text-sm font-bold transition-colors ${isPanic ? "bg-red-500 text-white animate-pulse" : "bg-red-500/10 text-red-400 hover:bg-red-500/20"}`,
-    clockOut: retro
-      ? "flex items-center gap-1.5 px-3 h-9 text-xs font-bold uppercase tracking-wider text-cad-muted hover:text-cad-text transition-colors"
-      : "flex items-center gap-1.5 px-3 h-10 rounded-lg text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition-colors",
-    unitText: retro ? "font-bold text-cad-text text-xs hover:text-cad-accent transition-colors uppercase tracking-wider" : "font-mono font-semibold text-white text-sm hover:text-blue-400 transition-colors",
-    camIcon: retro ? "text-cad-dim" : "text-slate-500",
+    bar: `h-11 bg-mdt-surface-2 border-t border-mdt-line flex items-center px-2 gap-1 ${isPanic ? "border-red-500" : ""}`,
+    logoBtn: "flex items-center gap-2 px-2 h-8 hover:bg-mdt-surface-3 transition-colors",
+    menu: "absolute bottom-11 left-0 w-48 bg-mdt-surface border border-mdt-line-2 py-1 z-50",
+    menuItem: "w-full flex items-center gap-2 px-2.5 py-1.5 text-[12px] text-mdt-muted hover:bg-mdt-surface-3 hover:text-mdt-text",
+    menuDiv: "border-t border-mdt-line my-1",
+    navBtn: (active) => `flex items-center gap-1.5 px-2.5 h-7 rounded-sm border text-[11.5px] font-medium transition-colors whitespace-nowrap ${active ? "bg-mdt-accent text-white border-mdt-accent" : "bg-mdt-surface-3 text-mdt-muted border-mdt-line-2 hover:text-mdt-text hover:bg-mdt-surface-4"}`,
+    divider: "w-px h-6 bg-mdt-line-2 mx-1",
+    statusBtn: `flex items-center gap-1.5 px-2.5 h-7 rounded-sm border border-mdt-line-2 text-[11px] font-semibold uppercase tracking-wide ${currentStatus.bg} ${currentStatus.color}`,
+    statusMenu: "absolute bottom-11 right-0 w-44 bg-mdt-surface border border-mdt-line-2 py-1 z-50",
+    statusItem: "w-full flex items-center gap-2 px-2.5 py-1.5 text-[12px] hover:bg-mdt-surface-3",
+    panic: `flex items-center justify-center w-9 h-7 rounded-sm border text-[11px] font-bold transition-colors ${isPanic ? "bg-red-600 text-white border-red-600" : "bg-red-500/10 text-red-300 border-red-500/30 hover:bg-red-500/20"}`,
+    clockOut: "flex items-center gap-1.5 px-2.5 h-7 rounded-sm border border-mdt-line-2 bg-mdt-surface-3 text-[11.5px] font-medium text-mdt-muted hover:text-mdt-text",
+    unitText: "font-mono font-semibold text-mdt-text text-[12px] hover:text-mdt-accent transition-colors",
+    camIcon: "text-mdt-dim",
   };
 
   return (
@@ -162,7 +137,6 @@ export default function Taskbar({ activeView, setActiveView, session, department
         {navButtons.map((v) => (
           <div key={v.id} className="relative">
             <button onClick={() => setActiveView(v.id)} className={c.navBtn(activeView === v.id)}>
-              {retro && <span className="text-cad-dim">&gt;</span>}
               <v.icon className="w-4 h-4" />
               <span className="hidden sm:block">{v.label}</span>
               {v.hasDropdown && <ChevronDown className="w-3 h-3 opacity-50" />}
@@ -184,7 +158,7 @@ export default function Taskbar({ activeView, setActiveView, session, department
       <div ref={statusRef} className="relative ml-auto">
         <button onClick={() => setStatusMenu(!statusMenu)} className={c.statusBtn}>
           <span className={`w-2 h-2 rounded-full ${currentStatus.dot}`} />
-          <span className="hidden sm:block">{retro ? `[${(session?.status || "AVAILABLE").toUpperCase()}]` : (session?.status || "AVAILABLE").toUpperCase()}</span>
+          <span className="hidden sm:block">{(session?.status || "AVAILABLE").toUpperCase()}</span>
           <ChevronUp className="w-3 h-3" />
         </button>
         {statusMenu && (
@@ -192,7 +166,7 @@ export default function Taskbar({ activeView, setActiveView, session, department
             {statusOptions.map((s) => (
               <button key={s.value} onClick={() => { onStatusChange(s.value); setStatusMenu(false); }} className={`${c.statusItem} ${s.color}`}>
                 <span className={`w-2 h-2 rounded-full ${s.dot}`} />
-                {retro ? s.value.toUpperCase() : s.value}
+                {s.value}
               </button>
             ))}
             <div className={c.menuDiv} />
@@ -212,7 +186,7 @@ export default function Taskbar({ activeView, setActiveView, session, department
       {/* Clock Out */}
       <button onClick={onClockOut} className={c.clockOut}>
         <LogOut className="w-4 h-4" />
-        <span className="hidden sm:block">{retro ? "LOGOUT" : "Clock Out"}</span>
+        <span className="hidden sm:block">Clock Out</span>
       </button>
       <SessionEditDialog open={editOpen} onOpenChange={setEditOpen} session={session} onSaved={onSessionUpdate} />
     </div>

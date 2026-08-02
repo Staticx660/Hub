@@ -3,8 +3,6 @@ import { Link, useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Building2, AlertCircle, Lock, LogIn, Shield, Flame, HeartPulse, Radio, User } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import { useCadTheme } from "@/hooks/useCadTheme";
-import RetroDepartmentList from "@/components/cad/retro/RetroDepartmentList";
 import { Btn, StatusPill, EmptyState } from "@/components/mdt/ui/primitives";
 import DataTable from "@/components/mdt/ui/DataTable";
 import { terminalRoute } from "@/components/cad/home/terminalRoute";
@@ -41,13 +39,11 @@ export default function CADDepartments() {
 
   useEffect(() => { load(); }, []);
 
-  const { theme } = useCadTheme();
 
   if (loading) {
     return <div className="h-full flex items-center justify-center"><div className="w-7 h-7 border-2 border-mdt-line border-t-mdt-accent rounded-full animate-spin" /></div>;
   }
 
-  if (theme === "retro") return <RetroDepartmentList departments={departments} units={units} personnel={personnel} community={community} />;
 
   const openCalls = calls.filter(c => c.status !== "Closed");
   const showDiscordWarning = accessInfo && !accessInfo.isAdmin && !accessInfo.hasDiscordLink && departments.some(d => d.discord_role_id);
