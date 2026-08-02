@@ -21,6 +21,10 @@ import { clearPanic } from "@/lib/panic";
 import { useCadTheme } from "@/hooks/useCadTheme";
 import RetroClockInScreen from "@/components/cad/retro/RetroClockInScreen";
 import { startPanicSound, stopPanicSound, playStatusBeep, stopPanicVoice, loadNotificationTones } from "@/components/cad/mdt/panicSound";
+import MDTShell from "@/components/mdt/shell/MDTShell";
+import { AlertBanner } from "@/components/mdt/shell/StatusStrip";
+import UnitControls from "@/components/mdt/shell/UnitControls";
+import { Radio as RadioIcon, Search as SearchIcon, FileText, PhoneCall, Users } from "lucide-react";
 
 const OCRP_LOGO = "https://media.base44.com/images/public/6a441f279b9d3cd678958799/5a43a1b46_OCRP20.png";
 
@@ -237,18 +241,62 @@ export default function CADMDT() {
     );
   }
 
+  const views = (
+    <>
+      {activeView === "dispatch" && <DispatchView department={department} session={session} setSession={setSession} setActiveView={setActiveView} setSelectedCallId={setSelectedCallId} />}
+      {activeView === "callviewer" && <CallViewer department={department} session={session} selectedCallId={selectedCallId} onSelectCall={setSelectedCallId} onBack={() => setActiveView("dispatch")} />}
+      {activeView === "lookups" && <LookupPanel department={department} session={session} />}
+      {activeView === "pcr" && <PCRForm department={department} session={session} />}
+      {activeView === "records" && <RecordsPanel department={department} session={session} />}
+      {activeView === "mycall" && <MyCallView department={department} session={session} setSession={setSession} selectedCallId={selectedCallId} setSelectedCallId={setSelectedCallId} setActiveView={setActiveView} />}
+      {activeView === "groups" && <GroupsView department={department} session={session} />}
+    </>
+  );
+
+  // Police MDT runs on the new Windows-style workspace shell
+  if (department.category === "Police" && !retro) {
+    return (
+      <>
+        <MDTShell
+          agency={department.name}
+          subtitle="MDT"
+          unit={`${session.callsign ? session.callsign + " · " : ""}${session.user_name}${session.rank ? " · " + session.rank : ""}`}
+          status={{ label: session.panic_active ? "PANIC" : session.status }}
+          navItems={[
+            { key: "dispatch", label: "Calls", icon: RadioIcon },
+            { key: "mycall", label: "My Call", icon: PhoneCall },
+            { key: "lookups", label: "Lookups", icon: SearchIcon },
+            { key: "records", label: "Records", icon: FileText },
+            { key: "groups", label: "Groups", icon: Users },
+          ]}
+          active={activeView === "callviewer" ? "dispatch" : activeView}
+          onNavigate={setActiveView}
+          tabs={[{ key: department.id, label: department.name }]}
+          activeTab={department.id}
+          onSelectTab={() => {}}
+          banner={session.panic_active ? <AlertBanner>PANIC ACTIVE — {session.callsign || session.user_name} — ALL UNITS RESPOND</AlertBanner> : null}
+          headerRight={
+            <UnitControls
+              session={session}
+              onStatusChange={handleStatusChange}
+              onPanic={handlePanic}
+              onOpenKeybinds={() => setKeybindsOpen(true)}
+              onClockOut={handleClockOut}
+            />
+          }
+        >
+          {() => <div className="flex-1 min-h-0 overflow-hidden">{views}</div>}
+        </MDTShell>
+        <PanicDialog open={panicOpen} department={department} session={session} onClose={() => setPanicOpen(false)} onActivated={(s) => setSession(s)} />
+        <KeybindsDialog open={keybindsOpen} onOpenChange={setKeybindsOpen} keybinds={keybinds} setKeybinds={setKeybinds} />
+      </>
+    );
+  }
+
   return (
     <div className={`flex flex-col h-screen cad-gradient-bg cad-font overflow-hidden ${retro ? "retro-shell" : ""}`}>
       {session.panic_active && <div className="bg-red-500/20 border-y border-red-500 text-red-400 text-center py-1.5 text-sm font-bold animate-pulse">🚨 PANIC ACTIVE — {session.callsign || session.user_name} — ALL UNITS RESPOND</div>}
-      <div className="flex-1 overflow-hidden">
-        {activeView === "dispatch" && <DispatchView department={department} session={session} setSession={setSession} setActiveView={setActiveView} setSelectedCallId={setSelectedCallId} />}
-        {activeView === "callviewer" && <CallViewer department={department} session={session} selectedCallId={selectedCallId} onSelectCall={setSelectedCallId} onBack={() => setActiveView("dispatch")} />}
-        {activeView === "lookups" && <LookupPanel department={department} session={session} />}
-        {activeView === "pcr" && <PCRForm department={department} session={session} />}
-        {activeView === "records" && <RecordsPanel department={department} session={session} />}
-        {activeView === "mycall" && <MyCallView department={department} session={session} setSession={setSession} selectedCallId={selectedCallId} setSelectedCallId={setSelectedCallId} setActiveView={setActiveView} />}
-        {activeView === "groups" && <GroupsView department={department} session={session} />}
-      </div>
+      <div className="flex-1 overflow-hidden">{views}</div>
       <Taskbar activeView={activeView} setActiveView={(v) => { if (v === "dispatch" && department.category === "Fire") { navigate(`/cad/fire/${deptId}`); } else if (v === "dispatch" && department.category === "EMS") { navigate(`/cad/ems/${deptId}`); } else { setActiveView(v); } }} session={session} departmentCategory={department.category} onStatusChange={handleStatusChange} onPanic={handlePanic} onClockOut={handleClockOut} onOpenKeybinds={() => setKeybindsOpen(true)} onSessionUpdate={setSession} />
       <PanicDialog open={panicOpen} department={department} session={session} onClose={() => setPanicOpen(false)} onActivated={(s) => setSession(s)} />
       <KeybindsDialog open={keybindsOpen} onOpenChange={setKeybindsOpen} keybinds={keybinds} setKeybinds={setKeybinds} />
