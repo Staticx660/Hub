@@ -333,10 +333,9 @@ export default function CADMDT() {
     {
       label: "Window",
       items: [
-        ...myDepts.map(d => ({ label: d.name, disabled: d.id === deptId, onSelect: () => navigate(deptRoute(d)) })),
+        ...myDepts.filter(d => d.category !== "Dispatch").map(d => ({ label: d.name, disabled: d.id === deptId, onSelect: () => navigate(deptRoute(d)) })),
         { separator: true },
         { label: "CAD Home", onSelect: () => navigate("/cad") },
-        { label: "Dispatch Center", onSelect: () => navigate("/cad/dispatch") },
         { label: "My Records", onSelect: () => navigate("/my-records") },
       ],
     },

@@ -7,9 +7,11 @@ import CallQueueWorkspace from "@/components/mdt/workspaces/police/CallQueueWork
 import UnitBoardWorkspace from "@/components/mdt/workspaces/police/UnitBoardWorkspace";
 import MyCallWorkspace from "@/components/mdt/workspaces/police/MyCallWorkspace";
 import ApparatusWorkspace from "@/components/mdt/workspaces/ops/ApparatusWorkspace";
-import { Radio as RadioIcon, Users, PhoneCall, Truck } from "lucide-react";
+import PCRWorkspace from "@/components/mdt/workspaces/ops/PCRWorkspace";
+import RecordsWorkspace from "@/components/mdt/workspaces/police/RecordsWorkspace";
+import { Radio as RadioIcon, Users, PhoneCall, Truck, FileText, ClipboardList } from "lucide-react";
 
-const VIEW_LABELS = { incidents: "Incidents", personnel: "Personnel", mycall: "My Call", apparatus: "Apparatus" };
+const VIEW_LABELS = { incidents: "Incidents", personnel: "Personnel", mycall: "My Call", apparatus: "Apparatus", reports: "Reports", pcr: "PCR" };
 
 /**
  * Shared enterprise workspace shell for Fire & EMS operations boards.
@@ -23,6 +25,7 @@ export default function OpsBoardShell({
   const navigate = useNavigate();
   const [openTabs, setOpenTabs] = useState(["incidents"]);
   const [activeView, setActiveView] = useState("incidents");
+  const [newFileRequest, setNewFileRequest] = useState(0);
 
   const openView = (key) => {
     setOpenTabs((tabs) => (tabs.includes(key) ? tabs : [...tabs, key]));
@@ -42,7 +45,9 @@ export default function OpsBoardShell({
     {
       label: "File",
       items: [
-        { label: "New Incident…", onSelect: () => { openView("mycall"); onNewCall(); } },
+        { label: "New Call…", onSelect: () => { openView("mycall"); onNewCall(); } },
+        { label: "New Report…", shortcut: "Ctrl+N", onSelect: () => { openView("reports"); setNewFileRequest((n) => n + 1); } },
+        { label: "New PCR…", onSelect: () => openView("pcr") },
         { label: "Global Search…", shortcut: "Ctrl+K", onSelect: openSearch },
         { separator: true },
         { label: "Clock Out & End Shift", onSelect: onClockOut, danger: true },
@@ -73,9 +78,8 @@ export default function OpsBoardShell({
     {
       label: "Window",
       items: [
-        { label: "MDT / Reports", onSelect: () => navigate(`/cad/mdt/${department.id}`) },
         { label: "CAD Home", onSelect: () => navigate("/cad") },
-        { label: "Dispatch Center", onSelect: () => navigate("/cad/dispatch") },
+        { label: "My Records", onSelect: () => navigate("/my-records") },
       ],
     },
     {
@@ -95,6 +99,8 @@ export default function OpsBoardShell({
         { key: "personnel", label: "Personnel", icon: Users },
         { key: "mycall", label: "My Call", icon: PhoneCall },
         { key: "apparatus", label: "Apparatus", icon: Truck },
+        { key: "reports", label: "Reports", icon: FileText },
+        { key: "pcr", label: "PCR", icon: ClipboardList },
       ]}
       active={activeView}
       onNavigate={openView}
@@ -129,6 +135,10 @@ export default function OpsBoardShell({
           <UnitBoardWorkspace session={session} setSession={setSession} />
         ) : activeView === "apparatus" ? (
           <ApparatusWorkspace department={department} session={session} />
+        ) : activeView === "reports" ? (
+          <RecordsWorkspace department={department} session={session} newFileRequest={newFileRequest} />
+        ) : activeView === "pcr" ? (
+          <PCRWorkspace department={department} session={session} />
         ) : (
           <MyCallWorkspace
             department={department}
