@@ -21,6 +21,8 @@ import { clearPanic } from "@/lib/panic";
 import { useCadTheme } from "@/hooks/useCadTheme";
 import RetroClockInScreen from "@/components/cad/retro/RetroClockInScreen";
 import { startPanicSound, stopPanicSound, playStatusBeep, stopPanicVoice, loadNotificationTones } from "@/components/cad/mdt/panicSound";
+import StationSignOn from "@/components/mdt/shell/StationSignOn";
+import { Btn } from "@/components/mdt/ui/primitives";
 import MDTShell from "@/components/mdt/shell/MDTShell";
 import useWorkspaceTabs from "@/components/mdt/shell/useWorkspaceTabs";
 import { AlertBanner } from "@/components/mdt/shell/StatusStrip";
@@ -228,35 +230,26 @@ export default function CADMDT() {
     panic: () => session && handlePanic(),
   });
 
-  if (loading) return <div className="flex justify-center items-center h-screen cad-gradient-bg cad-font"><div className="w-8 h-8 border-4 border-cad-border border-t-blue-500 rounded-full animate-spin" /></div>;
+  if (loading) return <div className="mdt fixed inset-0 bg-mdt-bg flex items-center justify-center"><div className="w-7 h-7 border-2 border-mdt-line border-t-mdt-accent rounded-full animate-spin" /></div>;
   if (accessDenied) return (
-    <div className="flex flex-col items-center justify-center h-screen cad-gradient-bg cad-font gap-4">
-      <Lock className="w-16 h-16 text-cad-dim" />
-      <h1 className="text-2xl font-bold text-cad-text">Access Denied</h1>
-      <p className="text-cad-muted">You need the Discord role or an Admin Panel department assignment for this department.</p>
-      <Button onClick={() => navigate("/cad")} variant="outline" className="border-cad-border text-cad-muted hover:bg-cad-surface-2/50">Back to Departments</Button>
+    <div className="mdt fixed inset-0 bg-mdt-bg flex flex-col items-center justify-center gap-3 px-6 text-center">
+      <Lock className="w-9 h-9 text-mdt-dim" />
+      <h1 className="text-[15px] font-semibold text-mdt-text">Access Denied</h1>
+      <p className="text-[12.5px] text-mdt-muted">You need the Discord role or an Admin Panel department assignment for this department.</p>
+      <Btn onClick={() => navigate("/cad")}>Back to Departments</Btn>
     </div>
   );
-  if (!department) return <div className="flex justify-center items-center h-screen cad-gradient-bg cad-font text-cad-muted">Department not found</div>;
+  if (!department) return <div className="mdt fixed inset-0 bg-mdt-bg flex items-center justify-center text-[12.5px] text-mdt-muted">Department not found</div>;
 
   if (!session) {
     if (retro) return (
       <RetroClockInScreen department={department} user={user} onClockIn={handleClockIn} clockInOpen={clockInOpen} setClockInOpen={setClockInOpen} subtitle={`${department.category} · MDT SYSTEM`} clockInLabel="Clock In & Start MDT" onBack={() => navigate("/cad")} icon={Radio} accentColor="#3b82f6" />
     );
     return (
-      <div className="flex flex-col items-center justify-center h-screen cad-gradient-bg cad-font gap-6">
-        <img src={OCRP_LOGO} alt="OCRP" className="w-24 h-24 rounded-2xl shadow-xl cad-accent-glow" />
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-cad-text mb-1">{department.name}</h1>
-          <p className="text-cad-muted">{department.category} · MDT System</p>
-          <p className="text-cad-dim text-sm mt-2">You are not currently on duty</p>
-        </div>
-        <div className="flex gap-3">
-          <Button onClick={() => navigate("/cad")} variant="outline" className="border-cad-border text-cad-muted hover:bg-cad-surface-2/50 gap-2 px-6"><ChevronLeft className="w-4 h-4" /> Back to Departments</Button>
-          <Button onClick={() => setClockInOpen(true)} className="bg-blue-600 hover:bg-blue-700 gap-2 px-8 cad-accent-glow"><Clock className="w-4 h-4" /> Clock In & Start MDT</Button>
-        </div>
+      <>
+        <StationSignOn department={department} subtitle={`${department.category} · MDT`} icon={Radio} onBack={() => navigate("/cad")} onClockIn={() => setClockInOpen(true)} />
         <ClockInDialog open={clockInOpen} onOpenChange={setClockInOpen} department={department} user={user} onClockIn={handleClockIn} />
-      </div>
+      </>
     );
   }
 

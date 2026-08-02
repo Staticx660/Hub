@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useToast } from "@/components/ui/use-toast";
-import { ShieldCheck, ShieldAlert, Loader2, Search, Crown, Eye } from "lucide-react";
+import { ShieldAlert, Loader2, Search, Crown, Eye } from "lucide-react";
+import { Btn, StatusPill, EmptyState } from "@/components/mdt/ui/primitives";
+
+const input = "h-7 px-2 bg-mdt-bg border border-mdt-line-2 text-[12px] text-mdt-text placeholder:text-mdt-dim focus:outline-none focus:border-mdt-accent";
+const cap = "text-[9.5px] font-semibold uppercase tracking-[0.09em] text-mdt-dim";
 
 export default function PermissionsManager() {
   const [personnel, setPersonnel] = useState([]);
@@ -9,6 +13,7 @@ export default function PermissionsManager() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filterDept, setFilterDept] = useState("all");
+  const [selectedId, setSelectedId] = useState(null);
   const [updatingIds, setUpdatingIds] = useState(new Set());
   const { toast } = useToast();
 
@@ -43,11 +48,7 @@ export default function PermissionsManager() {
     } catch (e) {
       toast({ title: "Error", description: e.message, variant: "destructive" });
     } finally {
-      setUpdatingIds((prev) => {
-        const next = new Set(prev);
-        next.delete(id);
-        return next;
-      });
+      setUpdatingIds((prev) => { const next = new Set(prev); next.delete(id); return next; });
     }
   };
 
@@ -76,152 +77,103 @@ export default function PermissionsManager() {
     return matchesSearch && matchesDept;
   });
 
-  if (loading) {
-    return (
-      <div className="flex justify-center py-16">
-        <Loader2 className="w-6 h-6 animate-spin text-cad-accent" />
-      </div>
-    );
-  }
+  if (loading) return <div className="flex justify-center py-12"><Loader2 className="w-5 h-5 animate-spin text-mdt-accent" /></div>;
+
+  const selected = filtered.find((p) => p.id === selectedId) || null;
 
   return (
-    <div>
-      <div className="mb-6">
-        <div className="flex items-center gap-3 mb-1">
-          <ShieldCheck className="w-5 h-5 text-cad-accent" />
-          <h2 className="text-lg font-semibold text-cad-text">Role Permissions</h2>
+    <div className="flex h-full min-h-0 border border-mdt-line bg-mdt-surface">
+      <div className="w-[320px] flex-shrink-0 border-r border-mdt-line flex flex-col min-h-0">
+        <div className="flex items-center gap-1.5 p-2 border-b border-mdt-line bg-mdt-surface-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-mdt-dim" />
+            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Name or callsign" className={`${input} w-full pl-7`} />
+          </div>
+          <select value={filterDept} onChange={(e) => setFilterDept(e.target.value)} className={input}>
+            <option value="all">All Depts</option>
+            {departments.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
+          </select>
         </div>
-        <p className="text-sm text-cad-muted">
-          Grant CAD-level supervisor or admin permissions to personnel. These flags are synced with Discord supervisor roles on login.
-        </p>
-      </div>
-
-      <div className="flex flex-wrap gap-3 mb-4">
-        <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-cad-dim" />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by name or callsign..."
-            className="w-full pl-9 pr-3 py-2 text-sm bg-cad-surface/80 border border-cad-border/50 rounded-lg text-cad-text placeholder:text-cad-dim focus:outline-none focus:border-cad-accent/50"
-          />
-        </div>
-        <select
-          value={filterDept}
-          onChange={(e) => setFilterDept(e.target.value)}
-          className="px-3 py-2 text-sm bg-cad-surface/80 border border-cad-border/50 rounded-lg text-cad-text focus:outline-none focus:border-cad-accent/50"
-        >
-          <option value="all">All Departments</option>
-          {departments.map((d) => (
-            <option key={d.id} value={d.id}>{d.name}</option>
+        <div className="flex-1 min-h-0 overflow-auto mdt-scroll">
+          {filtered.length === 0 && <EmptyState icon={ShieldAlert} title="No personnel found" />}
+          {filtered.map((p) => (
+            <button key={p.id} onClick={() => setSelectedId(p.id)}
+              className={`w-full text-left px-2 h-8 flex items-center gap-2 border-b border-mdt-line/60 ${selectedId === p.id ? "bg-mdt-accent/15" : "hover:bg-mdt-surface-3/60"}`}
+              style={{ boxShadow: selectedId === p.id ? "inset 2px 0 0 hsl(var(--mdt-accent))" : undefined }}>
+              <span className="min-w-0">
+                <span className="block text-[12px] text-mdt-text truncate">{p.name}</span>
+                <span className="block text-[10.5px] text-mdt-dim truncate">{deptName(p.department_id)}</span>
+              </span>
+              <span className="ml-auto flex gap-1">
+                {p.is_cad_admin && <StatusPill tone="info">A</StatusPill>}
+                {p.is_supervisor && <StatusPill tone="ok">S</StatusPill>}
+              </span>
+            </button>
           ))}
-        </select>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-        {filtered.map((p) => {
-          const isUpdating = updatingIds.has(p.id);
-          return (
-            <div
-              key={p.id}
-              className="cad-card p-4 flex flex-col gap-3"
-            >
-              <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0">
-                  <p className="font-semibold text-cad-text truncate">{p.name}</p>
-                  <p className="text-xs text-cad-dim">
-                    {p.rank || "No rank"} · {p.callsign || "No callsign"}
-                  </p>
-                  <p className="text-xs text-cad-muted mt-0.5">{deptName(p.department_id)}</p>
-                </div>
-                {isUpdating && <Loader2 className="w-4 h-4 animate-spin text-cad-accent flex-shrink-0" />}
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <PermissionToggle
-                  icon={Eye}
-                  label="Supervisor"
-                  description="Can manage groups, units & view personnel"
-                  enabled={p.is_supervisor}
-                  onChange={() => toggleFlag(p.id, "is_supervisor", p.is_supervisor)}
-                  color="emerald"
-                />
-                <PermissionToggle
-                  icon={Crown}
-                  label="CAD Admin"
-                  description="Full access to all CAD admin sections"
-                  enabled={p.is_cad_admin}
-                  onChange={() => toggleFlag(p.id, "is_cad_admin", p.is_cad_admin)}
-                  color="blue"
-                />
-              </div>
-
-              <div className="border-t border-cad-border/30 pt-3 mt-1">
-                <p className="text-[10px] font-bold text-cad-dim uppercase tracking-wider mb-2">Primary Department</p>
-                <select
-                  value={p.department_id || ""}
-                  onChange={(e) => updateDepts(p.id, { department_id: e.target.value })}
-                  className="w-full px-2 py-1.5 text-xs bg-cad-surface-2/50 border border-cad-border/40 rounded-lg text-cad-text focus:outline-none focus:border-cad-accent/50 mb-2"
-                >
-                  {departments.map((d) => (
-                    <option key={d.id} value={d.id}>{d.name}</option>
-                  ))}
-                </select>
-                <p className="text-[10px] font-bold text-cad-dim uppercase tracking-wider mb-1.5">Additional Departments</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {departments.filter((d) => d.id !== p.department_id).map((d) => {
-                    const isAdditional = (p.additional_department_ids || []).includes(d.id);
-                    return (
-                      <button
-                        key={d.id}
-                        onClick={() => toggleAdditionalDept(p, d.id)}
-                        className={`text-xs px-2 py-0.5 rounded-full border transition-colors ${isAdditional ? "bg-cad-accent/15 text-cad-accent border-cad-accent/30" : "bg-cad-surface-2/30 text-cad-muted border-cad-border/30 hover:border-cad-border-light/50"}`}
-                      >
-                        {d.name}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {filtered.length === 0 && !loading && (
-        <div className="text-center py-12 text-cad-dim">
-          <ShieldAlert className="w-12 h-12 mx-auto mb-3 opacity-50" />
-          <p>No personnel found.</p>
         </div>
-      )}
-    </div>
-  );
-}
-
-function PermissionToggle({ icon: Icon, label, description, enabled, onChange, color }) {
-  const colorMap = {
-    emerald: { on: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30", dot: "bg-emerald-400" },
-    blue: { on: "bg-blue-500/15 text-blue-400 border-blue-500/30", dot: "bg-blue-400" },
-  };
-  const c = colorMap[color] || colorMap.blue;
-
-  return (
-    <button
-      onClick={onChange}
-      className={`flex items-center gap-3 p-2.5 rounded-lg border text-left transition-all ${
-        enabled
-          ? c.on
-          : "bg-cad-surface-2/30 border-cad-border/30 text-cad-muted hover:border-cad-border-light/50"
-      }`}
-    >
-      <Icon className="w-4 h-4 flex-shrink-0" />
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium">{label}</p>
-        <p className="text-[11px] opacity-70 truncate">{description}</p>
       </div>
-      <span className={`w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center ${enabled ? `${c.dot} border-transparent` : "border-cad-border-light"}`}>
-        {enabled && <span className="w-1.5 h-1.5 rounded-full bg-cad-bg-solid" />}
-      </span>
-    </button>
+
+      <div className="flex-1 min-w-0 overflow-auto mdt-scroll">
+        {!selected ? (
+          <EmptyState icon={ShieldAlert} title="No personnel selected" hint="Pick a member to manage permissions" />
+        ) : (
+          <>
+            <div className="h-9 px-2.5 flex items-center gap-2 border-b border-mdt-line bg-mdt-surface-2">
+              <span className="text-[12.5px] font-semibold truncate">{selected.name}</span>
+              <span className="text-[11px] font-mono text-mdt-dim truncate">{selected.rank || "No rank"} · {selected.callsign || "No callsign"}</span>
+              {updatingIds.has(selected.id) && <Loader2 className="w-3.5 h-3.5 animate-spin text-mdt-accent ml-auto" />}
+            </div>
+
+            <div className="p-2.5 space-y-2.5">
+              <section className="border border-mdt-line">
+                <header className="h-7 px-2.5 flex items-center border-b border-mdt-line bg-mdt-surface-2"><span className={cap}>Permission Flags</span></header>
+                <div className="p-2.5 flex flex-col gap-1.5">
+                  <div className="flex items-center gap-2">
+                    <Eye className="w-3.5 h-3.5 text-mdt-dim" />
+                    <span className="text-[12px]">Supervisor — manage groups, units & personnel</span>
+                    <Btn className="ml-auto" variant={selected.is_supervisor ? "primary" : "default"} onClick={() => toggleFlag(selected.id, "is_supervisor", selected.is_supervisor)}>
+                      {selected.is_supervisor ? "Granted" : "Grant"}
+                    </Btn>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Crown className="w-3.5 h-3.5 text-mdt-dim" />
+                    <span className="text-[12px]">CAD Admin — full admin console access</span>
+                    <Btn className="ml-auto" variant={selected.is_cad_admin ? "primary" : "default"} onClick={() => toggleFlag(selected.id, "is_cad_admin", selected.is_cad_admin)}>
+                      {selected.is_cad_admin ? "Granted" : "Grant"}
+                    </Btn>
+                  </div>
+                </div>
+              </section>
+
+              <section className="border border-mdt-line">
+                <header className="h-7 px-2.5 flex items-center border-b border-mdt-line bg-mdt-surface-2"><span className={cap}>Department Assignment</span></header>
+                <div className="p-2.5 space-y-2">
+                  <div>
+                    <label className={`${cap} block mb-1`}>Primary Department</label>
+                    <select value={selected.department_id || ""} onChange={(e) => updateDepts(selected.id, { department_id: e.target.value })} className={`${input} w-full`}>
+                      {departments.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className={`${cap} block mb-1`}>Additional Departments</label>
+                    <div className="flex flex-wrap gap-1">
+                      {departments.filter((d) => d.id !== selected.department_id).map((d) => {
+                        const on = (selected.additional_department_ids || []).includes(d.id);
+                        return (
+                          <button key={d.id} onClick={() => toggleAdditionalDept(selected, d.id)}
+                            className={`h-6 px-2 rounded-sm border text-[11px] ${on ? "bg-mdt-accent/15 border-mdt-accent/40 text-mdt-text" : "bg-mdt-surface-3 border-mdt-line-2 text-mdt-muted hover:text-mdt-text"}`}>
+                            {d.name}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              </section>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
   );
 }
