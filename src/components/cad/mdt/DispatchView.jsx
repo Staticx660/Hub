@@ -6,6 +6,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { Users, Phone, Plus, Layers, Star, Trash2 } from "lucide-react";
 import { useAuth } from "@/lib/AuthContext";
 import { dedupeActiveSessions } from "@/lib/cadSessions";
+import { playStatusBeep } from "@/components/cad/mdt/panicSound";
 
 const statusColors = { Available: "text-green-400 bg-green-500/15", Busy: "text-yellow-400 bg-yellow-500/15", "On Call": "text-red-400 bg-red-500/15", Unavailable: "text-gray-400 bg-gray-500/15", Panic: "text-white bg-red-500 animate-pulse", "Off Duty": "text-cad-muted bg-cad-surface-3" };
 const STATUS_OPTS = ["Available", "Busy", "On Call", "Unavailable"];
@@ -58,7 +59,7 @@ export default function DispatchView({ department, session, setSession, setActiv
     try {
       await base44.entities.CADSession.update(sessionId, { status: newStatus });
       if (sessionId === session.id) setSession({ ...session, status: newStatus });
-      toast({ title: "Status updated", description: newStatus });
+      playStatusBeep();
     } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
   };
 
@@ -66,14 +67,13 @@ export default function DispatchView({ department, session, setSession, setActiv
     if (!confirm("Remove this unit from active duty?")) return;
     try {
       await base44.entities.CADSession.update(sessionId, { is_active: false, logout_time: new Date().toISOString(), status: "Unavailable" });
-      toast({ title: "Unit removed" });
     } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
   };
 
   const setGroupStatus = async (groupId, newStatus) => {
     try {
       await base44.entities.CADUnitGroup.update(groupId, { status: newStatus });
-      toast({ title: "Group status updated", description: newStatus });
+      playStatusBeep();
     } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
   };
 

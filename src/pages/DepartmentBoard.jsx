@@ -18,6 +18,7 @@ import { Clock, Siren, Users, PhoneCall, Activity, Flame, Ambulance, Radio, Plus
 import PanicDialog from "@/components/cad/mdt/PanicDialog";
 import { useKeybinds, loadKeybinds } from "@/hooks/useKeybinds";
 import { clearPanic } from "@/lib/panic";
+import { playStatusBeep, loadNotificationTones } from "@/components/cad/mdt/panicSound";
 import { dedupeActiveSessions } from "@/lib/cadSessions";
 
 export default function DepartmentBoard() {
@@ -40,6 +41,7 @@ export default function DepartmentBoard() {
   const retro = theme === "retro";
 
   useEffect(() => {
+    loadNotificationTones();
     const init = async () => {
       try {
         const dept = await base44.entities.CADDepartment.get(deptId);
@@ -98,7 +100,6 @@ export default function DepartmentBoard() {
         callsign: formData.callsign, rank: formData.rank, status: "Available", login_time: now, is_active: true, panic_active: false, shift_id: shift.id,
       });
       setSession(newSession); setClockInOpen(false);
-      toast({ title: "Clocked In", description: `On duty as ${formData.callsign || formData.name}` });
     } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
   };
 
@@ -127,7 +128,6 @@ export default function DepartmentBoard() {
     if (!confirm("Clock out and end your shift?")) return;
     await performClockOut(session);
     setSession(null); setSelectedCall(null);
-    toast({ title: "Clocked Out" });
     navigate("/cad");
   };
 
@@ -136,11 +136,12 @@ export default function DepartmentBoard() {
       if (newStatus === "Available" && session.panic_active) {
         const updated = await clearPanic(session);
         setSession(updated);
-        toast({ title: "Panic Cleared", description: "Panic call closed — status reset to Available." });
+        playStatusBeep();
         return;
       }
       await base44.entities.CADSession.update(session.id, { status: newStatus });
       setSession({ ...session, status: newStatus });
+      playStatusBeep();
     } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
   };
 
@@ -149,7 +150,7 @@ export default function DepartmentBoard() {
       try {
         const updated = await clearPanic(session);
         setSession(updated);
-        toast({ title: "Panic Cleared", description: "Panic call closed — status reset to Available." });
+        playStatusBeep();
       } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
       return;
     }

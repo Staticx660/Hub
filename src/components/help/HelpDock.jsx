@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { HelpCircle, X, Search, ChevronRight, Lightbulb, Sparkles, Send } from "lucide-react";
 import { TIPS_AND_TRICKS, HELP_CATEGORIES } from "@/lib/helpContent";
@@ -12,6 +12,11 @@ export default function HelpDock() {
   const [aiLoading, setAiLoading] = useState(false);
   const [mode, setMode] = useState("search");
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Hide on full-screen CAD boards/MDT — the bottom taskbar lives there and the dock blocks its buttons
+  const fullScreenCad = ["/cad/mdt/", "/cad/board/", "/cad/ems/", "/cad/fire/", "/cad/civilian/"].some(p => location.pathname.startsWith(p));
+  if (fullScreenCad) return null;
 
   const searchResults = query.trim()
     ? HELP_CATEGORIES.flatMap((c) =>

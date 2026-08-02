@@ -113,7 +113,6 @@ export default function CADMDT() {
       });
       setSession(newSession);
       setClockInOpen(false);
-      toast({ title: "Clocked In", description: `On duty as ${formData.callsign || formData.name}` });
     } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
   };
 
@@ -149,7 +148,6 @@ export default function CADMDT() {
       await performClockOut(session);
       setSession(null);
       setSelectedCallId(null);
-      toast({ title: "Clocked Out" });
       navigate("/cad");
     } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
   };
@@ -163,7 +161,6 @@ export default function CADMDT() {
         stopPanicSound();
         stopPanicVoice();
         playStatusBeep();
-        toast({ title: "Panic Cleared", description: "Panic call closed — status reset to Available." });
         return;
       }
       const updates = { status: newStatus, panic_active: newStatus === "Panic" ? session.panic_active : false };
@@ -188,7 +185,7 @@ export default function CADMDT() {
         setSession(updated);
         stopPanicSound();
         stopPanicVoice();
-        toast({ title: "Panic Cleared", description: "Panic call closed — status reset to Available." });
+        playStatusBeep();
       } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
       return;
     }

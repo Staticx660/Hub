@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/u
 import { useToast } from "@/components/ui/use-toast";
 import { Plus, Layers, Flame, Phone, ChevronRight, Truck, AlertCircle, MapPin, Users, User } from "lucide-react";
 import { dedupeActiveSessions } from "@/lib/cadSessions";
+import { playStatusBeep } from "@/components/cad/mdt/panicSound";
 
 const STATUS_OPTS = ["Available", "Busy", "On Call", "Unavailable"];
 const statusBadge = (s) => {
@@ -69,7 +70,7 @@ export default function FireDashboard({ department, session, setSession, onOpenC
     try {
       await base44.entities.CADSession.update(sessionId, { status: newStatus });
       if (sessionId === session.id && setSession) setSession({ ...session, status: newStatus });
-      toast({ title: "Status updated", description: newStatus });
+      playStatusBeep();
     } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
   };
 

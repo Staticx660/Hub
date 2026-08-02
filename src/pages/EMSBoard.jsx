@@ -16,6 +16,7 @@ import { Clock, Ambulance, ChevronLeft, ArrowLeft, FileText } from "lucide-react
 import PanicDialog from "@/components/cad/mdt/PanicDialog";
 import { useKeybinds, loadKeybinds } from "@/hooks/useKeybinds";
 import { clearPanic } from "@/lib/panic";
+import { playStatusBeep, loadNotificationTones } from "@/components/cad/mdt/panicSound";
 
 export default function EMSBoard() {
   const { deptId } = useParams();
@@ -34,6 +35,7 @@ export default function EMSBoard() {
   const retro = theme === "retro";
 
   useEffect(() => {
+    loadNotificationTones();
     const init = async () => {
       try {
         const dept = await base44.entities.CADDepartment.get(deptId);
@@ -78,7 +80,6 @@ export default function EMSBoard() {
         group_id: formData.group_id || "", group_name: formData.group_name || "",
       });
       setSession(newSession); setClockInOpen(false);
-      toast({ title: "Clocked In", description: `On duty as ${formData.callsign || formData.name}` });
     } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
   };
 
@@ -100,7 +101,6 @@ export default function EMSBoard() {
     if (!confirm("Clock out and end your shift?")) return;
     await performClockOut(session);
     setSession(null);
-    toast({ title: "Clocked Out" });
     navigate("/cad");
   };
 
@@ -109,11 +109,12 @@ export default function EMSBoard() {
       if (newStatus === "Available" && session.panic_active) {
         const updated = await clearPanic(session);
         setSession(updated);
-        toast({ title: "Panic Cleared", description: "Panic call closed — status reset to Available." });
+        playStatusBeep();
         return;
       }
       await base44.entities.CADSession.update(session.id, { status: newStatus });
       setSession({ ...session, status: newStatus });
+      playStatusBeep();
     } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
   };
 
@@ -122,7 +123,7 @@ export default function EMSBoard() {
       try {
         const updated = await clearPanic(session);
         setSession(updated);
-        toast({ title: "Panic Cleared", description: "Panic call closed — status reset to Available." });
+        playStatusBeep();
       } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
       return;
     }

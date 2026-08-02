@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/u
 import { useToast } from "@/components/ui/use-toast";
 import { Plus, Ambulance, Siren, Phone, ChevronRight, Stethoscope, AlertCircle, Truck, User, Heart, Activity, Hospital } from "lucide-react";
 import { dedupeActiveSessions } from "@/lib/cadSessions";
+import { playStatusBeep } from "@/components/cad/mdt/panicSound";
 
 const STATUS_OPTS = ["Available", "Busy", "On Call", "Unavailable"];
 const statusBadge = (s) => {
@@ -80,7 +81,7 @@ export default function EMSDashboard({ department, session, setSession, onOpenCa
     try {
       await base44.entities.CADSession.update(sessionId, { status: newStatus });
       if (sessionId === session.id && setSession) setSession({ ...session, status: newStatus });
-      toast({ title: "Status updated", description: newStatus });
+      playStatusBeep();
     } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
   };
 
