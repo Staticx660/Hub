@@ -5,12 +5,12 @@ import MDTShell from "@/components/mdt/shell/MDTShell";
 import { AlertBanner } from "@/components/mdt/shell/StatusStrip";
 import CallsWorkspace from "@/components/mdt/workspaces/CallsWorkspace";
 import UnitsWorkspace from "@/components/mdt/workspaces/UnitsWorkspace";
-import { Panel, EmptyState } from "@/components/mdt/ui/primitives";
+import { EmptyState } from "@/components/mdt/ui/primitives";
 import { Radio, Users, Search, FileText, Gavel, Eye, Car, Boxes, Loader2, LayoutGrid } from "lucide-react";
 
 /**
- * Design-language preview: the new MDT shell, navigation, tables and workspaces
- * running against live CAD data. Department-specific workflows build on this.
+ * Design-language preview: the Windows-style MDT workspace running against
+ * live CAD data. Department-specific workflows build on this frame.
  */
 export default function MDTPreview() {
   const { user } = useAuth();
@@ -40,25 +40,15 @@ export default function MDTPreview() {
   const active = calls.filter((c) => c.status === "Active").length;
   const panic = sessions.filter((s) => s.panic_active);
 
-  const navGroups = [
-    {
-      label: "Operations",
-      items: [
-        { key: "calls", label: "Calls", icon: Radio, count: pending + active },
-        { key: "units", label: "Units", icon: Users, count: sessions.length },
-      ],
-    },
-    {
-      label: "Records",
-      items: [
-        { key: "people", label: "People", icon: Search },
-        { key: "vehicles", label: "Vehicles", icon: Car },
-        { key: "reports", label: "Reports", icon: FileText },
-        { key: "warrants", label: "Warrants", icon: Gavel },
-        { key: "bolos", label: "BOLOs", icon: Eye },
-        { key: "evidence", label: "Evidence", icon: Boxes },
-      ],
-    },
+  const navItems = [
+    { key: "calls", label: "Calls", icon: Radio },
+    { key: "units", label: "Units", icon: Users },
+    { key: "people", label: "People", icon: Search },
+    { key: "vehicles", label: "Vehicles", icon: Car },
+    { key: "reports", label: "Reports", icon: FileText },
+    { key: "warrants", label: "Warrants", icon: Gavel },
+    { key: "bolos", label: "BOLOs", icon: Eye },
+    { key: "evidence", label: "Evidence", icon: Boxes },
   ];
 
   if (loading) {
@@ -74,26 +64,29 @@ export default function MDTPreview() {
       agency="OCRP Hub"
       subtitle="MDT Design Preview"
       unit={user?.full_name}
-      status={{ tone: "ok", label: "Preview" }}
+      status={{ label: "Preview" }}
       metrics={[
         { label: "Pending", value: pending, alert: pending > 0 },
         { label: "Active", value: active },
         { label: "On Duty", value: sessions.length },
       ]}
-      navGroups={navGroups}
+      navItems={navItems}
       active={view}
       onNavigate={setView}
+      tabs={[{ key: "active-calls", label: "Active Calls" }]}
+      activeTab="active-calls"
+      onSelectTab={() => {}}
       banner={panic.length > 0 ? <AlertBanner>PANIC — {panic.map((p) => p.callsign || p.user_name).join(", ")}</AlertBanner> : null}
     >
-      {view === "calls" ? (
-        <CallsWorkspace calls={calls} sessions={sessions} deptName="All departments" />
-      ) : view === "units" ? (
-        <UnitsWorkspace sessions={sessions} calls={calls} />
-      ) : (
-        <Panel title={view} className="flex-1">
+      {({ detailCollapsed }) =>
+        view === "calls" ? (
+          <CallsWorkspace calls={calls} sessions={sessions} deptName="All departments" detailCollapsed={detailCollapsed} />
+        ) : view === "units" ? (
+          <UnitsWorkspace sessions={sessions} calls={calls} />
+        ) : (
           <EmptyState icon={LayoutGrid} title="Workspace not built yet" hint="Approve this design language and I'll build each department's workflow on it." />
-        </Panel>
-      )}
+        )
+      }
     </MDTShell>
   );
 }

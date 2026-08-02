@@ -101,17 +101,17 @@
 /* ===== MDT Design Language (new UI system) ===== */
 /* Graphite enterprise palette: flat, calm, dense. One accent only. */
 :root {
-  --mdt-bg: 220 14% 9%;
-  --mdt-surface: 220 13% 12%;
-  --mdt-surface-2: 220 13% 15%;
-  --mdt-surface-3: 220 12% 19%;
-  --mdt-surface-4: 220 12% 23%;
-  --mdt-line: 220 10% 22%;
-  --mdt-line-2: 220 10% 30%;
-  --mdt-text: 210 20% 92%;
-  --mdt-muted: 215 14% 70%;
-  --mdt-dim: 215 12% 52%;
-  --mdt-accent: 213 80% 52%;
+  --mdt-bg: 200 9% 11%;
+  --mdt-surface: 203 9% 15%;
+  --mdt-surface-2: 200 9% 18%;
+  --mdt-surface-3: 202 9% 22%;
+  --mdt-surface-4: 202 9% 27%;
+  --mdt-line: 202 9% 25%;
+  --mdt-line-2: 202 9% 32%;
+  --mdt-text: 204 17% 89%;
+  --mdt-muted: 204 10% 72%;
+  --mdt-dim: 204 8% 55%;
+  --mdt-accent: 173 80% 40%;
 }
 
 .mdt ::-webkit-scrollbar,

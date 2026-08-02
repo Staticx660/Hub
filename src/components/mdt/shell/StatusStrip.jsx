@@ -1,10 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { Search, AlertTriangle } from "lucide-react";
-import { StatusPill } from "@/components/mdt/ui/primitives";
 
 /**
- * Persistent top strip: identity on the left, live operational state in the
- * middle, global search on the right. Always visible, never scrolls away.
+ * Application info strip: identity, live counters, global search, clock.
  */
 export default function StatusStrip({ agency, subtitle, unit, status, metrics = [], onSearch, right }) {
   const [clock, setClock] = useState("");
@@ -17,24 +15,18 @@ export default function StatusStrip({ agency, subtitle, unit, status, metrics = 
   }, []);
 
   return (
-    <header className="flex items-center gap-3 h-10 px-2.5 bg-mdt-surface-2 border-b border-mdt-line flex-shrink-0">
-      <div className="min-w-0">
-        <div className="text-[12.5px] font-semibold text-mdt-text leading-tight truncate">{agency}</div>
-        <div className="text-[10px] uppercase tracking-[0.1em] text-mdt-dim leading-tight truncate">{subtitle}</div>
-      </div>
-
-      <div className="h-5 w-px bg-mdt-line-2" />
-
-      <div className="flex items-center gap-2 min-w-0">
-        {unit && <span className="font-mono text-[12px] text-mdt-text">{unit}</span>}
-        {status && <StatusPill tone={status.tone}>{status.label}</StatusPill>}
-      </div>
-
-      <div className="hidden lg:flex items-center gap-3 ml-2">
+    <div className="flex items-center gap-4 h-9 px-3 bg-mdt-bg border-b border-mdt-line flex-shrink-0">
+      <span className="text-[13.5px] text-mdt-text truncate">{unit || agency}</span>
+      {status && (
+        <span className="px-1.5 h-[18px] flex items-center border border-mdt-accent/50 bg-mdt-accent/15 text-mdt-accent text-[10.5px] font-semibold uppercase tracking-wide">
+          {status.label}
+        </span>
+      )}
+      <div className="flex items-center gap-4">
         {metrics.map((m) => (
           <div key={m.label} className="flex items-baseline gap-1.5">
-            <span className="text-[10px] uppercase tracking-[0.08em] text-mdt-dim">{m.label}</span>
-            <span className={`font-mono text-[12.5px] ${m.alert ? "text-red-300" : "text-mdt-text"}`}>{m.value}</span>
+            <span className="text-[11px] uppercase tracking-[0.06em] text-mdt-dim">{m.label}</span>
+            <span className={`text-[13px] tabular-nums ${m.alert ? "text-red-400" : "text-mdt-text"}`}>{m.value}</span>
           </div>
         ))}
       </div>
@@ -44,18 +36,18 @@ export default function StatusStrip({ agency, subtitle, unit, status, metrics = 
       {onSearch && (
         <button
           onClick={onSearch}
-          className="flex items-center gap-2 h-7 px-2 w-[190px] rounded-sm border border-mdt-line-2 bg-mdt-surface text-mdt-dim hover:text-mdt-muted"
+          className="flex items-center gap-2 h-7 px-2 w-[220px] border border-mdt-line-2 bg-mdt-surface text-mdt-dim hover:text-mdt-muted"
         >
           <Search className="w-3.5 h-3.5" />
-          <span className="text-[11.5px]">Search everything</span>
-          <kbd className="ml-auto font-mono text-[10px] text-mdt-dim">⌘K</kbd>
+          <span className="text-[12.5px]">Search everything</span>
+          <kbd className="ml-auto text-[11px] text-mdt-dim">⌘K</kbd>
         </button>
       )}
 
       {right}
 
-      <span className="font-mono text-[12px] text-mdt-muted tabular-nums">{clock}</span>
-    </header>
+      <span className="text-[13px] text-mdt-text tabular-nums">{clock}</span>
+    </div>
   );
 }
 
