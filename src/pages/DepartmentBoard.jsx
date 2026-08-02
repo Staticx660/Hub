@@ -16,6 +16,9 @@ import { useCadTheme } from "@/hooks/useCadTheme";
 import RetroClockInScreen from "@/components/cad/retro/RetroClockInScreen";
 import { Clock, Siren, Users, PhoneCall, Activity, Flame, Ambulance, Radio, Plus, X, MapPin, AlertTriangle, CheckCircle, Building2, Stethoscope, ChevronLeft } from "lucide-react";
 import PanicDialog from "@/components/cad/mdt/PanicDialog";
+import { useKeybinds, loadKeybinds } from "@/hooks/useKeybinds";
+import { clearPanic } from "@/lib/panic";
+import { dedupeActiveSessions } from "@/lib/cadSessions";
 
 export default function DepartmentBoard() {
   const { deptId } = useParams();
@@ -45,7 +48,13 @@ export default function DepartmentBoard() {
         if (dept.category === "Fire") { navigate(`/cad/fire/${deptId}`); return; }
         setDepartment(dept);
         const sessions = await base44.entities.CADSession.filter({ user_id: user.id, department_id: deptId, is_active: true });
-        if (sessions.length > 0) setSession(sessions[0]);
+        if (sessions.length > 0) {
+          const sorted = [...sessions].sort((a, b) => new Date(b.login_time || b.created_date) - new Date(a.login_time || a.created_date));
+          setSession(sorted[0]);
+          for (const stale of sorted.slice(1)) {
+            base44.entities.CADSession.update(stale.id, { is_active: false, logout_time: new Date().toISOString(), status: "Unavailable" });
+          }
+        }
         await loadData();
       } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
       setLoading(false);
@@ -54,9 +63,15 @@ export default function DepartmentBoard() {
   }, [deptId]);
 
   useEffect(() => {
-    const unsub1 = base44.entities.ActiveCall.subscribe(() => loadData());
-    const unsub2 = base44.entities.CADSession.subscribe(() => loadData());
-    return () => { unsub1(); unsub2(); };
+    let timer;
+    const debouncedLoad = () => { clearTimeout(timer); timer = setTimeout(() => loadData(), 600); };
+    const unsub1 = base44.entities.ActiveCall.subscribe(debouncedLoad);
+    const unsub2 = base44.entities.CADSession.subscribe((event) => {
+      const cur = sessionRef.current;
+      if (cur && event.type === "update" && event.data?.id === cur.id) setSession(event.data);
+      debouncedLoad();
+    });
+    return () => { unsub1(); unsub2(); clearTimeout(timer); };
   }, []);
 
   const loadData = async () => {
@@ -68,7 +83,7 @@ export default function DepartmentBoard() {
         base44.entities.CADDepartment.list(),
       ]);
       const nonCivilianIds = depts.filter(d => d.category !== "Civilian").map(d => d.id);
-      setCalls(c); setUnits(u); setPersonnel(p.filter(s => nonCivilianIds.includes(s.department_id)));
+      setCalls(c); setUnits(u); setPersonnel(dedupeActiveSessions(p.filter(s => nonCivilianIds.includes(s.department_id))));
     } catch (e) { /* silent */ }
   };
 
@@ -118,6 +133,12 @@ export default function DepartmentBoard() {
 
   const handleStatusChange = async (newStatus) => {
     try {
+      if (newStatus === "Available" && session.panic_active) {
+        const updated = await clearPanic(session);
+        setSession(updated);
+        toast({ title: "Panic Cleared", description: "Panic call closed — status reset to Available." });
+        return;
+      }
       await base44.entities.CADSession.update(session.id, { status: newStatus });
       setSession({ ...session, status: newStatus });
     } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
@@ -126,14 +147,23 @@ export default function DepartmentBoard() {
   const handlePanic = async () => {
     if (session.panic_active) {
       try {
-        await base44.entities.CADSession.update(session.id, { panic_active: false, status: "Available" });
-        setSession({ ...session, panic_active: false, status: "Available" });
-        toast({ title: "Panic Cancelled" });
+        const updated = await clearPanic(session);
+        setSession(updated);
+        toast({ title: "Panic Cleared", description: "Panic call closed — status reset to Available." });
       } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
       return;
     }
     setPanicOpen(true);
   };
+
+  const [keybinds] = useState(loadKeybinds);
+  useKeybinds(keybinds, {
+    status_available: () => session && handleStatusChange("Available"),
+    status_busy: () => session && handleStatusChange("Busy"),
+    status_oncall: () => session && handleStatusChange("On Call"),
+    status_unavailable: () => session && handleStatusChange("Unavailable"),
+    panic: () => session && handlePanic(),
+  });
 
   if (loading) return <div className="flex justify-center items-center h-screen cad-gradient-bg cad-font"><div className="w-8 h-8 border-4 border-cad-border border-t-blue-500 rounded-full animate-spin" /></div>;
   if (!department) return <div className="flex justify-center items-center h-screen cad-gradient-bg cad-font text-cad-muted">Department not found</div>;

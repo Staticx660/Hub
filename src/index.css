@@ -91,6 +91,11 @@
   body {
     @apply bg-background text-foreground font-body;
   }
+
+  /* Improve click/tap detection: removes 300ms tap delay and misfires on mobile */
+  button, [role="button"], a, [role="menuitem"], [role="option"], [role="tab"] {
+    touch-action: manipulation;
+  }
 }
 
 /* ===== CAD Theme System ===== */

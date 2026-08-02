@@ -17,6 +17,7 @@ import ClockInDialog from "@/components/cad/mdt/ClockInDialog";
 import KeybindsDialog from "@/components/cad/mdt/KeybindsDialog";
 import PanicDialog from "@/components/cad/mdt/PanicDialog";
 import { useKeybinds, loadKeybinds } from "@/hooks/useKeybinds";
+import { clearPanic } from "@/lib/panic";
 import { useCadTheme } from "@/hooks/useCadTheme";
 import RetroClockInScreen from "@/components/cad/retro/RetroClockInScreen";
 import { startPanicSound, stopPanicSound, playStatusBeep, stopPanicVoice, loadNotificationTones } from "@/components/cad/mdt/panicSound";
@@ -56,7 +57,13 @@ export default function CADMDT() {
           return;
         }
         const sessions = await base44.entities.CADSession.filter({ user_id: user.id, department_id: deptId, is_active: true });
-        if (sessions.length > 0) setSession(sessions[0]);
+        if (sessions.length > 0) {
+          const sorted = [...sessions].sort((a, b) => new Date(b.login_time || b.created_date) - new Date(a.login_time || a.created_date));
+          setSession(sorted[0]);
+          for (const stale of sorted.slice(1)) {
+            base44.entities.CADSession.update(stale.id, { is_active: false, logout_time: new Date().toISOString(), status: "Unavailable" });
+          }
+        }
       } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
       setLoading(false);
     };
@@ -66,6 +73,10 @@ export default function CADMDT() {
   useEffect(() => {
     if (!department) return;
     const unsub = base44.entities.CADSession.subscribe((event) => {
+      // Live-sync own session (status/panic changes from dispatch or other tabs)
+      if (event.type === "update" && event.data?.id === sessionRef.current?.id) {
+        setSession(event.data);
+      }
       if (event.type === "update" && event.data?.department_id === department.id && event.data?.user_id !== user.id) {
         if (event.data?.panic_active) {
           toast({ title: "🚨 PANIC BUTTON ACTIVATED", description: `${event.data.callsign || event.data.user_name} has triggered a panic alert!`, variant: "destructive" });
@@ -145,6 +156,16 @@ export default function CADMDT() {
 
   const handleStatusChange = async (newStatus) => {
     try {
+      // Going Available while panic is active clears the panic call automatically
+      if (newStatus === "Available" && session.panic_active) {
+        const updated = await clearPanic(session);
+        setSession(updated);
+        stopPanicSound();
+        stopPanicVoice();
+        playStatusBeep();
+        toast({ title: "Panic Cleared", description: "Panic call closed — status reset to Available." });
+        return;
+      }
       const updates = { status: newStatus, panic_active: newStatus === "Panic" ? session.panic_active : false };
       // Going Available clears from active call
       if (newStatus === "Available" && session.active_call_id) {
@@ -163,11 +184,11 @@ export default function CADMDT() {
   const handlePanic = async () => {
     if (session.panic_active) {
       try {
-        await base44.entities.CADSession.update(session.id, { panic_active: false, status: "Available" });
-        setSession({ ...session, panic_active: false, status: "Available" });
+        const updated = await clearPanic(session);
+        setSession(updated);
         stopPanicSound();
         stopPanicVoice();
-        toast({ title: "Panic Cancelled" });
+        toast({ title: "Panic Cleared", description: "Panic call closed — status reset to Available." });
       } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
       return;
     }
@@ -192,7 +213,7 @@ export default function CADMDT() {
     <div className="flex flex-col items-center justify-center h-screen cad-gradient-bg cad-font gap-4">
       <Lock className="w-16 h-16 text-cad-dim" />
       <h1 className="text-2xl font-bold text-cad-text">Access Denied</h1>
-      <p className="text-cad-muted">You don't have the Discord role required for this department.</p>
+      <p className="text-cad-muted">You need the Discord role or an Admin Panel department assignment for this department.</p>
       <Button onClick={() => window.history.back()} variant="outline" className="border-cad-border text-cad-muted hover:bg-cad-surface-2/50">Go Back</Button>
     </div>
   );

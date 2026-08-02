@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
@@ -14,6 +14,8 @@ import { useCadTheme } from "@/hooks/useCadTheme";
 import RetroClockInScreen from "@/components/cad/retro/RetroClockInScreen";
 import { Clock, Ambulance, ChevronLeft, ArrowLeft, FileText } from "lucide-react";
 import PanicDialog from "@/components/cad/mdt/PanicDialog";
+import { useKeybinds, loadKeybinds } from "@/hooks/useKeybinds";
+import { clearPanic } from "@/lib/panic";
 
 export default function EMSBoard() {
   const { deptId } = useParams();
@@ -37,12 +39,32 @@ export default function EMSBoard() {
         const dept = await base44.entities.CADDepartment.get(deptId);
         setDepartment(dept);
         const sessions = await base44.entities.CADSession.filter({ user_id: user.id, department_id: deptId, is_active: true });
-        if (sessions.length > 0) setSession(sessions[0]);
+        if (sessions.length > 0) {
+          const sorted = [...sessions].sort((a, b) => new Date(b.login_time || b.created_date) - new Date(a.login_time || a.created_date));
+          setSession(sorted[0]);
+          for (const stale of sorted.slice(1)) {
+            base44.entities.CADSession.update(stale.id, { is_active: false, logout_time: new Date().toISOString(), status: "Unavailable" });
+          }
+        }
       } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
       setLoading(false);
     };
     init();
   }, [deptId]);
+
+  const sessionRef = useRef(null);
+  useEffect(() => { sessionRef.current = session; }, [session]);
+
+  // Live-sync own session (status changes from dispatch or other tabs)
+  useEffect(() => {
+    const unsub = base44.entities.CADSession.subscribe((event) => {
+      const cur = sessionRef.current;
+      if (cur && event.type === "update" && event.data?.id === cur.id) setSession(event.data);
+    });
+    return unsub;
+  }, []);
+
+  const [keybinds] = useState(loadKeybinds);
 
   const handleClockIn = async (formData) => {
     try {
@@ -84,6 +106,12 @@ export default function EMSBoard() {
 
   const handleStatusChange = async (newStatus) => {
     try {
+      if (newStatus === "Available" && session.panic_active) {
+        const updated = await clearPanic(session);
+        setSession(updated);
+        toast({ title: "Panic Cleared", description: "Panic call closed — status reset to Available." });
+        return;
+      }
       await base44.entities.CADSession.update(session.id, { status: newStatus });
       setSession({ ...session, status: newStatus });
     } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
@@ -92,14 +120,22 @@ export default function EMSBoard() {
   const handlePanic = async () => {
     if (session.panic_active) {
       try {
-        await base44.entities.CADSession.update(session.id, { panic_active: false, status: "Available" });
-        setSession({ ...session, panic_active: false, status: "Available" });
-        toast({ title: "Panic Cancelled" });
+        const updated = await clearPanic(session);
+        setSession(updated);
+        toast({ title: "Panic Cleared", description: "Panic call closed — status reset to Available." });
       } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
       return;
     }
     setPanicOpen(true);
   };
+
+  useKeybinds(keybinds, {
+    status_available: () => session && handleStatusChange("Available"),
+    status_busy: () => session && handleStatusChange("Busy"),
+    status_oncall: () => session && handleStatusChange("On Call"),
+    status_unavailable: () => session && handleStatusChange("Unavailable"),
+    panic: () => session && handlePanic(),
+  });
 
   const newCall = async () => {
     try {

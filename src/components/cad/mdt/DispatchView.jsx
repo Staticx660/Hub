@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/u
 import { useToast } from "@/components/ui/use-toast";
 import { Users, Phone, Plus, Layers, Star, Trash2 } from "lucide-react";
 import { useAuth } from "@/lib/AuthContext";
+import { dedupeActiveSessions } from "@/lib/cadSessions";
 
 const statusColors = { Available: "text-green-400 bg-green-500/15", Busy: "text-yellow-400 bg-yellow-500/15", "On Call": "text-red-400 bg-red-500/15", Unavailable: "text-gray-400 bg-gray-500/15", Panic: "text-white bg-red-500 animate-pulse", "Off Duty": "text-cad-muted bg-cad-surface-3" };
 const STATUS_OPTS = ["Available", "Busy", "On Call", "Unavailable"];
@@ -28,7 +29,7 @@ export default function DispatchView({ department, session, setSession, setActiv
       ]);
       const nonCivilianIds = allDepts.filter(d => d.category !== "Civilian").map(d => d.id);
       setCalls(allCalls.filter(c => c.status !== "Closed"));
-      setSessions(allSessions.filter(s => nonCivilianIds.includes(s.department_id)));
+      setSessions(dedupeActiveSessions(allSessions.filter(s => nonCivilianIds.includes(s.department_id))));
       try {
         const g = await base44.entities.CADUnitGroup.filter({});
         setGroups(g);

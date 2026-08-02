@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
 import { Plus, Layers, Flame, Phone, ChevronRight, Truck, AlertCircle, MapPin, Users, User } from "lucide-react";
+import { dedupeActiveSessions } from "@/lib/cadSessions";
 
 const STATUS_OPTS = ["Available", "Busy", "On Call", "Unavailable"];
 const statusBadge = (s) => {
@@ -40,7 +41,7 @@ export default function FireDashboard({ department, session, setSession, onOpenC
       ]);
       const nonCivilianIds = allDepts.filter(d => d.category !== "Civilian").map(d => d.id);
       setCalls(allCalls.filter(c => c.status !== "Closed"));
-      setSessions(allSessions.filter(s => nonCivilianIds.includes(s.department_id)));
+      setSessions(dedupeActiveSessions(allSessions.filter(s => nonCivilianIds.includes(s.department_id))));
       try {
         const g = await base44.entities.CADUnitGroup.filter({});
         setGroups(g);

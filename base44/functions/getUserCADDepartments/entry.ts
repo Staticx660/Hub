@@ -10,58 +10,61 @@ Deno.serve(async (req) => {
 
     const botToken = Deno.env.get("DISCORD_BOT_TOKEN");
     const guildId = Deno.env.get("DISCORD_GUILD_ID");
-
-    // Use the user's linked Discord ID (saved in profile via Settings)
     const discordId = user.discord_id;
     const isAdmin = user.role === 'admin';
 
-    // No Discord ID linked or no bot — user can only access departments without role restrictions
-    if (!discordId || !botToken || !guildId) {
-      return Response.json({
-        departments: departments.map(d => ({
-          id: d.id, name: d.name, category: d.category, description: d.description, color: d.color,
-          discord_role_id: d.discord_role_id, discord_supervisor_role_id: d.discord_supervisor_role_id,
-          hasAccess: !d.discord_role_id, isSupervisor: false
-        })),
-        discordId: null, hasDiscordLink: false, isAdmin
-      });
+    // Backend department assignments made in the Admin Panel (CADPersonnel)
+    let personnelRecord = null;
+    const assignedDeptIds = new Set();
+    let personnel = [];
+    if (discordId) {
+      personnel = await base44.asServiceRole.entities.CADPersonnel.filter({ discord_id: discordId });
+    }
+    if (personnel.length === 0 && user.email) {
+      personnel = await base44.asServiceRole.entities.CADPersonnel.filter({ email: user.email });
+    }
+    if (personnel.length > 0) {
+      personnelRecord = personnel[0];
+      if (personnelRecord.department_id) assignedDeptIds.add(personnelRecord.department_id);
+      for (const id of personnelRecord.additional_department_ids || []) assignedDeptIds.add(id);
     }
 
-    // Query Discord API for guild member roles using the linked Discord ID
+    // Discord role verification
     let userRoles = [];
     let inGuild = false;
-    try {
-      const memberRes = await fetch(`https://discord.com/api/v10/guilds/${guildId}/members/${discordId}`, {
-        headers: { Authorization: `Bot ${botToken}` }
-      });
-      if (memberRes.ok) {
-        const member = await memberRes.json();
-        userRoles = member.roles || [];
-        inGuild = true;
-      }
-    } catch {}
+    if (discordId && botToken && guildId) {
+      try {
+        const memberRes = await fetch(`https://discord.com/api/v10/guilds/${guildId}/members/${discordId}`, {
+          headers: { Authorization: `Bot ${botToken}` }
+        });
+        if (memberRes.ok) {
+          const member = await memberRes.json();
+          userRoles = member.roles || [];
+          inGuild = true;
+        }
+      } catch {}
+    }
 
+    // A user gains access if they satisfy EITHER Discord role verification
+    // OR a backend department assignment from the Admin Panel.
     const result = departments.map(dept => {
-      if (!dept.discord_role_id) {
-        return {
-          id: dept.id, name: dept.name, category: dept.category, description: dept.description,
-          color: dept.color, discord_role_id: dept.discord_role_id,
-          discord_supervisor_role_id: dept.discord_supervisor_role_id,
-          hasAccess: true, isSupervisor: false
-        };
-      }
-      const hasAccess = userRoles.includes(dept.discord_role_id);
-      const isSupervisor = dept.discord_supervisor_role_id && userRoles.includes(dept.discord_supervisor_role_id);
+      const backendAssigned = assignedDeptIds.has(dept.id);
+      const discordAccess = dept.discord_role_id ? userRoles.includes(dept.discord_role_id) : false;
+      const hasAccess = !dept.discord_role_id || discordAccess || backendAssigned;
+      const isSupervisor =
+        (dept.discord_supervisor_role_id && userRoles.includes(dept.discord_supervisor_role_id)) ||
+        (backendAssigned && !!personnelRecord?.is_supervisor);
       return {
         id: dept.id, name: dept.name, category: dept.category, description: dept.description,
         color: dept.color, discord_role_id: dept.discord_role_id,
         discord_supervisor_role_id: dept.discord_supervisor_role_id,
-        hasAccess, isSupervisor
+        hasAccess, isSupervisor: !!isSupervisor, backendAssigned
       };
     });
 
     return Response.json({
-      departments: result, discordId, discordRoles: userRoles, hasDiscordLink: inGuild, isAdmin
+      departments: result, discordId: discordId || null, discordRoles: userRoles,
+      hasDiscordLink: inGuild, isAdmin
     });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });

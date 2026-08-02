@@ -40,7 +40,16 @@ export default function PanicDialog({ open, department, session, onClose, onActi
     setSaving(true);
     try {
       const runNum = `PNC-${Date.now().toString().slice(-6)}`;
-      const description = form.description.trim() || `Panic button activated by ${unitName}. Immediate assistance required.`;
+      const timestamp = new Date().toLocaleString();
+      const description = [
+        `🚨 PANIC ACTIVATED — ${timestamp}`,
+        `Unit: ${session?.user_name || "Unknown"}${session?.callsign ? ` (${session.callsign})` : ""}`,
+        session?.rank ? `Rank: ${session.rank}` : null,
+        `Department: ${department?.name || "Unknown"}`,
+        `Status at activation: ${session?.status || "Unknown"}`,
+        form.postal ? `Postal: ${form.postal}` : null,
+        form.description.trim() ? `Details: ${form.description.trim()}` : "Immediate assistance required.",
+      ].filter(Boolean).join("\n");
 
       const call = await base44.entities.ActiveCall.create({
         call_type: form.call_type || defaultCallType,
@@ -52,10 +61,11 @@ export default function PanicDialog({ open, department, session, onClose, onActi
         description,
         department_id: department.id,
         run_number: runNum,
-        assigned_unit_ids: [],
+        assigned_unit_ids: [session.id],
         cad_notes: "",
-        call_origin: "Panic",
+        call_origin: "Officer Initiated",
         caller_name: unitName,
+        assignment_log: [{ unit_name: unitName, action: "panic activated", timestamp: new Date().toISOString(), message: "Unit auto-assigned to own panic call" }],
       });
 
       await base44.entities.CADSession.update(session.id, {

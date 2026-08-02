@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
 import { Plus, Ambulance, Siren, Phone, ChevronRight, Stethoscope, AlertCircle, Truck, User, Heart, Activity, Hospital } from "lucide-react";
+import { dedupeActiveSessions } from "@/lib/cadSessions";
 
 const STATUS_OPTS = ["Available", "Busy", "On Call", "Unavailable"];
 const statusBadge = (s) => {
@@ -51,7 +52,7 @@ export default function EMSDashboard({ department, session, setSession, onOpenCa
       ]);
       const emsDeptIds = allDepts.filter(d => d.category === "EMS" || d.category === "Fire").map(d => d.id);
       setCalls(allCalls.filter(c => c.status !== "Closed"));
-      setSessions(allSessions.filter(s => emsDeptIds.includes(s.department_id)));
+      setSessions(dedupeActiveSessions(allSessions.filter(s => emsDeptIds.includes(s.department_id))));
       try {
         const g = await base44.entities.CADUnitGroup.filter({});
         setGroups(g);
