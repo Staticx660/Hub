@@ -159,7 +159,7 @@ Deno.serve(async (req) => {
           headers: { ...headers, "Content-Type": "application/json" },
           body: JSON.stringify({ recipient_id: discordId }),
         });
-        if (!dmRes.ok) return false;
+        if (!dmRes.ok) { report.errors.push(`DM channel failed for ${name} (${discordId}): ${dmRes.status} ${await dmRes.text()}`); return false; }
         const dm = await dmRes.json();
         const msgRes = await fetch(`https://discord.com/api/v10/channels/${dm.id}/messages`, {
           method: "POST",
@@ -174,8 +174,10 @@ Deno.serve(async (req) => {
             }],
           }),
         });
+        if (!msgRes.ok) report.errors.push(`DM send failed for ${name} (${discordId}): ${msgRes.status} ${await msgRes.text()}`);
         return msgRes.ok;
-      } catch (_e) {
+      } catch (e) {
+        report.errors.push(`DM error for ${name}: ${e.message}`);
         return false;
       }
     };

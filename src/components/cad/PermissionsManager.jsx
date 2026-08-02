@@ -15,16 +15,21 @@ export default function PermissionsManager() {
   const [filterDept, setFilterDept] = useState("all");
   const [selectedId, setSelectedId] = useState(null);
   const [updatingIds, setUpdatingIds] = useState(new Set());
+  const [guildIds, setGuildIds] = useState(null);
+  const [purging, setPurging] = useState(false);
   const { toast } = useToast();
 
   const load = async () => {
     try {
-      const [p, d] = await Promise.all([
+      const [p, d, dm] = await Promise.all([
         base44.entities.CADPersonnel.list(),
         base44.entities.CADDepartment.list(),
+        base44.functions.getDiscordMembers({}).catch(() => null),
       ]);
       setPersonnel(p);
       setDepartments(d);
+      const list = dm?.data?.members || dm?.members;
+      if (Array.isArray(list)) setGuildIds(new Set(list.map((m) => m.discord_id)));
     } catch (e) {
       toast({ title: "Error", description: e.message, variant: "destructive" });
     } finally {
@@ -71,7 +76,24 @@ export default function PermissionsManager() {
     updateDepts(p.id, { additional_department_ids: newAdditional });
   };
 
-  const filtered = personnel.filter((p) => {
+  // Role permissions are backed by Identifiers/Discord: anyone whose Discord account
+  // is no longer in the guild is not shown here.
+  const departed = guildIds ? personnel.filter((p) => p.discord_id && !guildIds.has(p.discord_id)) : [];
+  const active = guildIds ? personnel.filter((p) => !p.discord_id || guildIds.has(p.discord_id)) : personnel;
+
+  const purgeDeparted = async () => {
+    if (!window.confirm(`Remove ${departed.length} personnel record(s) for members who left Discord?`)) return;
+    setPurging(true);
+    try {
+      for (const p of departed) await base44.entities.CADPersonnel.delete(p.id);
+      setPersonnel((prev) => prev.filter((p) => !departed.some((d) => d.id === p.id)));
+      toast({ title: `Removed ${departed.length} departed member(s)` });
+    } catch (e) {
+      toast({ title: "Error", description: e.message, variant: "destructive" });
+    } finally { setPurging(false); }
+  };
+
+  const filtered = active.filter((p) => {
     const matchesSearch = !search || p.name?.toLowerCase().includes(search.toLowerCase()) || p.callsign?.toLowerCase().includes(search.toLowerCase());
     const matchesDept = filterDept === "all" || p.department_id === filterDept || (p.additional_department_ids || []).includes(filterDept);
     return matchesSearch && matchesDept;
@@ -94,6 +116,12 @@ export default function PermissionsManager() {
             {departments.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
           </select>
         </div>
+        {departed.length > 0 && (
+          <div className="flex items-center gap-2 px-2 py-1.5 border-b border-amber-500/30 bg-amber-500/10">
+            <span className="text-[11px] text-amber-200 flex-1">{departed.length} record(s) left Discord — hidden</span>
+            <Btn variant="danger" disabled={purging} onClick={purgeDeparted}>{purging ? "Removing…" : "Purge"}</Btn>
+          </div>
+        )}
         <div className="flex-1 min-h-0 overflow-auto mdt-scroll">
           {filtered.length === 0 && <EmptyState icon={ShieldAlert} title="No personnel found" />}
           {filtered.map((p) => (
