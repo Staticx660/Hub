@@ -5,7 +5,7 @@ import { ChevronUp, ChevronDown } from "lucide-react";
  * Dense enterprise table — sticky header, click-to-sort, row selection.
  * columns: [{ key, label, width, align, render, sortable, mono }]
  */
-export default function DataTable({ columns, rows, rowKey = (r) => r.id, onRowClick, selectedKey, sort: initialSort, rowTone, emptyMessage = "No records" }) {
+export default function DataTable({ columns, rows, rowKey = (r) => r.id, onRowClick, onRowDoubleClick, selectedKey, sort: initialSort, rowTone, emptyMessage = "No records" }) {
   const [sort, setSort] = useState(initialSort || null);
 
   const sorted = useMemo(() => {
@@ -54,6 +54,7 @@ export default function DataTable({ columns, rows, rowKey = (r) => r.id, onRowCl
             <tr
               key={k}
               onClick={onRowClick ? () => onRowClick(r) : undefined}
+              onDoubleClick={onRowDoubleClick ? () => onRowDoubleClick(r) : undefined}
               className={`border-b border-mdt-line/60 ${onRowClick ? "cursor-pointer" : ""} ${selected ? "bg-mdt-accent/15" : "hover:bg-mdt-surface-3/60"}`}
             >
               {columns.map((c, i) => (

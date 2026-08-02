@@ -25,6 +25,8 @@ import MDTShell from "@/components/mdt/shell/MDTShell";
 import { AlertBanner } from "@/components/mdt/shell/StatusStrip";
 import UnitControls from "@/components/mdt/shell/UnitControls";
 import { Radio as RadioIcon, Search as SearchIcon, FileText, PhoneCall, Users } from "lucide-react";
+import CallQueueWorkspace from "@/components/mdt/workspaces/police/CallQueueWorkspace";
+import UnitBoardWorkspace from "@/components/mdt/workspaces/police/UnitBoardWorkspace";
 
 const OCRP_LOGO = "https://media.base44.com/images/public/6a441f279b9d3cd678958799/5a43a1b46_OCRP20.png";
 
@@ -264,10 +266,10 @@ export default function CADMDT() {
           status={{ label: session.panic_active ? "PANIC" : session.status }}
           navItems={[
             { key: "dispatch", label: "Calls", icon: RadioIcon },
+            { key: "units", label: "Units", icon: Users },
             { key: "mycall", label: "My Call", icon: PhoneCall },
             { key: "lookups", label: "Lookups", icon: SearchIcon },
             { key: "records", label: "Records", icon: FileText },
-            { key: "groups", label: "Groups", icon: Users },
           ]}
           active={activeView === "callviewer" ? "dispatch" : activeView}
           onNavigate={setActiveView}
@@ -285,7 +287,21 @@ export default function CADMDT() {
             />
           }
         >
-          {() => <div className="flex-1 min-h-0 overflow-hidden">{views}</div>}
+          {({ detailCollapsed }) => (
+            activeView === "dispatch" ? (
+              <CallQueueWorkspace
+                department={department}
+                session={session}
+                setSession={setSession}
+                onOpenCall={(id) => { setSelectedCallId(id); setActiveView("callviewer"); }}
+                detailCollapsed={detailCollapsed}
+              />
+            ) : activeView === "units" ? (
+              <UnitBoardWorkspace session={session} setSession={setSession} />
+            ) : (
+              <div className="flex-1 min-h-0 overflow-hidden">{views}</div>
+            )
+          )}
         </MDTShell>
         <PanicDialog open={panicOpen} department={department} session={session} onClose={() => setPanicOpen(false)} onActivated={(s) => setSession(s)} />
         <KeybindsDialog open={keybindsOpen} onOpenChange={setKeybindsOpen} keybinds={keybinds} setKeybinds={setKeybinds} />
