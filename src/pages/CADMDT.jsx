@@ -211,7 +211,7 @@ export default function CADMDT() {
       <Lock className="w-16 h-16 text-cad-dim" />
       <h1 className="text-2xl font-bold text-cad-text">Access Denied</h1>
       <p className="text-cad-muted">You need the Discord role or an Admin Panel department assignment for this department.</p>
-      <Button onClick={() => window.history.back()} variant="outline" className="border-cad-border text-cad-muted hover:bg-cad-surface-2/50">Go Back</Button>
+      <Button onClick={() => navigate("/cad")} variant="outline" className="border-cad-border text-cad-muted hover:bg-cad-surface-2/50">Back to Departments</Button>
     </div>
   );
   if (!department) return <div className="flex justify-center items-center h-screen cad-gradient-bg cad-font text-cad-muted">Department not found</div>;
