@@ -18,7 +18,7 @@ function Row({ label, children, span }) {
 const inputCls = "h-7 px-1.5 w-full bg-mdt-bg border border-mdt-line-2 text-[12px] text-mdt-text placeholder:text-mdt-dim focus:outline-none focus:border-mdt-accent";
 const sectionCap = "h-7 px-2.5 flex items-center border-y border-mdt-line bg-mdt-surface-2 text-[9.5px] font-semibold uppercase tracking-[0.09em] text-mdt-dim";
 
-export default function NewCallModal({ open, onClose, form, setForm, departments, onCreate }) {
+export default function NewCallModal({ open, onClose, form, setForm, departments, streets = [], onCreate }) {
   if (!open) return null;
   const set = (k, v) => setForm({ ...form, [k]: v });
 
@@ -66,14 +66,17 @@ export default function NewCallModal({ open, onClose, form, setForm, departments
         <div className={sectionCap}>Location</div>
         <div className="p-2.5 grid grid-cols-3 gap-2.5">
           <Row label="Location *" span={2}>
-            <input value={form.location} onChange={(e) => set("location", e.target.value)} className={inputCls} placeholder="Street or landmark" />
+            <input list="cad-streets" value={form.location} onChange={(e) => set("location", e.target.value)} className={inputCls} placeholder="Street or landmark" />
           </Row>
           <Row label="Postal">
             <input value={form.postal} onChange={(e) => set("postal", e.target.value)} className={`${inputCls} font-mono`} placeholder="e.g. 1234" />
           </Row>
           <Row label="Cross Streets" span={2}>
-            <input value={form.cross_streets} onChange={(e) => set("cross_streets", e.target.value)} className={inputCls} placeholder="Nearest intersection" />
+            <input list="cad-streets" value={form.cross_streets} onChange={(e) => set("cross_streets", e.target.value)} className={inputCls} placeholder="Nearest intersection" />
           </Row>
+          <datalist id="cad-streets">
+            {streets.map((s) => <option key={s} value={s} />)}
+          </datalist>
           <Row label="Block / Apt">
             <input value={form.block} onChange={(e) => set("block", e.target.value)} className={inputCls} />
           </Row>

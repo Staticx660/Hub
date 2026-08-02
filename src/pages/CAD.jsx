@@ -13,6 +13,9 @@ import UnitsPane from "@/components/dispatch/station/UnitsPane";
 import ActivityPane from "@/components/dispatch/station/ActivityPane";
 import NewCallModal from "@/components/dispatch/station/NewCallModal";
 import LookupPane from "@/components/dispatch/station/LookupPane";
+import StationSignOn from "@/components/mdt/shell/StationSignOn";
+import ClockInDialog from "@/components/cad/mdt/ClockInDialog";
+import { Radio } from "lucide-react";
 
 const emptyCallForm = { call_type: "", priority: "3 - Low", status: "Active", location: "", cross_streets: "", postal: "", block: "", call_origin: "", run_number: "", description: "", cad_notes: "", notes: "", caller_name: "", caller_phone: "", department_id: "" };
 
@@ -22,6 +25,10 @@ export default function CAD() {
   const [departments, setDepartments] = useState([]);
   const [groups, setGroups] = useState([]);
   const [dispatchers, setDispatchers] = useState([]);
+  const [streets, setStreets] = useState([]);
+  const [user, setUser] = useState(null);
+  const [session, setSession] = useState(null);
+  const [clockInOpen, setClockInOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [callForm, setCallForm] = useState(emptyCallForm);
@@ -32,16 +39,21 @@ export default function CAD() {
 
   const load = async () => {
     try {
-      const [c, u, d, g, s] = await Promise.all([
+      const [c, u, d, g, s, addr, me] = await Promise.all([
         base44.entities.ActiveCall.list("-created_date"),
         base44.entities.CADUnit.list(),
         base44.entities.CADDepartment.list(),
         base44.entities.CADUnitGroup.list(),
         base44.entities.CADSession.filter({ is_active: true }),
+        base44.entities.Address.list().catch(() => []),
+        base44.auth.me(),
       ]);
-      setCalls(c); setUnits(u); setDepartments(d); setGroups(g);
+      setCalls(c); setUnits(u); setDepartments(d); setGroups(g); setUser(me);
+      setStreets(addr.map(a => a.street_name).filter(Boolean).sort());
       const dispatchDeptIds = d.filter(x => x.category === "Dispatch").map(x => x.id);
-      setDispatchers(s.filter(x => dispatchDeptIds.includes(x.department_id)));
+      const onDuty = s.filter(x => dispatchDeptIds.includes(x.department_id));
+      setDispatchers(onDuty);
+      setSession(onDuty.find(x => x.user_id === me.id) || null);
     } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
     finally { setLoading(false); }
   };
@@ -127,6 +139,37 @@ export default function CAD() {
     } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
   };
 
+  const dispatchDept = departments.find(d => d.category === "Dispatch");
+
+  const handleClockIn = async (form) => {
+    try {
+      const created = await base44.entities.CADSession.create({
+        user_id: user.id,
+        user_name: form.name || user.full_name,
+        department_id: dispatchDept.id,
+        department_name: dispatchDept.name,
+        callsign: form.callsign,
+        rank: form.rank,
+        status: "Available",
+        login_time: new Date().toISOString(),
+        is_active: true,
+      });
+      setSession(created);
+      setDispatchers(prev => [...prev, created]);
+      setClockInOpen(false);
+      toast({ title: "Signed on as dispatcher" });
+    } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
+  };
+
+  const handleSignOff = async () => {
+    try {
+      await base44.entities.CADSession.update(session.id, { is_active: false, logout_time: new Date().toISOString() });
+      setDispatchers(prev => prev.filter(d => d.id !== session.id));
+      setSession(null);
+      toast({ title: "Signed off" });
+    } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
+  };
+
   const openCreateCall = () => { setCallForm({ ...emptyCallForm, department_id: departments[0]?.id || "" }); setDialogOpen(true); };
 
   if (loading) {
@@ -144,6 +187,15 @@ export default function CAD() {
     );
   }
 
+  if (dispatchDept && !session) {
+    return (
+      <>
+        <StationSignOn department={dispatchDept} subtitle="Dispatch · Command Station" icon={Radio} onBack={() => { window.location.href = "/cad"; }} onClockIn={() => setClockInOpen(true)} />
+        <ClockInDialog open={clockInOpen} onOpenChange={setClockInOpen} department={dispatchDept} user={user} onClockIn={handleClockIn} />
+      </>
+    );
+  }
+
   const selectedCall = activeCalls.find((c) => c.id === selectedId) || null;
   const availableUnits = units.filter((u) => u.status === "Available" || u.status === "Off Duty");
 
@@ -157,6 +209,8 @@ export default function CAD() {
         logCollapsed={logCollapsed}
         onToggleLog={() => setLogCollapsed(v => !v)}
         onLookups={() => { setLogCollapsed(false); setDockTab("lookups"); }}
+        session={session}
+        onSignOff={session ? handleSignOff : undefined}
       />
       <StationHeader
         pending={activeCalls.filter(c => c.status === "Pending").length}
@@ -229,6 +283,7 @@ export default function CAD() {
         form={callForm}
         setForm={setCallForm}
         departments={departments}
+        streets={streets}
         onCreate={handleCreateCall}
       />
     </div>
