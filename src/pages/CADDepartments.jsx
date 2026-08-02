@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
-import { Building2, AlertCircle, MessageCircle, Globe } from "lucide-react";
+import { Building2, AlertCircle } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useCadTheme } from "@/hooks/useCadTheme";
 import RetroDepartmentList from "@/components/cad/retro/RetroDepartmentList";
-import { ConsolePanel, ConsoleBtn, ConsoleEmpty } from "@/components/cad/console/ConsoleUI";
-import DepartmentCard from "@/components/cad/home/DepartmentCard";
+import { Btn, EmptyState } from "@/components/mdt/ui/primitives";
+import SignOnRail from "@/components/cad/home/SignOnRail";
+import SignOnDetail from "@/components/cad/home/SignOnDetail";
 
 export default function CADDepartments() {
   const [departments, setDepartments] = useState([]);
@@ -16,6 +17,7 @@ export default function CADDepartments() {
   const [loading, setLoading] = useState(true);
   const [accessInfo, setAccessInfo] = useState(null);
   const [community, setCommunity] = useState(null);
+  const [selectedId, setSelectedId] = useState(null);
   const { toast } = useToast();
 
   const load = async () => {
@@ -27,9 +29,11 @@ export default function CADDepartments() {
         base44.entities.ActiveCall.list(),
         base44.entities.CommunitySetting.list().catch(() => []),
       ]);
-      setDepartments(accessRes.data.departments || []);
+      const depts = accessRes.data.departments || [];
+      setDepartments(depts);
       setAccessInfo(accessRes.data);
       setUnits(u); setPersonnel(p); setCalls(c);
+      setSelectedId((prev) => prev || (depts.find(d => d.hasAccess !== false) || depts[0])?.id || null);
       if (cs.length > 0) setCommunity(cs[0]);
     } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
     finally { setLoading(false); }
@@ -39,82 +43,55 @@ export default function CADDepartments() {
 
   const { theme } = useCadTheme();
   const unitCount = (deptId) => units.filter(u => u.department_id === deptId).length;
-  const personnelCount = (deptId) => personnel.filter(p => p.department_id === deptId).length;
+  const availableCount = (deptId) => units.filter(u => u.department_id === deptId && u.status === "Available").length;
 
-  if (loading) return <div className="flex justify-center py-16"><div className="w-8 h-8 border-2 border-cad-border border-t-cad-accent rounded-full animate-spin" /></div>;
+  if (loading) {
+    return <div className="mdt h-full min-h-[60vh] bg-mdt-bg flex items-center justify-center"><div className="w-7 h-7 border-2 border-mdt-line border-t-mdt-accent rounded-full animate-spin" /></div>;
+  }
 
   if (theme === "retro") return <RetroDepartmentList departments={departments} units={units} personnel={personnel} community={community} />;
 
-  const activeCalls = calls.filter(c => c.status !== "Closed");
-  const availableUnits = units.filter(u => u.status === "Available");
   const showDiscordWarning = accessInfo && !accessInfo.isAdmin && !accessInfo.hasDiscordLink && departments.some(d => d.discord_role_id);
+  const selected = departments.find(d => d.id === selectedId) || null;
+  const activeCalls = calls.filter(c => c.status !== "Closed");
 
-  const stats = [
-    { label: "Departments", value: departments.length },
-    { label: "Active Calls", value: activeCalls.length },
-    { label: "Units Available", value: `${availableUnits.length}/${units.length}` },
-    { label: "Personnel", value: personnel.length },
-  ];
+  if (departments.length === 0) {
+    return (
+      <div className="mdt h-full min-h-[60vh] bg-mdt-bg border border-mdt-line flex items-center justify-center">
+        <EmptyState icon={Building2} title="No departments configured" hint="Departments are created in the Admin Panel" />
+      </div>
+    );
+  }
 
   return (
-    <div className="cad-font space-y-4">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h1 className="text-3xl font-bold text-cad-text mb-1 tracking-tight">
-            {community?.community_name ? `${community.community_name} CAD` : "CAD System"}
-          </h1>
-          <p className="text-[13px] text-cad-muted">Select a department to view calls, units, and personnel</p>
-        </div>
-        {community && (community.discord_invite_url || community.website_url) && (
-          <div className="flex items-center gap-2">
-            {community.discord_invite_url && (
-              <a href={community.discord_invite_url} target="_blank" rel="noopener noreferrer">
-                <ConsoleBtn variant="active" icon={MessageCircle}>Discord</ConsoleBtn>
-              </a>
-            )}
-            {community.website_url && (
-              <a href={community.website_url} target="_blank" rel="noopener noreferrer">
-                <ConsoleBtn icon={Globe}>Website</ConsoleBtn>
-              </a>
-            )}
-          </div>
-        )}
+    <div className="mdt flex flex-col h-[calc(100vh-96px)] min-h-[520px] bg-mdt-bg border border-mdt-line text-mdt-text">
+      <div className="flex items-center gap-3 h-10 px-3 border-b border-mdt-line bg-mdt-surface-2 flex-shrink-0">
+        <span className="text-[12.5px] font-semibold text-mdt-text truncate">
+          {community?.community_name ? `${community.community_name} — Terminal Selection` : "Terminal Selection"}
+        </span>
+        <span className="ml-auto text-[11px] font-mono text-mdt-dim">
+          {activeCalls.length} OPEN CALLS · {units.filter(u => u.status === "Available").length}/{units.length} UNITS AVAILABLE
+        </span>
+        <Link to="/cad/admin"><Btn>Admin Panel</Btn></Link>
       </div>
 
-      <ConsolePanel title="System Status" scroll={false}>
-        <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-cad-border/50">
-          {stats.map(s => (
-            <div key={s.label} className="px-3 py-2.5">
-              <div className="text-[10px] font-semibold uppercase tracking-[0.1em] text-cad-dim">{s.label}</div>
-              <div className="text-xl font-bold text-cad-text">{s.value}</div>
-            </div>
-          ))}
-        </div>
-      </ConsolePanel>
-
       {showDiscordWarning && (
-        <div className="flex items-start gap-2 bg-amber-500/10 border border-amber-500/30 rounded-[var(--cad-radius)] p-3">
-          <AlertCircle className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
-          <p className="text-[12.5px] text-amber-300">Your Discord account isn't linked to the roster. Departments with Discord role restrictions are locked. Ask an admin to sync Discord members.</p>
+        <div className="flex items-center gap-2 px-3 h-8 bg-amber-500/10 border-b border-amber-500/30 flex-shrink-0">
+          <AlertCircle className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
+          <p className="text-[11.5px] text-amber-300 truncate">Discord account not linked — departments with role restrictions are locked. Ask an admin to sync Discord members.</p>
         </div>
       )}
 
-      <ConsolePanel title="Departments" subtitle={`${departments.length} total`} scroll={false} bodyClassName="p-3">
-        {departments.length === 0 ? (
-          <ConsoleEmpty
-            icon={Building2}
-            title="No departments yet"
-            hint="Departments are created in the Admin Panel"
-            action={<Link to="/cad/admin"><ConsoleBtn variant="primary">Open Admin Panel</ConsoleBtn></Link>}
-          />
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {departments.map((d) => (
-              <DepartmentCard key={d.id} dept={d} unitCount={unitCount(d.id)} personnelCount={personnelCount(d.id)} />
-            ))}
-          </div>
-        )}
-      </ConsolePanel>
+      <div className="flex-1 min-h-0 flex">
+        <SignOnRail
+          departments={departments}
+          selectedId={selectedId}
+          onSelect={setSelectedId}
+          unitCount={unitCount}
+          availableCount={availableCount}
+        />
+        <SignOnDetail dept={selected} units={units} personnel={personnel} calls={calls} community={community} />
+      </div>
     </div>
   );
 }

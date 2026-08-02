@@ -1,22 +1,21 @@
 import { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
 import { useToast } from "@/components/ui/use-toast";
 import { AlertTriangle, ChevronLeft, UserPlus } from "lucide-react";
 import CharacterForm from "@/components/cad/civilian/CharacterForm";
 import CivilianDMV from "@/components/cad/civilian/CivilianDMV";
-import CivilianCharacterBar from "@/components/cad/civilian/CivilianCharacterBar";
-import CivilianProfilePanel from "@/components/cad/civilian/CivilianProfilePanel";
-import CivilianRecordsPanel from "@/components/cad/civilian/CivilianRecordsPanel";
 import Call911Dialog from "@/components/cad/civilian/Call911Dialog";
-import { ConsolePanel, ConsoleBtn, ConsoleEmpty } from "@/components/cad/console/ConsoleUI";
+import CharacterRail from "@/components/cad/civilian/terminal/CharacterRail";
+import IdentityPane from "@/components/cad/civilian/terminal/IdentityPane";
+import RecordsPane from "@/components/cad/civilian/terminal/RecordsPane";
+import { Btn, EmptyState } from "@/components/mdt/ui/primitives";
 import { useCadTheme } from "@/hooks/useCadTheme";
-
-const OCRP_LOGO = "https://media.base44.com/images/public/6a441f279b9d3cd678958799/5a43a1b46_OCRP20.png";
 
 export default function CADCivilian() {
   const { deptId } = useParams();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
   const [department, setDepartment] = useState(null);
@@ -119,64 +118,57 @@ export default function CADCivilian() {
   };
 
   if (loading) return (
-    <div className="flex justify-center items-center py-16">
-      <div className="w-8 h-8 border-2 border-cad-border border-t-cad-accent rounded-full animate-spin" />
+    <div className="mdt fixed inset-0 bg-mdt-bg flex items-center justify-center">
+      <div className="w-7 h-7 border-2 border-mdt-line border-t-mdt-accent rounded-full animate-spin" />
     </div>
   );
 
   if (error || !department) return (
-    <div className="cad-font flex flex-col items-center justify-center py-20 gap-3">
-      <AlertTriangle className="w-12 h-12 text-cad-dim" />
-      <h1 className="text-lg font-semibold text-cad-text">{error ? "Something went wrong" : "Department not found"}</h1>
-      {error && <p className="text-[13px] text-cad-muted">{error}</p>}
-      <ConsoleBtn icon={ChevronLeft} onClick={() => window.history.back()}>Go Back</ConsoleBtn>
+    <div className="mdt fixed inset-0 bg-mdt-bg flex flex-col items-center justify-center gap-3">
+      <AlertTriangle className="w-9 h-9 text-mdt-dim" />
+      <h1 className="text-[15px] font-semibold text-mdt-text">{error ? "Something went wrong" : "Department not found"}</h1>
+      {error && <p className="text-[12.5px] text-mdt-muted">{error}</p>}
+      <Btn icon={ChevronLeft} onClick={() => window.history.back()}>Go Back</Btn>
     </div>
   );
 
   const fullName = selectedChar ? `${selectedChar.first_name} ${selectedChar.middle_name ? selectedChar.middle_name + " " : ""}${selectedChar.last_name}` : "";
 
   return (
-    <div className={`min-h-screen cad-gradient-bg cad-font p-4 lg:p-6 space-y-3 ${retro ? "retro-shell" : ""}`}>
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <img src={OCRP_LOGO} alt="OCRP" className="w-10 h-10 rounded-lg" />
-          <div>
-            <h1 className="text-xl font-bold text-cad-text tracking-tight">{department.name}</h1>
-            <p className="text-[12.5px] text-cad-muted">Civilian Portal</p>
-          </div>
+    <div className={`mdt fixed inset-0 flex flex-col bg-mdt-bg text-mdt-text ${retro ? "retro-shell" : ""}`}>
+      <div className="flex items-center gap-3 h-11 px-3 border-b border-mdt-line bg-mdt-surface-2 flex-shrink-0">
+        <div className="min-w-0">
+          <div className="text-[12.5px] font-semibold text-mdt-text truncate leading-tight">Civilian Device</div>
+          <div className="text-[10px] uppercase tracking-[0.1em] text-mdt-dim truncate">{department.name}</div>
         </div>
-        <Link to="/cad">
-          <ConsoleBtn icon={ChevronLeft}>Back to CAD</ConsoleBtn>
-        </Link>
+        <span className="ml-auto text-[11.5px] font-mono text-mdt-dim truncate">{fullName || "NO PERSONA"}</span>
+        <Btn icon={ChevronLeft} onClick={() => navigate("/cad")}>Exit</Btn>
       </div>
 
-      <CivilianCharacterBar
-        characters={characters}
-        selectedChar={selectedChar}
-        onSelect={(id) => { setSelectedChar(characters.find(c => c.id === id)); setPanel(null); }}
-        panel={panel}
-        setPanel={setPanel}
-        onNew={() => { setEditingChar(null); setCharFormOpen(true); }}
-        onEdit={() => { setEditingChar(selectedChar); setCharFormOpen(true); }}
-        on911={() => setCall911Open(true)}
-      />
+      <div className="flex-1 min-h-0 flex">
+        <CharacterRail
+          characters={characters}
+          selectedChar={selectedChar}
+          onSelect={(id) => { setSelectedChar(characters.find(c => c.id === id)); setPanel(null); }}
+          panel={panel}
+          setPanel={setPanel}
+          onNew={() => { setEditingChar(null); setCharFormOpen(true); }}
+          onEdit={() => { setEditingChar(selectedChar); setCharFormOpen(true); }}
+          on911={() => setCall911Open(true)}
+        />
 
-      {!selectedChar ? (
-        <ConsolePanel title="Character">
-          <ConsoleEmpty
-            icon={UserPlus}
-            title="No character selected"
-            hint="Create a character to get started"
-            action={<ConsoleBtn variant="primary" icon={UserPlus} onClick={() => { setEditingChar(null); setCharFormOpen(true); }}>New Character</ConsoleBtn>}
-          />
-        </ConsolePanel>
-      ) : panel === "records" ? (
-        <CivilianRecordsPanel fullName={fullName} warrants={warrants} bolos={bolos} reports={reports} />
-      ) : panel === "dmv" ? (
-        <CivilianDMV character={selectedChar} department={department} user={user} onUpdate={reloadCharacter} />
-      ) : (
-        <CivilianProfilePanel character={selectedChar} fullName={fullName} />
-      )}
+        <div className="flex-1 min-w-0 overflow-auto mdt-scroll">
+          {!selectedChar ? (
+            <EmptyState icon={UserPlus} title="No persona on this device" hint="Create a persona to use the civilian terminal" />
+          ) : panel === "records" ? (
+            <RecordsPane fullName={fullName} warrants={warrants} bolos={bolos} reports={reports} />
+          ) : panel === "dmv" ? (
+            <CivilianDMV character={selectedChar} department={department} user={user} onUpdate={reloadCharacter} />
+          ) : (
+            <IdentityPane character={selectedChar} fullName={fullName} />
+          )}
+        </div>
+      </div>
 
       <CharacterForm open={charFormOpen} onOpenChange={setCharFormOpen} editing={editingChar} department={department} user={user} onSaved={reloadCharacters} />
 
