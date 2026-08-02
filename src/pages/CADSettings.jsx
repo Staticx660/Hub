@@ -4,10 +4,11 @@ import DiscordLinker from "@/components/cad/DiscordLinker";
 
 export default function CADSettings() {
   return (
-    <div className="space-y-6 cad-font">
-      <div>
-        <h1 className="text-2xl font-bold text-cad-text flex items-center gap-2"><Palette className="w-6 h-6 text-cad-accent" /> CAD Settings</h1>
-        <p className="text-sm text-cad-muted mt-1">Manage your CAD appearance and Discord account link</p>
+    <div className="mdt space-y-2.5 text-mdt-text">
+      <div className="flex items-center gap-2 h-9 px-2.5 border border-mdt-line bg-mdt-surface-2">
+        <Palette className="w-4 h-4 text-mdt-dim" />
+        <span className="text-[12.5px] font-semibold">CAD Settings</span>
+        <span className="text-[11px] text-mdt-dim truncate">Appearance and Discord account link</span>
       </div>
       <DiscordLinker />
       <ThemeSelector />

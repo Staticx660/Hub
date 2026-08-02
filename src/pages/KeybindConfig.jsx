@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Keyboard, RotateCcw, Check } from "lucide-react";
+import { Keyboard, RotateCcw } from "lucide-react";
 import { DEFAULT_KEYBINDS, KEYBIND_LABELS, saveKeybinds } from "@/hooks/useKeybinds";
+import { Btn, Panel } from "@/components/mdt/ui/primitives";
 
 export default function KeybindConfig() {
   const [keybinds, setKeybinds] = useState(() => {
@@ -33,43 +33,42 @@ export default function KeybindConfig() {
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-white flex items-center gap-2"><Keyboard className="w-6 h-6 text-cyan-400" /> Keybind Configuration</h1>
-        <p className="text-sm text-slate-400 mt-1">Customize your keyboard shortcuts for the MDT. Click a key to rebind it, then press any key.</p>
+    <div className="mdt space-y-2.5 text-mdt-text">
+      <div className="flex items-center gap-2 h-9 px-2.5 border border-mdt-line bg-mdt-surface-2">
+        <Keyboard className="w-4 h-4 text-mdt-dim" />
+        <span className="text-[12.5px] font-semibold">Keybind Configuration</span>
+        <span className="text-[11px] text-mdt-dim truncate">Click a binding, then press any key</span>
+        <Btn icon={RotateCcw} className="ml-auto" onClick={reset}>Reset Defaults</Btn>
       </div>
 
-      <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-5">
-        <div className="space-y-2 max-w-2xl">
+      <Panel title="Bindings" scroll={false}>
+        <div className="divide-y divide-mdt-line/60">
           {Object.entries(KEYBIND_LABELS).map(([action, label]) => (
-            <div key={action} className="flex items-center justify-between bg-slate-800/50 rounded-lg px-4 py-3">
-              <span className="text-sm text-slate-300">{label}</span>
+            <div key={action} className="flex items-center gap-2 h-8 px-2.5">
+              <span className="text-[12px] text-mdt-muted truncate">{label}</span>
               <button
                 onClick={() => captureKey(action)}
-                className={`min-w-[90px] px-4 py-2 rounded-md text-sm font-mono font-bold text-center transition-colors ${
-                  listening === action ? "bg-cyan-500 text-white animate-pulse" : "bg-slate-700 text-white hover:bg-slate-600"
+                className={`ml-auto min-w-[76px] h-6 px-2 rounded-sm border text-[11.5px] font-mono font-semibold ${
+                  listening === action
+                    ? "bg-mdt-accent text-white border-mdt-accent animate-pulse"
+                    : "bg-mdt-surface-3 text-mdt-text border-mdt-line-2 hover:bg-mdt-surface-4"
                 }`}
               >
-                {listening === action ? "Press key..." : keybinds[action] || "—"}
+                {listening === action ? "Press key…" : keybinds[action] || "—"}
               </button>
             </div>
           ))}
         </div>
-      </div>
+      </Panel>
 
-      <div className="flex gap-3">
-        <Button onClick={reset} variant="outline" className="border-slate-700 text-slate-300 gap-2"><RotateCcw className="w-4 h-4" /> Reset to Defaults</Button>
-      </div>
-
-      <div className="bg-slate-900/40 border border-slate-800 rounded-xl p-4">
-        <h3 className="text-sm font-semibold text-slate-400 mb-2">Tips</h3>
-        <ul className="text-xs text-slate-500 space-y-1">
-          <li>• Keybinds are saved to your browser and apply only to this device.</li>
-          <li>• Shortcuts are disabled while typing in input fields.</li>
-          <li>• Modifier keys (Ctrl, Alt, Cmd) are ignored to prevent conflicts.</li>
-          <li>• Press Escape while capturing to cancel without changing the keybind.</li>
+      <Panel title="Notes" scroll={false}>
+        <ul className="p-2.5 space-y-1 text-[11.5px] text-mdt-dim">
+          <li>Keybinds are stored on this device only.</li>
+          <li>Shortcuts are disabled while typing in input fields.</li>
+          <li>Modifier keys (Ctrl, Alt, Cmd) are ignored to prevent conflicts.</li>
+          <li>Press Escape while capturing to cancel.</li>
         </ul>
-      </div>
+      </Panel>
     </div>
   );
 }

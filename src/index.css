@@ -125,19 +125,19 @@
 
 /* ===== CAD Theme System ===== */
 :root {
-  --cad-bg: 222 47% 6%;
-  --cad-bg-solid: 222 47% 7%;
-  --cad-surface: 222 40% 11%;
-  --cad-surface-2: 222 35% 14%;
-  --cad-surface-3: 222 30% 17%;
-  --cad-border: 220 20% 20%;
-  --cad-border-light: 220 15% 25%;
-  --cad-text: 210 40% 98%;
-  --cad-text-muted: 215 20% 65%;
-  --cad-text-dim: 220 15% 45%;
-  --cad-accent: 199 89% 48%;
-  --cad-accent-soft: 199 89% 48%;
-  --cad-radius: 0.75rem;
+  --cad-bg: 200 9% 11%;
+  --cad-bg-solid: 200 9% 11%;
+  --cad-surface: 203 9% 15%;
+  --cad-surface-2: 200 9% 18%;
+  --cad-surface-3: 202 9% 22%;
+  --cad-border: 202 9% 25%;
+  --cad-border-light: 202 9% 32%;
+  --cad-text: 204 17% 89%;
+  --cad-text-muted: 204 10% 72%;
+  --cad-text-dim: 204 8% 55%;
+  --cad-accent: 173 80% 40%;
+  --cad-accent-soft: 173 80% 40%;
+  --cad-radius: 0.125rem;
   --cad-font: 'Inter', ui-sans-serif, system-ui, sans-serif;
 }
 
@@ -224,42 +224,24 @@
 /* CAD utility classes */
 .cad-font { font-family: var(--cad-font); }
 
-.cad-gradient-bg {
-  background:
-    radial-gradient(ellipse 60% 40% at 50% -10%, hsl(var(--cad-accent) / 0.07), transparent 60%),
-    radial-gradient(ellipse 40% 30% at 100% 100%, hsl(var(--cad-accent) / 0.04), transparent 50%),
-    hsl(var(--cad-bg));
-}
+.cad-gradient-bg { background: hsl(var(--cad-bg)); }
 
-.cad-glass {
-  background: hsl(var(--cad-surface) / 0.7);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-}
+.cad-glass { background: hsl(var(--cad-surface)); }
 
-.cad-glass-strong {
-  background: hsl(var(--cad-surface) / 0.92);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-}
+.cad-glass-strong { background: hsl(var(--cad-surface)); }
 
 .cad-card {
-  background: hsl(var(--cad-surface) / 0.8);
-  border: 1px solid hsl(var(--cad-border) / 0.5);
+  background: hsl(var(--cad-surface));
+  border: 1px solid hsl(var(--cad-border));
   border-radius: var(--cad-radius);
-  transition: all 0.2s ease;
 }
 
 .cad-card-hover:hover {
-  border-color: hsl(var(--cad-accent) / 0.3);
-  background: hsl(var(--cad-surface) / 0.95);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px hsl(var(--cad-bg-solid) / 0.5);
+  border-color: hsl(var(--cad-border-light));
+  background: hsl(var(--cad-surface-2));
 }
 
-.cad-accent-glow {
-  box-shadow: 0 0 20px hsl(var(--cad-accent) / 0.15);
-}
+.cad-accent-glow { box-shadow: none; }
 
 .cad-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
 .cad-scroll::-webkit-scrollbar-track { background: transparent; }

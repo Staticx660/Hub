@@ -49,7 +49,6 @@ import MyRecords from '@/pages/MyRecords';
 import SystemLogs from '@/pages/SystemLogs';
 import Help from '@/pages/Help';
 import MDTPreview from '@/pages/MDTPreview';
-import HelpDock from '@/components/help/HelpDock';
 import { useCadTheme, syncThemeFromUser } from "@/hooks/useCadTheme";
 import { useCommunityBranding } from "@/hooks/useCommunityBranding";
 
@@ -155,7 +154,6 @@ function App() {
         <Router>
           <ScrollToTop />
           <AuthenticatedApp />
-          <HelpDock />
         </Router>
         <Toaster />
       </QueryClientProvider>
