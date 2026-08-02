@@ -22,6 +22,9 @@
       "type": "number",
       "default": 3
     },
+    "trigger_token": {
+      "type": "string"
+    },
     "last_run_status": {
       "type": "string"
     },
@@ -60,5 +63,6 @@
         "role": "admin"
       }
     }
-  }
+  },
+  "required": []
 }
