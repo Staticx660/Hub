@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
-import { Plus, Siren, Building2 } from "lucide-react";
-import { Panel, Btn, StatusPill } from "@/components/mdt/ui/primitives";
-import DataTable from "@/components/mdt/ui/DataTable";
+import { Plus, Building2 } from "lucide-react";
+import { ConsolePanel, ConsoleBtn, Tag } from "@/components/cad/console/ConsoleUI";
+import ConsoleTable from "@/components/cad/console/ConsoleTable";
 import NewCallDialog from "@/components/dispatch/NewCallDialog";
 import CallDetailPane from "@/components/dispatch/CallDetailPane";
 import UnitsRosterPanel from "@/components/dispatch/UnitsRosterPanel";
@@ -118,15 +117,17 @@ export default function CAD() {
 
   const openCreateCall = () => { setCallForm({ ...emptyCallForm, department_id: departments[0]?.id || "" }); setDialogOpen(true); };
 
-  if (loading) return <div className="flex justify-center py-16"><div className="w-8 h-8 border-4 border-slate-700 border-t-cyan-500 rounded-full animate-spin" /></div>;
+  if (loading) return <div className="flex justify-center py-16"><div className="w-8 h-8 border-2 border-cad-border border-t-cad-accent rounded-full animate-spin" /></div>;
 
   if (departments.length === 0) {
     return (
-      <div className="text-center py-16">
-        <Building2 className="w-16 h-16 mx-auto mb-4 text-slate-600" />
-        <h2 className="text-xl font-semibold text-white mb-2">No CAD Departments</h2>
-        <p className="text-slate-400 mb-4">Create departments in the Admin Panel to start dispatching.</p>
-        <Button onClick={() => window.location.href = "/cad/admin"} className="bg-cyan-600 hover:bg-cyan-700">Go to Admin Panel</Button>
+      <div className="cad-font text-center py-16">
+        <Building2 className="w-14 h-14 mx-auto mb-4 text-cad-dim" />
+        <h2 className="text-lg font-semibold text-cad-text mb-1">No CAD Departments</h2>
+        <p className="text-[13px] text-cad-muted mb-4">Create departments in the Admin Panel to start dispatching.</p>
+        <div className="flex justify-center">
+          <ConsoleBtn variant="primary" onClick={() => window.location.href = "/cad/admin"}>Go to Admin Panel</ConsoleBtn>
+        </div>
       </div>
     );
   }
@@ -135,7 +136,7 @@ export default function CAD() {
   const availableUnits = units.filter((u) => u.status === "Available" || u.status === "Off Duty");
 
   const columns = [
-    { key: "priority", label: "Pri", width: 90, render: (c) => <StatusPill tone={c.priority === "1 - High" ? "crit" : c.priority === "2 - Medium" ? "warn" : "info"}>{c.priority.split(" ")[0]}</StatusPill> },
+    { key: "priority", label: "Pri", width: 80, render: (c) => <Tag tone={c.priority === "1 - High" ? "crit" : c.priority === "2 - Medium" ? "warn" : "info"}>P{c.priority.split(" ")[0]}</Tag> },
     { key: "call_type", label: "Type" },
     { key: "location", label: "Location" },
     { key: "department_id", label: "Department", width: 160, render: (c) => deptName(c.department_id) },
@@ -144,19 +145,19 @@ export default function CAD() {
   ];
 
   return (
-    <div className="mdt">
-      <div className="flex items-center justify-between mb-4">
+    <div className="cad-font">
+      <div className="flex items-center justify-between gap-3 mb-4">
         <div>
-          <h1 className="text-[18px] font-semibold text-mdt-text">CAD Dispatch</h1>
-          <p className="text-[12px] text-mdt-dim">{activeCalls.length} active calls · {units.filter(u => u.status === "Available").length} units available</p>
+          <h1 className="text-2xl font-bold text-cad-text tracking-tight">Dispatch Console</h1>
+          <p className="text-[13px] text-cad-muted">{activeCalls.length} active calls · {units.filter(u => u.status === "Available").length} units available</p>
         </div>
-        <Btn variant="primary" icon={Plus} onClick={openCreateCall}>New Call</Btn>
+        <ConsoleBtn variant="primary" icon={Plus} onClick={openCreateCall}>New Call</ConsoleBtn>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-2 items-start">
-        <div className="lg:col-span-2 space-y-2">
-          <Panel title={`Active Calls · ${activeCalls.length}`} bodyClassName="max-h-[45vh]">
-            <DataTable
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 items-start">
+        <div className="lg:col-span-2 space-y-3">
+          <ConsolePanel title="Call Queue" subtitle={`${activeCalls.length} active`} bodyClassName="max-h-[45vh]">
+            <ConsoleTable
               columns={columns}
               rows={activeCalls}
               selectedKey={selectedId}
@@ -164,8 +165,8 @@ export default function CAD() {
               rowTone={(c) => (c.priority === "1 - High" ? "#ef4444" : c.priority === "2 - Medium" ? "#f59e0b" : "#3b82f6")}
               emptyMessage="No active calls"
             />
-          </Panel>
-          <Panel title="Call Detail">
+          </ConsolePanel>
+          <ConsolePanel title="Call Detail">
             <CallDetailPane
               call={selectedCall}
               deptName={deptName}
@@ -175,7 +176,7 @@ export default function CAD() {
               onUnassign={unassignUnit}
               onClose={(id) => { closeCall(id); setSelectedId(null); }}
             />
-          </Panel>
+          </ConsolePanel>
         </div>
 
         <UnitsRosterPanel

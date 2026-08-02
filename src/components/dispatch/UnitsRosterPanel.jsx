@@ -1,53 +1,51 @@
 import React from "react";
-import { Panel, StatusPill } from "@/components/mdt/ui/primitives";
+import { ConsolePanel, Tag, ConsoleSelect } from "@/components/cad/console/ConsoleUI";
 
 const TONE = { "Available": "ok", "On Call": "crit", "Transporting": "warn", "Out of Service": "neutral", "Off Duty": "neutral" };
 
 export default function UnitsRosterPanel({ departments, units, groups, activeCalls, deptName, onDispatchGroup }) {
   return (
-    <div className="flex flex-col min-h-0 gap-2 h-full">
-      <Panel title="Units" className="flex-1">
+    <div className="flex flex-col gap-3 min-h-0">
+      <ConsolePanel title="Units" subtitle={`${units.filter((u) => u.status === "Available").length} available`} bodyClassName="max-h-[50vh]">
         {departments.map((dept) => {
           const deptUnits = units.filter((u) => u.department_id === dept.id);
           if (deptUnits.length === 0) return null;
           return (
-            <div key={dept.id} className="border-b border-mdt-line last:border-b-0">
-              <div className="flex items-center gap-2 h-7 px-2.5 bg-mdt-surface-2">
-                <span className="w-2 h-2" style={{ background: dept.color }} />
-                <span className="text-[11.5px] font-medium text-mdt-text truncate">{dept.name}</span>
-                <span className="text-[11px] text-mdt-dim ml-auto">{deptUnits.filter((u) => u.status === "Available").length}/{deptUnits.length}</span>
+            <div key={dept.id} className="border-b border-cad-border/50 last:border-b-0">
+              <div className="flex items-center gap-2 h-8 px-2.5 bg-cad-surface-2/40">
+                <span className="w-2 h-2 rounded-full" style={{ background: dept.color }} />
+                <span className="text-[12px] font-medium text-cad-text truncate">{dept.name}</span>
+                <span className="text-[11px] text-cad-dim ml-auto">{deptUnits.filter((u) => u.status === "Available").length}/{deptUnits.length}</span>
               </div>
               {deptUnits.map((u) => (
-                <div key={u.id} className="flex items-center justify-between gap-2 h-7 px-2.5 border-t border-mdt-line/60">
-                  <span className="text-[12px] text-mdt-text truncate">{u.name}</span>
-                  <StatusPill tone={TONE[u.status] || "neutral"}>{u.status}</StatusPill>
+                <div key={u.id} className="flex items-center justify-between gap-2 h-8 px-2.5 border-t border-cad-border/30">
+                  <span className="text-[12.5px] text-cad-text truncate">{u.name}</span>
+                  <Tag tone={TONE[u.status] || "neutral"}>{u.status}</Tag>
                 </div>
               ))}
             </div>
           );
         })}
-      </Panel>
+      </ConsolePanel>
 
       {groups.length > 0 && (
-        <Panel title="Preset Groups" className="flex-1">
+        <ConsolePanel title="Preset Groups" bodyClassName="max-h-[40vh]">
           {groups.map((g) => (
-            <div key={g.id} className="p-2.5 border-b border-mdt-line last:border-b-0">
+            <div key={g.id} className="p-2.5 border-b border-cad-border/50 last:border-b-0">
               <div className="flex items-center justify-between gap-2">
-                <span className="text-[12.5px] text-mdt-text truncate">{g.name}</span>
-                <span className="text-[11px] text-mdt-dim">{g.unit_ids?.length || 0} units</span>
+                <span className="text-[12.5px] font-medium text-cad-text truncate">{g.name}</span>
+                <span className="text-[11px] text-cad-dim">{g.unit_ids?.length || 0} units</span>
               </div>
-              <p className="text-[11px] text-mdt-dim mb-1.5">{deptName(g.department_id)}</p>
-              <select
+              <p className="text-[11px] text-cad-dim mb-1.5">{deptName(g.department_id)}</p>
+              <ConsoleSelect
                 value=""
                 onChange={(e) => e.target.value && onDispatchGroup(g.id, e.target.value)}
-                className="h-7 px-1.5 w-full bg-mdt-surface border border-mdt-line-2 text-[12px] text-mdt-text focus:outline-none focus:border-mdt-accent"
-              >
-                <option value="">Dispatch to call…</option>
-                {activeCalls.map((c) => <option key={c.id} value={c.id}>{c.call_type} · {c.location}</option>)}
-              </select>
+                placeholder="Dispatch to call…"
+                options={activeCalls.map((c) => ({ value: c.id, label: `${c.call_type} · ${c.location}` }))}
+              />
             </div>
           ))}
-        </Panel>
+        </ConsolePanel>
       )}
     </div>
   );
