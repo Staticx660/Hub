@@ -1,0 +1,115 @@
+{
+  "name": "AutoDispatchLog",
+  "type": "object",
+  "properties": {
+    "call_id": {
+      "type": "string"
+    },
+    "call_type": {
+      "type": "string"
+    },
+    "location": {
+      "type": "string"
+    },
+    "postal": {
+      "type": "string"
+    },
+    "outcome": {
+      "type": "string",
+      "enum": [
+        "Auto-Dispatched",
+        "Skipped - Dispatcher Online",
+        "Skipped - Disabled",
+        "Failed"
+      ],
+      "default": "Auto-Dispatched"
+    },
+    "category": {
+      "type": "string"
+    },
+    "priority": {
+      "type": "string"
+    },
+    "department_names": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "recommended_units": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "session_id": {
+            "type": "string"
+          },
+          "unit_name": {
+            "type": "string"
+          },
+          "callsign": {
+            "type": "string"
+          },
+          "department_name": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "distance": {
+            "type": "number"
+          },
+          "score": {
+            "type": "number"
+          },
+          "assigned": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "narrative": {
+      "type": "string"
+    },
+    "reasoning": {
+      "type": "string"
+    },
+    "error": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "outcome"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

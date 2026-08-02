@@ -1,0 +1,64 @@
+{
+  "name": "AutoDispatchSetting",
+  "type": "object",
+  "properties": {
+    "enabled": {
+      "type": "boolean",
+      "default": true
+    },
+    "auto_assign_units": {
+      "type": "boolean",
+      "default": true
+    },
+    "ai_narratives": {
+      "type": "boolean",
+      "default": true
+    },
+    "discord_notify": {
+      "type": "boolean",
+      "default": true
+    },
+    "max_recommended_units": {
+      "type": "number",
+      "default": 3
+    },
+    "last_run_status": {
+      "type": "string"
+    },
+    "last_run_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

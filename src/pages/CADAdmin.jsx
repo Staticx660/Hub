@@ -11,8 +11,9 @@ import DangerZoneManager from "@/components/cad/customizer/DangerZoneManager";
 import PenalCodesManager from "@/components/cad/PenalCodesManager";
 import DepartmentsGroupsManager from "@/components/cad/DepartmentsGroupsManager";
 import PermissionsManager from "@/components/cad/PermissionsManager";
+import AutoDispatchManager from "@/components/cad/AutoDispatchManager";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
-import { Users, IdCard, Settings, Building2, MapPin, Gavel, ShieldCheck, Bell, MessageCircle, ScrollText, ArrowLeft, KeyRound, Crown, Trash2 } from "lucide-react";
+import { Users, IdCard, Settings, Building2, MapPin, Gavel, ShieldCheck, Bell, MessageCircle, ScrollText, ArrowLeft, KeyRound, Crown, Trash2, Bot } from "lucide-react";
 import SystemLogs from "@/pages/SystemLogs";
 
 // access: "supervisor" = visible to supervisors+, "admin" = visible to CAD/platform admins only
@@ -31,6 +32,7 @@ const ALL_SECTIONS = [
     { id: "tones", label: "Notification Tones", icon: Bell, access: "admin" },
   ]},
   { title: "ADVANCED", items: [
+    { id: "autodispatch", label: "Auto Dispatch", icon: Bot, access: "admin" },
     { id: "discord", label: "Discord", icon: MessageCircle, access: "admin" },
     { id: "logs", label: "Logs", icon: ScrollText, access: "admin" },
     { id: "danger", label: "Danger Zone", icon: Trash2, access: "admin" },
@@ -65,6 +67,7 @@ export default function CADAdmin() {
       case "penal": return <PenalCodesManager />;
       case "restrictions": return <UserRestrictionsManager />;
       case "tones": return <NotificationTonesManager />;
+      case "autodispatch": return <AutoDispatchManager />;
       case "discord": return <DiscordSettings />;
       case "logs": return <SystemLogs />;
       case "danger": return <DangerZoneManager />;

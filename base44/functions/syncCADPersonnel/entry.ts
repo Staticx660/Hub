@@ -138,7 +138,36 @@ Deno.serve(async (req) => {
       if (batch.length < 1000) hasMore = false;
     }
 
-    const report = { totalDiscordMembers: members.length, added: 0, updated: 0, skipped: 0, merged: dedupReport.merged, deleted: dedupReport.deleted, addedToDefault: 0, errors: [] };
+    const report = { totalDiscordMembers: members.length, added: 0, updated: 0, skipped: 0, merged: dedupReport.merged, deleted: dedupReport.deleted, addedToDefault: 0, notified: 0, errors: [] };
+
+    // Members are enrolled in the CAD automatically — they must be told via bot DM.
+    const notifyEnrolled = async (discordId, name, deptName) => {
+      try {
+        const dmRes = await fetch("https://discord.com/api/v10/users/@me/channels", {
+          method: "POST",
+          headers: { ...headers, "Content-Type": "application/json" },
+          body: JSON.stringify({ recipient_id: discordId }),
+        });
+        if (!dmRes.ok) return false;
+        const dm = await dmRes.json();
+        const msgRes = await fetch(`https://discord.com/api/v10/channels/${dm.id}/messages`, {
+          method: "POST",
+          headers: { ...headers, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            embeds: [{
+              title: "You've been added to the OCRP Hub CAD",
+              description: `Hi ${name} — because you hold a synced Discord role, a CAD personnel record was created for you automatically.\n\n**Department:** ${deptName}\n\nYour record stores your name, Discord ID, department, rank and callsign so you can go on duty in the CAD. If you did not want an account, contact a community administrator and it will be removed.`,
+              color: 0x3b82f6,
+              timestamp: new Date().toISOString(),
+              footer: { text: "OCRP Hub — Automated Enrollment Notice" },
+            }],
+          }),
+        });
+        return msgRes.ok;
+      } catch (_e) {
+        return false;
+      }
+    };
 
     for (const member of members) {
       if (!member.user || member.user.bot) { report.skipped++; continue; }
@@ -211,6 +240,7 @@ Deno.serve(async (req) => {
           existingByName[displayName.toLowerCase().trim()] = newRec;
           report.added++;
           if (assignedToDefault) report.addedToDefault++;
+          if (await notifyEnrolled(discordId, displayName, primaryDept.name)) report.notified++;
         } catch (e) { report.errors.push(`Failed to create ${displayName}: ${e.message}`); }
       }
     }
