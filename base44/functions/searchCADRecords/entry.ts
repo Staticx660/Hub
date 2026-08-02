@@ -1,10 +1,11 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { requireCADAccess } from '../../shared/authGuards.js';
 
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    const access = await requireCADAccess(base44);
+    if (access.error) return access.error;
 
     const body = await req.json();
     const { searchType, firstName, lastName, dob, plate, serial, personId, personName, vehicleId, vehiclePlate, exact } = body;
