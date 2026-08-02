@@ -24,8 +24,13 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'DISCORD_PUBLIC_KEY not configured' }, { status: 500 });
     }
 
-    // Verify Discord interaction signature using Deno's built-in Web Crypto (Ed25519)
-    if (signature && timestamp) {
+    // Signature headers are mandatory — reject anything not signed by Discord
+    if (!signature || !timestamp) {
+      return Response.json({ error: 'Missing request signature' }, { status: 401 });
+    }
+
+    let isValid = false;
+    try {
       const cryptoKey = await crypto.subtle.importKey(
         'raw',
         hexToBytes(publicKey.trim()),
@@ -34,16 +39,18 @@ Deno.serve(async (req) => {
         ['verify']
       );
 
-      const isValid = await crypto.subtle.verify(
+      isValid = await crypto.subtle.verify(
         'Ed25519',
         cryptoKey,
         hexToBytes(signature),
         strToBytes(timestamp + rawBody)
       );
+    } catch (_e) {
+      isValid = false;
+    }
 
-      if (!isValid) {
-        return Response.json({ error: 'Invalid request signature' }, { status: 401 });
-      }
+    if (!isValid) {
+      return Response.json({ error: 'Invalid request signature' }, { status: 401 });
     }
 
     const body = JSON.parse(rawBody);
