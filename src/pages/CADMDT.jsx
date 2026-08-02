@@ -33,6 +33,15 @@ import MyCallWorkspace from "@/components/mdt/workspaces/police/MyCallWorkspace"
 
 const OCRP_LOGO = "https://media.base44.com/images/public/6a441f279b9d3cd678958799/5a43a1b46_OCRP20.png";
 
+// Workspace views that can be opened as browser-style tabs
+const VIEW_LABELS = {
+  dispatch: "Calls",
+  units: "Units",
+  mycall: "My Call",
+  lookups: "Lookups",
+  records: "Records",
+};
+
 export default function CADMDT() {
   const { deptId } = useParams();
   const { user } = useAuth();
@@ -51,6 +60,7 @@ export default function CADMDT() {
   const [panicOpen, setPanicOpen] = useState(false);
   const [myDepts, setMyDepts] = useState([]);
   const [newFileRequest, setNewFileRequest] = useState(0);
+  const [openTabs, setOpenTabs] = useState(["dispatch"]);
   const { theme } = useCadTheme();
   const retro = theme === "retro";
 
@@ -204,11 +214,26 @@ export default function CADMDT() {
     setPanicOpen(true);
   };
 
+  const openView = (key) => {
+    setOpenTabs((tabs) => (tabs.includes(key) ? tabs : [...tabs, key]));
+    setActiveView(key);
+  };
+
+  const closeTab = (key) => {
+    setOpenTabs((tabs) => {
+      if (tabs.length <= 1) return tabs;
+      const next = tabs.filter((t) => t !== key);
+      const isActive = activeView === key || (key === "mycall" && activeView === "callviewer");
+      if (isActive) setActiveView(next[Math.max(0, tabs.indexOf(key) - 1)]);
+      return next;
+    });
+  };
+
   useKeybinds(keybinds, {
-    view_dispatch: () => setActiveView("dispatch"),
-    view_lookups: () => setActiveView("lookups"),
-    view_records: () => setActiveView("records"),
-    view_mycall: () => setActiveView("mycall"),
+    view_dispatch: () => openView("dispatch"),
+    view_lookups: () => openView("lookups"),
+    view_records: () => openView("records"),
+    view_mycall: () => openView("mycall"),
     view_groups: () => setActiveView("groups"),
     status_available: () => session && handleStatusChange("Available"),
     status_busy: () => session && handleStatusChange("Busy"),
@@ -272,7 +297,7 @@ export default function CADMDT() {
     {
       label: "File",
       items: [
-        { label: "New Report…", shortcut: "Ctrl+N", onSelect: () => { setActiveView("records"); setNewFileRequest(n => n + 1); } },
+        { label: "New Report…", shortcut: "Ctrl+N", onSelect: () => { openView("records"); setNewFileRequest(n => n + 1); } },
         { label: "Global Search…", shortcut: "Ctrl+K", onSelect: openSearch },
         { separator: true },
         { label: "Clock Out & End Shift", onSelect: handleClockOut, danger: true },
@@ -295,11 +320,11 @@ export default function CADMDT() {
     {
       label: "View",
       items: [
-        { label: "Call Queue", onSelect: () => setActiveView("dispatch") },
-        { label: "Unit Board", onSelect: () => setActiveView("units") },
-        { label: "My Call", onSelect: () => setActiveView("mycall") },
-        { label: "Lookups", onSelect: () => setActiveView("lookups") },
-        { label: "Records", onSelect: () => setActiveView("records") },
+        { label: "Call Queue", onSelect: () => openView("dispatch") },
+        { label: "Unit Board", onSelect: () => openView("units") },
+        { label: "My Call", onSelect: () => openView("mycall") },
+        { label: "Lookups", onSelect: () => openView("lookups") },
+        { label: "Records", onSelect: () => openView("records") },
         { separator: true },
         { label: detailCollapsed ? "Show Status Detail" : "Hide Status Detail", onSelect: toggleDetail },
         { label: "Reload Workspace", onSelect: () => window.location.reload() },
@@ -343,12 +368,14 @@ export default function CADMDT() {
             { key: "records", label: "Records", icon: FileText },
           ]}
           active={activeView === "callviewer" ? "mycall" : activeView}
-          onNavigate={setActiveView}
+          onNavigate={openView}
           menus={buildMenus}
-          tabs={(myDepts.length ? myDepts : [{ id: department.id, name: department.name, category: department.category }]).map(d => ({ key: d.id, label: d.name }))}
-          activeTab={department.id}
-          onSelectTab={(key) => { const d = myDepts.find(x => x.id === key); if (d && d.id !== deptId) navigate(deptRoute(d)); }}
-          onAddTab={() => navigate("/cad")}
+          tabs={openTabs.map(k => ({ key: k, label: VIEW_LABELS[k] || k }))}
+          activeTab={activeView === "callviewer" ? "mycall" : activeView}
+          onSelectTab={setActiveView}
+          onAddTab={openView}
+          onCloseTab={closeTab}
+          tabAddOptions={Object.keys(VIEW_LABELS).filter(k => !openTabs.includes(k)).map(k => ({ key: k, label: VIEW_LABELS[k] }))}
           banner={session.panic_active ? <AlertBanner>PANIC ACTIVE — {session.callsign || session.user_name} — ALL UNITS RESPOND</AlertBanner> : null}
           headerRight={
             <UnitControls
@@ -366,7 +393,7 @@ export default function CADMDT() {
                 department={department}
                 session={session}
                 setSession={setSession}
-                onOpenCall={(id) => { setSelectedCallId(id); setActiveView("callviewer"); }}
+                onOpenCall={(id) => { setSelectedCallId(id); openView("mycall"); setActiveView("callviewer"); }}
                 detailCollapsed={detailCollapsed}
               />
             ) : activeView === "units" ? (

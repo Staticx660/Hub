@@ -11,7 +11,7 @@ import GlobalSearch from "@/components/mdt/shell/GlobalSearch";
  * toolbar, maximized content area, docked status bar. Fills the viewport.
  * `children` is a function of { detailCollapsed }.
  */
-export default function MDTShell({ agency, subtitle, unit, status, metrics, navItems, active, onNavigate, tabs, activeTab, onSelectTab, onAddTab, menus, banner, headerRight, statusBarRight, children }) {
+export default function MDTShell({ agency, subtitle, unit, status, metrics, navItems, active, onNavigate, tabs, activeTab, onSelectTab, onAddTab, onCloseTab, tabAddOptions, menus, banner, headerRight, statusBarRight, children }) {
   const [searchOpen, setSearchOpen] = useState(false);
   const [detailCollapsed, setDetailCollapsed] = useState(false);
 
@@ -23,7 +23,7 @@ export default function MDTShell({ agency, subtitle, unit, status, metrics, navI
   return (
     <div className="mdt fixed inset-0 flex flex-col bg-mdt-bg text-mdt-text font-body antialiased">
       <MenuStrip menus={menuItems} onSearch={() => setSearchOpen(true)} />
-      {tabs && <TabBar tabs={tabs} activeTab={activeTab} onSelect={onSelectTab} onAdd={onAddTab} />}
+      {tabs && <TabBar tabs={tabs} activeTab={activeTab} onSelect={onSelectTab} onAdd={onAddTab} onClose={onCloseTab} addOptions={tabAddOptions} />}
       <ToolbarNav items={navItems} active={active} onSelect={onNavigate} />
       <StatusStrip
         agency={agency}
