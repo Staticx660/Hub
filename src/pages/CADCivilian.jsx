@@ -339,7 +339,7 @@ export default function CADCivilian() {
                 <Label className="text-cad-muted">Call Type *</Label>
                 <Select value={call911Form.call_type} onValueChange={v => setCall911Form({ ...call911Form, call_type: v })}>
                   <SelectTrigger className="bg-cad-surface-2 border-cad-border text-cad-text"><SelectValue /></SelectTrigger>
-                  <SelectContent className="bg-cad-surface-2 border-cad-border max-h-60">
+                  <SelectContent position="popper" className="z-[200] bg-cad-surface-2 border-cad-border max-h-60">
                     {CIVILIAN_CALL_TYPES.map(t => <SelectItem key={t} value={t} className="text-cad-text">{t}</SelectItem>)}
                   </SelectContent>
                 </Select>
@@ -348,7 +348,7 @@ export default function CADCivilian() {
                 <Label className="text-cad-muted">Priority</Label>
                 <Select value={call911Form.priority} onValueChange={v => setCall911Form({ ...call911Form, priority: v })}>
                   <SelectTrigger className="bg-cad-surface-2 border-cad-border text-cad-text"><SelectValue /></SelectTrigger>
-                  <SelectContent className="bg-cad-surface-2 border-cad-border">
+                  <SelectContent position="popper" className="z-[200] bg-cad-surface-2 border-cad-border">
                     {["1 - High", "2 - Medium", "3 - Low"].map(p => <SelectItem key={p} value={p} className="text-cad-text">{p}</SelectItem>)}
                   </SelectContent>
                 </Select>
