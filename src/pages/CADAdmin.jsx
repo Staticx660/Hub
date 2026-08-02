@@ -15,6 +15,7 @@ import { useUserPermissions } from "@/hooks/useUserPermissions";
 import AdminRail from "@/components/cad/admin/AdminRail";
 import { Users, IdCard, Settings, Building2, MapPin, Gavel, ShieldCheck, Bell, MessageCircle, ScrollText, KeyRound, Trash2, Bot } from "lucide-react";
 import SystemLogs from "@/pages/SystemLogs";
+import { APP_VERSION } from "@/lib/version";
 
 // access: "supervisor" = visible to supervisors+, "admin" = visible to CAD/platform admins only
 const ALL_SECTIONS = [
@@ -91,6 +92,7 @@ export default function CADAdmin() {
         <div className="flex items-center gap-2 h-11 px-3 border-b border-mdt-line bg-mdt-surface-2 flex-shrink-0">
           <span className="text-[12.5px] font-semibold truncate">{activeLabel}</span>
           <span className="ml-auto text-[11px] font-mono uppercase tracking-wide text-mdt-dim">Admin Console</span>
+          <span className="text-[11px] font-mono text-mdt-dim border-l border-mdt-line pl-2">v{APP_VERSION}</span>
         </div>
         <div className="flex-1 min-h-0 overflow-auto mdt-scroll p-3">
           {renderPanel()}
