@@ -24,7 +24,7 @@ export default function PermissionsManager() {
       const [p, d, dm] = await Promise.all([
         base44.entities.CADPersonnel.list(),
         base44.entities.CADDepartment.list(),
-        base44.functions.getDiscordMembers({}).catch(() => null),
+        base44.functions.invoke('getDiscordMembers', {}).catch(() => null),
       ]);
       setPersonnel(p);
       setDepartments(d);

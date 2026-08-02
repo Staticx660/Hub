@@ -135,7 +135,7 @@ Deno.serve(async (req) => {
       if (batch.length < 1000) hasMore = false;
     }
 
-    const report = { totalDiscordMembers: members.length, added: 0, updated: 0, skipped: 0, merged: dedupReport.merged, deleted: dedupReport.deleted, removedLeftGuild: 0, addedToDefault: 0, notified: 0, errors: [] };
+    const report = { totalDiscordMembers: members.length, added: 0, updated: 0, skipped: 0, merged: dedupReport.merged, deleted: dedupReport.deleted, removedLeftGuild: 0, removedFromRoster: 0, addedToDefault: 0, notified: 0, errors: [] };
 
     // === PRUNE: personnel whose Discord account is no longer in the guild ===
     const guildDiscordIds = new Set(members.filter(m => m.user).map(m => m.user.id));
@@ -148,6 +148,15 @@ Deno.serve(async (req) => {
           if (p.name) delete existingByName[p.name.toLowerCase().trim()];
           report.removedLeftGuild++;
         } catch (e) { report.errors.push(`Failed to remove ${p.name}: ${e.message}`); }
+      }
+      // Roster members whose Discord account left the server are removed too.
+      for (const m of rosterMembers) {
+        if (!m.discord_id || guildDiscordIds.has(m.discord_id)) continue;
+        try {
+          await base44.asServiceRole.entities.RosterMember.delete(m.id);
+          delete rosterByDiscordId[m.discord_id];
+          report.removedFromRoster++;
+        } catch (e) { report.errors.push(`Failed to remove roster entry ${m.name}: ${e.message}`); }
       }
     }
 
