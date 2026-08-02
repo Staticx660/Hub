@@ -19,14 +19,14 @@ import ReportTypeFields from "@/components/cad/mdt/ReportTypeFields";
 function GridField({ label, children, span }) {
   return (
     <div className={span ? `col-span-${span}` : ""}>
-      <Label className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1 block">{label}</Label>
+      <Label className="text-[9.5px] font-semibold uppercase tracking-[0.09em] text-mdt-dim mb-1 block">{label}</Label>
       {children}
     </div>
   );
 }
 
-const darkInput = "bg-[#0f1115] border-none text-white text-sm h-9 rounded-md focus-visible:ring-1 focus-visible:ring-slate-600 placeholder:text-slate-600";
-const darkSelect = "bg-[#0f1115] border-none text-white text-sm h-9 rounded-md focus-visible:ring-1 focus-visible:ring-slate-600";
+const darkInput = "bg-mdt-surface border border-mdt-line-2 text-mdt-text text-[12.5px] h-7 rounded-none focus-visible:ring-0 focus-visible:border-mdt-accent placeholder:text-mdt-dim";
+const darkSelect = "bg-mdt-surface border border-mdt-line-2 text-mdt-text text-[12.5px] h-7 rounded-none focus:ring-0 focus:border-mdt-accent";
 
 export default function ReportFormView({ department, session, initialType, templates, existingReport, onClose, onSaved }) {
   const fd = existingReport?.field_data || {};
@@ -265,29 +265,30 @@ export default function ReportFormView({ department, session, initialType, templ
   });
 
   return (
-    <div className="h-full overflow-y-auto bg-[#1a1d21]">
+    <div className="h-full overflow-y-auto mdt-scroll bg-mdt-bg">
       {/* Header */}
-      <div className="flex items-center gap-3 px-4 py-3 border-b border-[#2c2f36] sticky top-0 bg-[#1a1d21] z-10">
-        <button onClick={handleClose} className="text-slate-400 hover:text-white"><ArrowLeft className="w-5 h-5" /></button>
-        <h2 className="text-lg font-bold text-white">{existingReport ? "Edit" : "New"} {reportType}</h2>
+      <div className="flex items-center gap-3 h-9 px-3 border-b border-mdt-line sticky top-0 bg-mdt-bg z-10">
+        <button onClick={handleClose} className="text-mdt-dim hover:text-mdt-text"><ArrowLeft className="w-4 h-4" /></button>
+        <h2 className="text-[12.5px] uppercase tracking-[0.06em] text-mdt-text">{existingReport ? "Edit" : "New"} {reportType}</h2>
+        <span className="text-[11.5px] font-mono text-mdt-accent">{recordNumber}</span>
         <div className="ml-auto flex items-center gap-2">
           <Select value={reportType} onValueChange={setReportType}>
             <SelectTrigger className={`${darkSelect} w-40`}><SelectValue /></SelectTrigger>
-            <SelectContent className="bg-slate-800 border-slate-700">{reportTypes.map(t => <SelectItem key={t} value={t} className="text-white">{t}</SelectItem>)}</SelectContent>
+            <SelectContent className="bg-mdt-surface border-mdt-line-2 rounded-none">{reportTypes.map(t => <SelectItem key={t} value={t} className="text-mdt-text text-[12.5px]">{t}</SelectItem>)}</SelectContent>
           </Select>
           {availableTemplates.length > 0 && (
             <Select onValueChange={(v) => { const t = availableTemplates.find(t => t.id === v); if (t) { setSelectedTemplate(t); setReportType(t.category); setTitle(t.name); } }}>
               <SelectTrigger className={`${darkSelect} w-40`}><SelectValue placeholder="Template..." /></SelectTrigger>
-              <SelectContent className="bg-slate-800 border-slate-700">{availableTemplates.map(t => <SelectItem key={t.id} value={t.id} className="text-white">{t.name}</SelectItem>)}</SelectContent>
+              <SelectContent className="bg-mdt-surface border-mdt-line-2 rounded-none">{availableTemplates.map(t => <SelectItem key={t.id} value={t.id} className="text-mdt-text text-[12.5px]">{t.name}</SelectItem>)}</SelectContent>
             </Select>
           )}
         </div>
       </div>
 
-      <div className="p-4 space-y-4 max-w-5xl">
+      <div className="p-2 space-y-2">
         {/* Flags */}
         {shouldShowSection(reportType, "flags") && (
-        <div className="bg-[#262a30] rounded-lg p-3">
+        <div className="border border-mdt-line bg-mdt-surface-2 p-3">
           <div className="flex items-center gap-6">
             {[
               { key: "armed", label: "Armed" },
@@ -296,7 +297,7 @@ export default function ReportFormView({ department, session, initialType, templ
             ].map(f => (
               <label key={f.key} className="flex items-center gap-2 cursor-pointer">
                 <input type="checkbox" checked={flags[f.key]} onChange={e => setFlags({ ...flags, [f.key]: e.target.checked })} className="w-4 h-4 rounded border-2 border-red-500 bg-transparent accent-red-500" />
-                <span className="text-sm text-white">{f.label}</span>
+                <span className="text-[12.5px] text-mdt-text">{f.label}</span>
               </label>
             ))}
           </div>
@@ -304,8 +305,8 @@ export default function ReportFormView({ department, session, initialType, templ
         )}
 
         {/* Agency Information */}
-        <div className="bg-[#262a30] rounded-lg p-3">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-red-500 mb-3">Agency Information</h3>
+        <div className="border border-mdt-line bg-mdt-surface-2 p-3">
+          <h3 className="text-[10.5px] font-semibold uppercase tracking-[0.09em] text-mdt-accent mb-3">Agency Information</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <GridField label="Record #"><Input value={recordNumber} readOnly className={`${darkInput} font-mono text-cyan-400`} /></GridField>
             <GridField label="Agency"><Input value="PUBLIC SAFETY" readOnly className={darkInput} /></GridField>
@@ -319,38 +320,38 @@ export default function ReportFormView({ department, session, initialType, templ
         </div>
 
         {/* Linked Records */}
-        <div className="bg-[#262a30] rounded-lg p-3">
+        <div className="border border-mdt-line bg-mdt-surface-2 p-3">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300">Linked Records ({linkedRecords.length})</h3>
-            <Button size="sm" onClick={() => setShowLinkedRecords(true)} className="bg-teal-600 hover:bg-teal-700 text-white gap-1.5"><Link2 className="w-3.5 h-3.5" /> Link Record</Button>
+            <h3 className="text-[10.5px] font-semibold uppercase tracking-[0.09em] text-mdt-dim">Linked Records ({linkedRecords.length})</h3>
+            <Button size="sm" onClick={() => setShowLinkedRecords(true)} className="h-6 rounded-none bg-mdt-accent/15 border border-mdt-accent/60 text-mdt-accent hover:bg-mdt-accent/25 text-[12px] gap-1.5"><Link2 className="w-3.5 h-3.5" /> Link Record</Button>
           </div>
           {linkedRecords.length > 0 && (
             <div className="space-y-1.5">
               {linkedRecords.map((rec, i) => (
-                <div key={i} className="flex items-center justify-between bg-[#1a1d21] rounded-lg p-2">
+                <div key={i} className="flex items-center justify-between border border-mdt-line bg-mdt-surface p-2">
                   <div className="flex items-center gap-2 min-w-0">
                     {rec.type === "warrant" ? <Gavel className="w-3.5 h-3.5 text-red-400 flex-shrink-0" /> : rec.type === "bolo" ? <Eye className="w-3.5 h-3.5 text-yellow-400 flex-shrink-0" /> : <FileText className="w-3.5 h-3.5 text-blue-400 flex-shrink-0" />}
                     <div className="min-w-0">
-                      <p className="text-sm text-white truncate">{rec.title}</p>
-                      <p className="text-[10px] text-slate-500">{rec.type}{rec.number ? ` · ${rec.number}` : ""}{rec.status ? ` · ${rec.status}` : ""}</p>
+                      <p className="text-[12.5px] text-mdt-text truncate">{rec.title}</p>
+                      <p className="text-[10px] text-mdt-dim">{rec.type}{rec.number ? ` · ${rec.number}` : ""}{rec.status ? ` · ${rec.status}` : ""}</p>
                     </div>
                   </div>
-                  <button onClick={() => setLinkedRecords(linkedRecords.filter((_, idx) => idx !== i))} className="text-slate-500 hover:text-red-400 flex-shrink-0"><X className="w-3.5 h-3.5" /></button>
+                  <button onClick={() => setLinkedRecords(linkedRecords.filter((_, idx) => idx !== i))} className="text-mdt-dim hover:text-red-400 flex-shrink-0"><X className="w-3.5 h-3.5" /></button>
                 </div>
               ))}
             </div>
           )}
-          {linkedRecords.length === 0 && <p className="text-xs text-slate-500">No records linked yet</p>}
+          {linkedRecords.length === 0 && <p className="text-xs text-mdt-dim">No records linked yet</p>}
         </div>
 
         {/* Civilian Information */}
         {shouldShowSection(reportType, "civilian") && (
-        <div className="bg-[#262a30] rounded-lg p-3">
+        <div className="border border-mdt-line bg-mdt-surface-2 p-3">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300">Civilian Information</h3>
+            <h3 className="text-[10.5px] font-semibold uppercase tracking-[0.09em] text-mdt-dim">Civilian Information</h3>
             <div className="flex gap-2">
-              <Button size="sm" variant="outline" onClick={() => { setSelectedCivilian(null); setCivilianData({}); }} className="border-slate-600 text-slate-400 hover:text-white gap-1.5"><Trash2 className="w-3.5 h-3.5" /> Clear</Button>
-              <Button size="sm" onClick={() => setShowCivilianSearch(!showCivilianSearch)} className="bg-teal-600 hover:bg-teal-700 text-white gap-1.5"><Search className="w-3.5 h-3.5" /> Search</Button>
+              <Button size="sm" variant="outline" onClick={() => { setSelectedCivilian(null); setCivilianData({}); }} className="h-6 rounded-none border-mdt-line bg-mdt-surface text-mdt-muted hover:text-mdt-text hover:bg-mdt-surface-3 text-[12px] gap-1.5"><Trash2 className="w-3.5 h-3.5" /> Clear</Button>
+              <Button size="sm" onClick={() => setShowCivilianSearch(!showCivilianSearch)} className="h-6 rounded-none bg-mdt-accent/15 border border-mdt-accent/60 text-mdt-accent hover:bg-mdt-accent/25 text-[12px] gap-1.5"><Search className="w-3.5 h-3.5" /> Search</Button>
             </div>
           </div>
           {showCivilianSearch && (
@@ -368,7 +369,7 @@ export default function ReportFormView({ department, session, initialType, templ
             <GridField label="Sex">
               <Select value={civilianData.gender || ""} onValueChange={v => setCivilianData({ ...civilianData, gender: v })}>
                 <SelectTrigger className={darkSelect}><SelectValue placeholder="Select..." /></SelectTrigger>
-                <SelectContent className="bg-slate-800 border-slate-700">{["Male", "Female", "Other"].map(s => <SelectItem key={s} value={s} className="text-white">{s}</SelectItem>)}</SelectContent>
+                <SelectContent className="bg-mdt-surface border-mdt-line-2 rounded-none">{["Male", "Female", "Other"].map(s => <SelectItem key={s} value={s} className="text-mdt-text text-[12.5px]">{s}</SelectItem>)}</SelectContent>
               </Select>
             </GridField>
             <div className="col-span-2 md:col-span-6"><GridField label="A.K.A. (Former/Known Alias)"><Input value={civilianData.aka || ""} onChange={e => setCivilianData({ ...civilianData, aka: e.target.value })} className={darkInput} /></GridField></div>
@@ -382,13 +383,13 @@ export default function ReportFormView({ department, session, initialType, templ
             <GridField label="Hair Color">
               <Select value={civilianData.hair_color || ""} onValueChange={v => setCivilianData({ ...civilianData, hair_color: v })}>
                 <SelectTrigger className={darkSelect}><SelectValue placeholder="Select..." /></SelectTrigger>
-                <SelectContent className="bg-slate-800 border-slate-700">{["Black", "Brown", "Blonde", "Red", "Gray", "White", "Other"].map(s => <SelectItem key={s} value={s} className="text-white">{s}</SelectItem>)}</SelectContent>
+                <SelectContent className="bg-mdt-surface border-mdt-line-2 rounded-none">{["Black", "Brown", "Blonde", "Red", "Gray", "White", "Other"].map(s => <SelectItem key={s} value={s} className="text-mdt-text text-[12.5px]">{s}</SelectItem>)}</SelectContent>
               </Select>
             </GridField>
             <GridField label="Eye Color">
               <Select value={civilianData.eye_color || ""} onValueChange={v => setCivilianData({ ...civilianData, eye_color: v })}>
                 <SelectTrigger className={darkSelect}><SelectValue placeholder="Select..." /></SelectTrigger>
-                <SelectContent className="bg-slate-800 border-slate-700">{["Brown", "Blue", "Green", "Hazel", "Gray", "Other"].map(s => <SelectItem key={s} value={s} className="text-white">{s}</SelectItem>)}</SelectContent>
+                <SelectContent className="bg-mdt-surface border-mdt-line-2 rounded-none">{["Brown", "Blue", "Green", "Hazel", "Gray", "Other"].map(s => <SelectItem key={s} value={s} className="text-mdt-text text-[12.5px]">{s}</SelectItem>)}</SelectContent>
               </Select>
             </GridField>
             <GridField label="Emergency Contact"><Input value={civilianData.emergency_contact || ""} onChange={e => setCivilianData({ ...civilianData, emergency_contact: e.target.value })} className={darkInput} /></GridField>
@@ -400,12 +401,12 @@ export default function ReportFormView({ department, session, initialType, templ
 
         {/* Vehicle Information */}
         {shouldShowSection(reportType, "vehicle") && (
-        <div className="bg-[#262a30] rounded-lg p-3">
+        <div className="border border-mdt-line bg-mdt-surface-2 p-3">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300">Vehicle Information</h3>
+            <h3 className="text-[10.5px] font-semibold uppercase tracking-[0.09em] text-mdt-dim">Vehicle Information</h3>
             <div className="flex gap-2">
-              <Button size="sm" variant="outline" onClick={() => { setSelectedVehicle(null); setVehicleData({}); }} className="border-slate-600 text-slate-400 hover:text-white gap-1.5"><Trash2 className="w-3.5 h-3.5" /> Clear</Button>
-              <Button size="sm" onClick={() => setShowVehicleSearch(!showVehicleSearch)} className="bg-teal-600 hover:bg-teal-700 text-white gap-1.5"><Search className="w-3.5 h-3.5" /> Search</Button>
+              <Button size="sm" variant="outline" onClick={() => { setSelectedVehicle(null); setVehicleData({}); }} className="h-6 rounded-none border-mdt-line bg-mdt-surface text-mdt-muted hover:text-mdt-text hover:bg-mdt-surface-3 text-[12px] gap-1.5"><Trash2 className="w-3.5 h-3.5" /> Clear</Button>
+              <Button size="sm" onClick={() => setShowVehicleSearch(!showVehicleSearch)} className="h-6 rounded-none bg-mdt-accent/15 border border-mdt-accent/60 text-mdt-accent hover:bg-mdt-accent/25 text-[12px] gap-1.5"><Search className="w-3.5 h-3.5" /> Search</Button>
             </div>
           </div>
           {showVehicleSearch && (
@@ -415,7 +416,7 @@ export default function ReportFormView({ department, session, initialType, templ
             <GridField label="Vehicle Type">
               <Select value={vehicleData.type || ""} onValueChange={v => setVehicleData({ ...vehicleData, type: v })}>
                 <SelectTrigger className={darkSelect}><SelectValue placeholder="Select..." /></SelectTrigger>
-                <SelectContent className="bg-slate-800 border-slate-700">{["Sedan", "SUV", "Truck", "Motorcycle", "Van", "Sports", "Other"].map(s => <SelectItem key={s} value={s} className="text-white">{s}</SelectItem>)}</SelectContent>
+                <SelectContent className="bg-mdt-surface border-mdt-line-2 rounded-none">{["Sedan", "SUV", "Truck", "Motorcycle", "Van", "Sports", "Other"].map(s => <SelectItem key={s} value={s} className="text-mdt-text text-[12.5px]">{s}</SelectItem>)}</SelectContent>
               </Select>
             </GridField>
             <GridField label="License Plate"><Input value={vehicleData.plate || ""} onChange={e => setVehicleData({ ...vehicleData, plate: e.target.value.toUpperCase() })} className={`${darkInput} font-mono`} /></GridField>
@@ -429,16 +430,16 @@ export default function ReportFormView({ department, session, initialType, templ
 
         {/* Charges */}
         {hasCharges(department?.category) && shouldShowSection(reportType, "charges") && (
-        <div className="bg-[#262a30] rounded-lg p-3">
+        <div className="border border-mdt-line bg-mdt-surface-2 p-3">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-red-500">Charges</h3>
+            <h3 className="text-[10.5px] font-semibold uppercase tracking-[0.09em] text-mdt-accent">Charges</h3>
             <button onClick={addCharge} className="w-7 h-7 rounded-md bg-green-500 hover:bg-green-600 flex items-center justify-center"><Plus className="w-4 h-4 text-white" /></button>
           </div>
-          <p className="text-xs text-slate-400 mb-3">Fine Total: ${fineTotal.toFixed(2)}</p>
+          <p className="text-xs text-mdt-muted mb-3">Fine Total: ${fineTotal.toFixed(2)}</p>
           {charges.map((charge, idx) => (
-            <div key={charge.id} className="bg-[#1a1d21] rounded-lg p-3 mb-2 relative">
+            <div key={charge.id} className="border border-mdt-line bg-mdt-surface p-3 mb-2 relative">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs text-slate-400">Charge #{idx + 1}</span>
+                <span className="text-xs text-mdt-muted">Charge #{idx + 1}</span>
                 <button onClick={() => removeCharge(charge.id)} className="text-red-500 hover:text-red-400"><Trash2 className="w-4 h-4" /></button>
               </div>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -446,7 +447,7 @@ export default function ReportFormView({ department, session, initialType, templ
                   {penalCodes.length > 0 ? (
                     <Select value={charge.charge} onValueChange={v => { const pc = penalCodes.find(p => p.id === v); updateCharge(charge.id, "charge", pc ? `${pc.code} - ${pc.title}` : v); if (pc) { updateCharge(charge.id, "title_code", pc.code); updateCharge(charge.id, "bond_amount", pc.fine_amount || 0); updateCharge(charge.id, "jail_time", pc.jail_time_months ? `${pc.jail_time_months} month${pc.jail_time_months !== 1 ? 's' : ''}` : ""); if (pc.charge_type) updateCharge(charge.id, "charge_type", pc.charge_type); if (pc.bond_type) updateCharge(charge.id, "bond_type", pc.bond_type); } }}>
                       <SelectTrigger className={darkSelect}><SelectValue placeholder="Select..." /></SelectTrigger>
-                      <SelectContent className="bg-slate-800 border-slate-700">{penalCodes.map(pc => <SelectItem key={pc.id} value={pc.id} className="text-white">{pc.code} - {pc.title}</SelectItem>)}</SelectContent>
+                      <SelectContent className="bg-mdt-surface border-mdt-line-2 rounded-none">{penalCodes.map(pc => <SelectItem key={pc.id} value={pc.id} className="text-mdt-text text-[12.5px]">{pc.code} - {pc.title}</SelectItem>)}</SelectContent>
                     </Select>
                   ) : <Input value={charge.charge} onChange={e => updateCharge(charge.id, "charge", e.target.value)} className={darkInput} placeholder="Charge..." />}
                 </GridField>
@@ -454,7 +455,7 @@ export default function ReportFormView({ department, session, initialType, templ
                   {chargeTypes.length > 0 ? (
                     <Select value={charge.charge_type} onValueChange={v => updateCharge(charge.id, "charge_type", v)}>
                       <SelectTrigger className={darkSelect}><SelectValue placeholder="Select..." /></SelectTrigger>
-                      <SelectContent className="bg-slate-800 border-slate-700">{chargeTypes.map(ct => <SelectItem key={ct.id} value={ct.name} className="text-white">{ct.name}</SelectItem>)}</SelectContent>
+                      <SelectContent className="bg-mdt-surface border-mdt-line-2 rounded-none">{chargeTypes.map(ct => <SelectItem key={ct.id} value={ct.name} className="text-mdt-text text-[12.5px]">{ct.name}</SelectItem>)}</SelectContent>
                     </Select>
                   ) : <Input value={charge.charge_type} onChange={e => updateCharge(charge.id, "charge_type", e.target.value)} className={darkInput} placeholder="Type..." />}
                 </GridField>
@@ -464,7 +465,7 @@ export default function ReportFormView({ department, session, initialType, templ
                   {bondTypes.length > 0 ? (
                     <Select value={charge.bond_type} onValueChange={v => { const bt = bondTypes.find(b => b.name === v); updateCharge(charge.id, "bond_type", v); if (bt?.default_amount) updateCharge(charge.id, "bond_amount", bt.default_amount); }}>
                       <SelectTrigger className={darkSelect}><SelectValue placeholder="Select..." /></SelectTrigger>
-                      <SelectContent className="bg-slate-800 border-slate-700">{bondTypes.map(bt => <SelectItem key={bt.id} value={bt.name} className="text-white">{bt.name}</SelectItem>)}</SelectContent>
+                      <SelectContent className="bg-mdt-surface border-mdt-line-2 rounded-none">{bondTypes.map(bt => <SelectItem key={bt.id} value={bt.name} className="text-mdt-text text-[12.5px]">{bt.name}</SelectItem>)}</SelectContent>
                     </Select>
                   ) : <Input value={charge.bond_type} onChange={e => updateCharge(charge.id, "bond_type", e.target.value)} className={darkInput} placeholder="Bond..." />}
                 </GridField>
@@ -473,7 +474,7 @@ export default function ReportFormView({ department, session, initialType, templ
               </div>
             </div>
           ))}
-          {charges.length === 0 && <p className="text-xs text-slate-500 text-center py-2">No charges added. Click + to add one.</p>}
+          {charges.length === 0 && <p className="text-xs text-mdt-dim text-center py-2">No charges added. Click + to add one.</p>}
         </div>
         )}
 
@@ -481,25 +482,25 @@ export default function ReportFormView({ department, session, initialType, templ
         <ReportTypeFields reportType={reportType} fieldData={fieldData} updateField={(key, val) => setFieldData({ ...fieldData, [key]: val })} />
 
         {/* Narrative */}
-        <div className="bg-[#262a30] rounded-lg p-3">
+        <div className="border border-mdt-line bg-mdt-surface-2 p-3">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-red-500">Narrative</h3>
+            <h3 className="text-[10.5px] font-semibold uppercase tracking-[0.09em] text-mdt-accent">Narrative</h3>
             <Button onClick={handleGenerateNarrative} disabled={generatingNarrative} size="sm" variant="outline" className="border-slate-600 text-cyan-400 hover:text-cyan-300 h-7 gap-1.5 text-xs">
               <Sparkles className="w-3.5 h-3.5" /> {generatingNarrative ? "Generating..." : "AI Generate"}
             </Button>
           </div>
-          <Textarea value={narrative} onChange={e => setNarrative(e.target.value)} className="bg-[#0f1115] border-none text-white min-h-[120px]" placeholder="Describe the incident in detail..." />
+          <Textarea value={narrative} onChange={e => setNarrative(e.target.value)} className="bg-mdt-surface border border-mdt-line-2 rounded-none text-mdt-text text-[12.5px] min-h-[120px] focus-visible:ring-0 focus-visible:border-mdt-accent" placeholder="Describe the incident in detail..." />
         </div>
 
         {/* Status */}
         {shouldShowSection(reportType, "signatures") && (
-        <div className="bg-[#262a30] rounded-lg p-3">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300 mb-3">Status</h3>
+        <div className="border border-mdt-line bg-mdt-surface-2 p-3">
+          <h3 className="text-[10.5px] font-semibold uppercase tracking-[0.09em] text-mdt-dim mb-3">Status</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <GridField label="Status">
               <Select value={status} onValueChange={setStatus}>
                 <SelectTrigger className={darkSelect}><SelectValue /></SelectTrigger>
-                <SelectContent className="bg-slate-800 border-slate-700">{["Draft", "Filed", "Reviewed", "Approved"].map(s => <SelectItem key={s} value={s} className="text-white">{s}</SelectItem>)}</SelectContent>
+                <SelectContent className="bg-mdt-surface border-mdt-line-2 rounded-none">{["Draft", "Filed", "Reviewed", "Approved"].map(s => <SelectItem key={s} value={s} className="text-mdt-text text-[12.5px]">{s}</SelectItem>)}</SelectContent>
               </Select>
             </GridField>
             <GridField label="Officer Name"><Input value={officerName} onChange={e => setOfficerName(e.target.value)} className={darkInput} placeholder="Type officer name..." /></GridField>
@@ -511,12 +512,12 @@ export default function ReportFormView({ department, session, initialType, templ
 
         {/* Template Fields */}
         {selectedTemplate?.fields?.length > 0 && (
-          <div className="bg-[#262a30] rounded-lg p-3">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300 mb-3">Template Fields</h3>
+          <div className="border border-mdt-line bg-mdt-surface-2 p-3">
+            <h3 className="text-[10.5px] font-semibold uppercase tracking-[0.09em] text-mdt-dim mb-3">Template Fields</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {selectedTemplate.fields.map((field, i) => {
                 if (field.field_type === "label") {
-                  return <div key={i} className="col-span-2 md:col-span-4"><h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 border-b border-slate-700 pb-1">{field.label}</h4></div>;
+                  return <div key={i} className="col-span-2 md:col-span-4"><h4 className="text-xs font-bold uppercase tracking-wider text-mdt-muted border-b border-slate-700 pb-1">{field.label}</h4></div>;
                 }
                 if (IDENTIFIER_TYPES.includes(field.field_type)) {
                   return (
@@ -530,7 +531,7 @@ export default function ReportFormView({ department, session, initialType, templ
                     <GridField key={i} label={field.label}>
                       <Select value={fieldData[field.label] || ""} onValueChange={v => setFieldData({ ...fieldData, [field.label]: v })}>
                         <SelectTrigger className={darkSelect}><SelectValue placeholder="Select..." /></SelectTrigger>
-                        <SelectContent className="bg-slate-800 border-slate-700">{["Draft", "Filed", "Reviewed", "Approved"].map(s => <SelectItem key={s} value={s} className="text-white">{s}</SelectItem>)}</SelectContent>
+                        <SelectContent className="bg-mdt-surface border-mdt-line-2 rounded-none">{["Draft", "Filed", "Reviewed", "Approved"].map(s => <SelectItem key={s} value={s} className="text-mdt-text text-[12.5px]">{s}</SelectItem>)}</SelectContent>
                       </Select>
                     </GridField>
                   );
@@ -542,7 +543,7 @@ export default function ReportFormView({ department, session, initialType, templ
                     ) : field.field_type === "select" ? (
                       <Select value={fieldData[field.label] || ""} onValueChange={v => setFieldData({ ...fieldData, [field.label]: v })}>
                         <SelectTrigger className={darkSelect}><SelectValue placeholder="Select..." /></SelectTrigger>
-                        <SelectContent className="bg-slate-800 border-slate-700">{(field.options || []).map(o => <SelectItem key={o} value={o} className="text-white">{o}</SelectItem>)}</SelectContent>
+                        <SelectContent className="bg-mdt-surface border-mdt-line-2 rounded-none">{(field.options || []).map(o => <SelectItem key={o} value={o} className="text-mdt-text text-[12.5px]">{o}</SelectItem>)}</SelectContent>
                       </Select>
                     ) : field.field_type === "checkboxes" ? (
                       <div className="space-y-1">
@@ -577,9 +578,11 @@ export default function ReportFormView({ department, session, initialType, templ
       </div>
 
       {/* Footer */}
-      <div className="sticky bottom-0 bg-[#1a1d21] border-t border-[#2c2f36] p-3 flex items-center justify-center gap-4">
-        <button onClick={() => handleSave(false)} disabled={saving || !title.trim()} className="w-12 h-12 rounded-full bg-green-500 hover:bg-green-600 disabled:opacity-40 flex items-center justify-center"><Plus className="w-6 h-6 text-white" /></button>
-        <button onClick={handleClose} disabled={saving} className="w-12 h-12 rounded-full bg-slate-700 hover:bg-slate-600 disabled:opacity-40 flex items-center justify-center"><X className="w-6 h-6 text-slate-300" /></button>
+      <div className="sticky bottom-0 bg-mdt-bg border-t border-mdt-line px-3 h-9 flex items-center gap-2">
+        <button onClick={() => handleSave(false)} disabled={saving || !title.trim()} className="h-6 px-3 border border-mdt-accent/60 bg-mdt-accent/15 text-[12.5px] text-mdt-accent hover:bg-mdt-accent/25 disabled:opacity-40">{saving ? "Saving…" : "File Report"}</button>
+        <button onClick={() => handleSave(true)} disabled={saving || !title.trim()} className="h-6 px-3 border border-mdt-line bg-mdt-surface text-[12.5px] text-mdt-text hover:bg-mdt-surface-3 disabled:opacity-40">Save Draft</button>
+        <div className="flex-1" />
+        <button onClick={handleClose} disabled={saving} className="h-6 px-3 border border-mdt-line bg-mdt-surface text-[12.5px] text-mdt-muted hover:bg-mdt-surface-3">Cancel</button>
       </div>
 
       <LinkedRecordsDialog

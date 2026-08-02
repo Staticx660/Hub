@@ -49,6 +49,8 @@ export default function CADMDT() {
   const [keybinds, setKeybinds] = useState(loadKeybinds());
   const [keybindsOpen, setKeybindsOpen] = useState(false);
   const [panicOpen, setPanicOpen] = useState(false);
+  const [myDepts, setMyDepts] = useState([]);
+  const [newFileRequest, setNewFileRequest] = useState(0);
   const { theme } = useCadTheme();
   const retro = theme === "retro";
 
@@ -59,6 +61,7 @@ export default function CADMDT() {
         const dept = await base44.entities.CADDepartment.get(deptId);
         setDepartment(dept);
         const accessRes = await base44.functions.invoke('getUserCADDepartments', {});
+        setMyDepts((accessRes.data.departments || []).filter(d => d.hasAccess));
         const deptAccess = accessRes.data.departments.find(d => d.id === deptId);
         if (deptAccess && !deptAccess.hasAccess) {
           setAccessDenied(true);
@@ -258,6 +261,71 @@ export default function CADMDT() {
     </>
   );
 
+  const deptRoute = (d) =>
+    d.category === "Fire" ? `/cad/fire/${d.id}`
+    : d.category === "EMS" ? `/cad/ems/${d.id}`
+    : d.category === "Civilian" ? `/cad/civilian/${d.id}`
+    : d.category === "Dispatch" ? `/cad/dispatch`
+    : `/cad/mdt/${d.id}`;
+
+  const buildMenus = ({ openSearch, toggleDetail, detailCollapsed }) => [
+    {
+      label: "File",
+      items: [
+        { label: "New Report…", shortcut: "Ctrl+N", onSelect: () => { setActiveView("records"); setNewFileRequest(n => n + 1); } },
+        { label: "Global Search…", shortcut: "Ctrl+K", onSelect: openSearch },
+        { separator: true },
+        { label: "Clock Out & End Shift", onSelect: handleClockOut, danger: true },
+        { label: "Close MDT", onSelect: () => navigate("/cad") },
+      ],
+    },
+    {
+      label: "Edit",
+      items: [
+        { label: "Copy Callsign", onSelect: () => navigator.clipboard?.writeText(session.callsign || ""), disabled: !session.callsign },
+        { label: "Copy Unit Info", onSelect: () => navigator.clipboard?.writeText(`${session.callsign || ""} ${session.user_name}${session.rank ? " (" + session.rank + ")" : ""}`.trim()) },
+        { separator: true },
+        { label: "Set Status: Available", onSelect: () => handleStatusChange("Available") },
+        { label: "Set Status: Busy", onSelect: () => handleStatusChange("Busy") },
+        { label: "Set Status: Unavailable", onSelect: () => handleStatusChange("Unavailable") },
+        { separator: true },
+        { label: session.panic_active ? "Clear Panic" : "Activate Panic", onSelect: handlePanic, danger: true },
+      ],
+    },
+    {
+      label: "View",
+      items: [
+        { label: "Call Queue", onSelect: () => setActiveView("dispatch") },
+        { label: "Unit Board", onSelect: () => setActiveView("units") },
+        { label: "My Call", onSelect: () => setActiveView("mycall") },
+        { label: "Lookups", onSelect: () => setActiveView("lookups") },
+        { label: "Records", onSelect: () => setActiveView("records") },
+        { separator: true },
+        { label: detailCollapsed ? "Show Status Detail" : "Hide Status Detail", onSelect: toggleDetail },
+        { label: "Reload Workspace", onSelect: () => window.location.reload() },
+      ],
+    },
+    {
+      label: "Window",
+      items: [
+        ...myDepts.map(d => ({ label: d.name, disabled: d.id === deptId, onSelect: () => navigate(deptRoute(d)) })),
+        { separator: true },
+        { label: "CAD Home", onSelect: () => navigate("/cad") },
+        { label: "Dispatch Center", onSelect: () => navigate("/cad/dispatch") },
+        { label: "My Records", onSelect: () => navigate("/my-records") },
+      ],
+    },
+    {
+      label: "Help",
+      items: [
+        { label: "Keybind Settings…", onSelect: () => setKeybindsOpen(true) },
+        { label: "Help Center", onSelect: () => navigate("/help") },
+        { separator: true },
+        { label: `About — ${department.name} MDT`, onSelect: () => toast({ title: `${department.name} MDT`, description: "OCRP Hub Mobile Data Terminal" }) },
+      ],
+    },
+  ];
+
   // Police MDT runs on the new Windows-style workspace shell
   if (department.category === "Police" && !retro) {
     return (
@@ -276,9 +344,11 @@ export default function CADMDT() {
           ]}
           active={activeView === "callviewer" ? "mycall" : activeView}
           onNavigate={setActiveView}
-          tabs={[{ key: department.id, label: department.name }]}
+          menus={buildMenus}
+          tabs={(myDepts.length ? myDepts : [{ id: department.id, name: department.name, category: department.category }]).map(d => ({ key: d.id, label: d.name }))}
           activeTab={department.id}
-          onSelectTab={() => {}}
+          onSelectTab={(key) => { const d = myDepts.find(x => x.id === key); if (d && d.id !== deptId) navigate(deptRoute(d)); }}
+          onAddTab={() => navigate("/cad")}
           banner={session.panic_active ? <AlertBanner>PANIC ACTIVE — {session.callsign || session.user_name} — ALL UNITS RESPOND</AlertBanner> : null}
           headerRight={
             <UnitControls
@@ -304,7 +374,7 @@ export default function CADMDT() {
             ) : activeView === "lookups" ? (
               <LookupsWorkspace session={session} />
             ) : activeView === "records" ? (
-              <RecordsWorkspace department={department} session={session} />
+              <RecordsWorkspace department={department} session={session} newFileRequest={newFileRequest} />
             ) : activeView === "mycall" || activeView === "callviewer" ? (
               <MyCallWorkspace
                 department={department}

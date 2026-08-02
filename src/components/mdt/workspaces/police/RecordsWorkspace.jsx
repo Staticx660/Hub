@@ -14,7 +14,7 @@ const INPUT = "h-7 px-2 bg-mdt-surface border border-mdt-line-2 text-[12.5px] te
 const TONE = { Draft: "warn", Active: "crit", Closed: "neutral", Filed: "ok", Reviewed: "info", Approved: "ok", Served: "neutral" };
 
 /** Records workspace — file categories, dense record table, detail pane. */
-export default function RecordsWorkspace({ department, session }) {
+export default function RecordsWorkspace({ department, session, newFileRequest = 0 }) {
   const { toast } = useToast();
   const [tab, setTab] = useState("myfiles");
   const [reports, setReports] = useState([]);
@@ -47,6 +47,10 @@ export default function RecordsWorkspace({ department, session }) {
   };
 
   useEffect(() => { load(); }, []);
+
+  useEffect(() => {
+    if (newFileRequest > 0) { setEditingReport(null); setFormType("Incident"); setShowForm(true); }
+  }, [newFileRequest]);
 
   const myReports = reports.filter((r) => r.filed_by_id === session.user_id);
   const myDrafts = myReports.filter((r) => r.status === "Draft");
