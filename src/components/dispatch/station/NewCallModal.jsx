@@ -1,4 +1,5 @@
 import React from "react";
+import StreetCombo from "@/components/dispatch/station/StreetCombo";
 import { Panel, Btn } from "@/components/mdt/ui/primitives";
 import { X } from "lucide-react";
 
@@ -66,17 +67,14 @@ export default function NewCallModal({ open, onClose, form, setForm, departments
         <div className={sectionCap}>Location</div>
         <div className="p-2.5 grid grid-cols-3 gap-2.5">
           <Row label="Location *" span={2}>
-            <input list="cad-streets" value={form.location} onChange={(e) => set("location", e.target.value)} className={inputCls} placeholder="Street or landmark" />
+            <StreetCombo value={form.location} onChange={(v) => set("location", v)} streets={streets} placeholder="Street or landmark" />
           </Row>
           <Row label="Postal">
             <input value={form.postal} onChange={(e) => set("postal", e.target.value)} className={`${inputCls} font-mono`} placeholder="e.g. 1234" />
           </Row>
           <Row label="Cross Streets" span={2}>
-            <input list="cad-streets" value={form.cross_streets} onChange={(e) => set("cross_streets", e.target.value)} className={inputCls} placeholder="Nearest intersection" />
+            <StreetCombo value={form.cross_streets} onChange={(v) => set("cross_streets", v)} streets={streets} placeholder="Nearest intersection" />
           </Row>
-          <datalist id="cad-streets">
-            {streets.map((s) => <option key={s} value={s} />)}
-          </datalist>
           <Row label="Block / Apt">
             <input value={form.block} onChange={(e) => set("block", e.target.value)} className={inputCls} />
           </Row>
