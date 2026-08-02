@@ -9,6 +9,7 @@ import ClockInDialog from "@/components/cad/mdt/ClockInDialog";
 import CallViewer from "@/components/cad/mdt/CallViewer";
 import GroupsView from "@/components/cad/mdt/GroupsView";
 import FireDashboard from "@/components/cad/fire/FireDashboard";
+import OpsBoardShell from "@/components/mdt/shell/OpsBoardShell";
 import { useCommunityBranding } from "@/hooks/useCommunityBranding";
 import { useCadTheme } from "@/hooks/useCadTheme";
 import RetroClockInScreen from "@/components/cad/retro/RetroClockInScreen";
@@ -152,6 +153,8 @@ export default function FireBoard() {
 
   const openCall = (callId) => { setSelectedCallId(callId); setActiveView("callviewer"); };
 
+  const enterprise = !retro && department && session;
+
   if (loading) return <div className="flex justify-center items-center h-screen cad-gradient-bg cad-font"><div className="w-8 h-8 border-4 border-cad-border border-t-red-500 rounded-full animate-spin" /></div>;
   if (!department) return <div className="flex justify-center items-center h-screen cad-gradient-bg cad-font text-cad-muted">Department not found</div>;
 
@@ -173,6 +176,26 @@ export default function FireBoard() {
         </div>
         <ClockInDialog open={clockInOpen} onOpenChange={setClockInOpen} department={department} user={user} onClockIn={handleClockIn} />
       </div>
+    );
+  }
+
+  if (enterprise) {
+    return (
+      <>
+        <OpsBoardShell
+          department={department}
+          session={session}
+          setSession={setSession}
+          subtitle="Fire Operations"
+          onStatusChange={handleStatusChange}
+          onPanic={handlePanic}
+          onClockOut={handleClockOut}
+          onNewCall={newCall}
+          selectedCallId={selectedCallId}
+          setSelectedCallId={setSelectedCallId}
+        />
+        <PanicDialog open={panicOpen} department={department} session={session} onClose={() => setPanicOpen(false)} onActivated={(s) => setSession(s)} />
+      </>
     );
   }
 
