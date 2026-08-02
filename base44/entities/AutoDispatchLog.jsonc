@@ -30,6 +30,9 @@
     "priority": {
       "type": "string"
     },
+    "dispatch_seconds": {
+      "type": "number"
+    },
     "department_names": {
       "type": "array",
       "items": {

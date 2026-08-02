@@ -83,15 +83,20 @@ Deno.serve(async (req) => {
       // effective CAD admin access via the computed response value below, but the
       // persistent flag can only be granted by an admin through the admin panel.
 
-      // Sync departments from Discord roles (set to match when user has matched depts)
+      // Sync departments from Discord roles. This MERGES with existing assignments —
+      // manual department assignments made in the Admin Panel must never be wiped.
       if (matchedDepts.length > 0) {
-        const primaryDeptId = matchedDepts[0].id;
-        const additionalDeptIds = matchedDepts.slice(1).map(d => d.id);
-        if (p.department_id !== primaryDeptId) updates.department_id = primaryDeptId;
+        const primaryDeptId = p.department_id || matchedDepts[0].id;
+        if (!p.department_id) updates.department_id = primaryDeptId;
+
+        const merged = new Set(p.additional_department_ids || []);
+        for (const d of matchedDepts) {
+          if (d.id !== primaryDeptId) merged.add(d.id);
+        }
+        const expected = [...merged];
         const current = (p.additional_department_ids || []).slice().sort();
-        const expected = additionalDeptIds.slice().sort();
-        if (JSON.stringify(current) !== JSON.stringify(expected)) {
-          updates.additional_department_ids = additionalDeptIds;
+        if (JSON.stringify(current) !== JSON.stringify(expected.slice().sort())) {
+          updates.additional_department_ids = expected;
         }
       }
 

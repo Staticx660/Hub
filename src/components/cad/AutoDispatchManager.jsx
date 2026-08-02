@@ -5,22 +5,26 @@ import { Bot, Loader2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AutoDispatchToggles from "@/components/cad/autodispatch/AutoDispatchToggles";
 import AutoDispatchLogList from "@/components/cad/autodispatch/AutoDispatchLogList";
+import AutoDispatchStats from "@/components/cad/autodispatch/AutoDispatchStats";
 
 export default function AutoDispatchManager() {
   const [settings, setSettings] = useState(null);
   const [logs, setLogs] = useState([]);
+  const [closedCallIds, setClosedCallIds] = useState(new Set());
   const [dispatchersOnline, setDispatchersOnline] = useState(0);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
 
   const load = async () => {
-    const [list, logList, sessions, depts] = await Promise.all([
+    const [list, logList, sessions, depts, closedCalls] = await Promise.all([
       base44.entities.AutoDispatchSetting.list(),
-      base44.entities.AutoDispatchLog.list("-created_date", 30),
+      base44.entities.AutoDispatchLog.list("-created_date", 200),
       base44.entities.CADSession.filter({ is_active: true }),
       base44.entities.CADDepartment.filter({ is_active: true }),
+      base44.entities.ActiveCall.filter({ status: "Closed" }, "-created_date", 300),
     ]);
+    setClosedCallIds(new Set(closedCalls.map((c) => c.id)));
     const dispatchIds = new Set(depts.filter((d) => d.category === "Dispatch").map((d) => d.id));
     setDispatchersOnline(sessions.filter((s) => dispatchIds.has(s.department_id)).length);
     setSettings(list[0] || (await base44.entities.AutoDispatchSetting.create({ enabled: true })));
@@ -76,11 +80,13 @@ export default function AutoDispatchManager() {
         )}
       </div>
 
+      <AutoDispatchStats logs={logs} closedCallIds={closedCallIds} />
+
       <AutoDispatchToggles settings={settings} onChange={updateSettings} saving={saving} />
 
       <div>
         <h3 className="text-sm font-bold text-cad-text uppercase tracking-wider mb-2">Dispatch Activity</h3>
-        <AutoDispatchLogList logs={logs} />
+        <AutoDispatchLogList logs={logs.slice(0, 30)} />
       </div>
     </div>
   );

@@ -174,7 +174,11 @@ Return the incident category, a priority ("1 - High", "2 - Medium" or "3 - Low")
       }
     }
 
+    const createdAt = call.created_date ? new Date(call.created_date).getTime() : null;
+    const dispatchSeconds = createdAt ? Math.max(0, Math.round((Date.now() - createdAt) / 1000)) : undefined;
+
     return await finish('Auto-Dispatched', {
+      dispatch_seconds: dispatchSeconds,
       category: ai.category,
       priority,
       department_names: responding.map((d) => d.name),
