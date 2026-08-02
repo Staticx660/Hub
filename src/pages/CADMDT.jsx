@@ -22,6 +22,7 @@ import { useCadTheme } from "@/hooks/useCadTheme";
 import RetroClockInScreen from "@/components/cad/retro/RetroClockInScreen";
 import { startPanicSound, stopPanicSound, playStatusBeep, stopPanicVoice, loadNotificationTones } from "@/components/cad/mdt/panicSound";
 import MDTShell from "@/components/mdt/shell/MDTShell";
+import useWorkspaceTabs from "@/components/mdt/shell/useWorkspaceTabs";
 import { AlertBanner } from "@/components/mdt/shell/StatusStrip";
 import UnitControls from "@/components/mdt/shell/UnitControls";
 import { Radio as RadioIcon, Search as SearchIcon, FileText, PhoneCall, Users } from "lucide-react";
@@ -51,7 +52,6 @@ export default function CADMDT() {
   const [department, setDepartment] = useState(null);
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [activeView, setActiveView] = useState(location.state?.initialView || "dispatch");
   const [selectedCallId, setSelectedCallId] = useState(null);
   const [clockInOpen, setClockInOpen] = useState(false);
   const [accessDenied, setAccessDenied] = useState(false);
@@ -60,7 +60,8 @@ export default function CADMDT() {
   const [panicOpen, setPanicOpen] = useState(false);
   const [myDepts, setMyDepts] = useState([]);
   const [newFileRequest, setNewFileRequest] = useState(0);
-  const [openTabs, setOpenTabs] = useState(["dispatch"]);
+  const { tabs, activeId, activeView, setActiveId, setView: setActiveView, addTab, closeTab } = useWorkspaceTabs(location.state?.initialView || "dispatch");
+  const openView = setActiveView;
   const { theme } = useCadTheme();
   const retro = theme === "retro";
 
@@ -214,21 +215,6 @@ export default function CADMDT() {
     setPanicOpen(true);
   };
 
-  const openView = (key) => {
-    setOpenTabs((tabs) => (tabs.includes(key) ? tabs : [...tabs, key]));
-    setActiveView(key);
-  };
-
-  const closeTab = (key) => {
-    setOpenTabs((tabs) => {
-      if (tabs.length <= 1) return tabs;
-      const next = tabs.filter((t) => t !== key);
-      const isActive = activeView === key || (key === "mycall" && activeView === "callviewer");
-      if (isActive) setActiveView(next[Math.max(0, tabs.indexOf(key) - 1)]);
-      return next;
-    });
-  };
-
   useKeybinds(keybinds, {
     view_dispatch: () => openView("dispatch"),
     view_lookups: () => openView("lookups"),
@@ -369,12 +355,12 @@ export default function CADMDT() {
           active={activeView === "callviewer" ? "mycall" : activeView}
           onNavigate={openView}
           menus={buildMenus}
-          tabs={openTabs.map(k => ({ key: k, label: VIEW_LABELS[k] || k }))}
-          activeTab={activeView === "callviewer" ? "mycall" : activeView}
-          onSelectTab={setActiveView}
-          onAddTab={openView}
+          tabs={tabs.map(t => ({ key: t.id, label: VIEW_LABELS[t.view === "callviewer" ? "mycall" : t.view] || t.view }))}
+          activeTab={activeId}
+          onSelectTab={setActiveId}
+          onAddTab={addTab}
           onCloseTab={closeTab}
-          tabAddOptions={Object.keys(VIEW_LABELS).filter(k => !openTabs.includes(k)).map(k => ({ key: k, label: VIEW_LABELS[k] }))}
+          tabAddOptions={Object.keys(VIEW_LABELS).map(k => ({ key: k, label: VIEW_LABELS[k] }))}
           banner={session.panic_active ? <AlertBanner>PANIC ACTIVE — {session.callsign || session.user_name} — ALL UNITS RESPOND</AlertBanner> : null}
           headerRight={
             <UnitControls
@@ -392,7 +378,7 @@ export default function CADMDT() {
                 department={department}
                 session={session}
                 setSession={setSession}
-                onOpenCall={(id) => { setSelectedCallId(id); openView("mycall"); setActiveView("callviewer"); }}
+                onOpenCall={(id) => { setSelectedCallId(id); setActiveView("callviewer"); }}
                 detailCollapsed={detailCollapsed}
               />
             ) : activeView === "units" ? (

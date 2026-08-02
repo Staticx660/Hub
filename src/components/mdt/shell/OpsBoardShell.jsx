@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import MDTShell from "@/components/mdt/shell/MDTShell";
+import useWorkspaceTabs from "@/components/mdt/shell/useWorkspaceTabs";
 import { AlertBanner } from "@/components/mdt/shell/StatusStrip";
 import UnitControls from "@/components/mdt/shell/UnitControls";
 import CallQueueWorkspace from "@/components/mdt/workspaces/police/CallQueueWorkspace";
@@ -23,25 +24,10 @@ export default function OpsBoardShell({
   selectedCallId, setSelectedCallId,
 }) {
   const navigate = useNavigate();
-  const [openTabs, setOpenTabs] = useState(["incidents"]);
-  const [activeView, setActiveView] = useState("incidents");
   const [newFileRequest, setNewFileRequest] = useState(0);
   const hasPCR = department.category === "EMS";
   const viewLabels = Object.fromEntries(Object.entries(VIEW_LABELS).filter(([k]) => hasPCR || k !== "pcr"));
-
-  const openView = (key) => {
-    setOpenTabs((tabs) => (tabs.includes(key) ? tabs : [...tabs, key]));
-    setActiveView(key);
-  };
-
-  const closeTab = (key) => {
-    setOpenTabs((tabs) => {
-      if (tabs.length <= 1) return tabs;
-      const next = tabs.filter((t) => t !== key);
-      if (activeView === key) setActiveView(next[Math.max(0, tabs.indexOf(key) - 1)]);
-      return next;
-    });
-  };
+  const { tabs, activeId, activeView, setActiveId, setView: openView, addTab, closeTab } = useWorkspaceTabs("incidents");
 
   const buildMenus = ({ openSearch, toggleDetail, detailCollapsed }) => [
     {
@@ -107,12 +93,12 @@ export default function OpsBoardShell({
       active={activeView}
       onNavigate={openView}
       menus={buildMenus}
-      tabs={openTabs.map((k) => ({ key: k, label: viewLabels[k] || VIEW_LABELS[k] }))}
-      activeTab={activeView}
-      onSelectTab={setActiveView}
-      onAddTab={openView}
+      tabs={tabs.map((t) => ({ key: t.id, label: viewLabels[t.view] || VIEW_LABELS[t.view] }))}
+      activeTab={activeId}
+      onSelectTab={setActiveId}
+      onAddTab={addTab}
       onCloseTab={closeTab}
-      tabAddOptions={Object.keys(viewLabels).filter((k) => !openTabs.includes(k)).map((k) => ({ key: k, label: viewLabels[k] }))}
+      tabAddOptions={Object.keys(viewLabels).map((k) => ({ key: k, label: viewLabels[k] }))}
       banner={session.panic_active ? <AlertBanner>PANIC ACTIVE — {session.callsign || session.user_name} — ALL UNITS RESPOND</AlertBanner> : null}
       headerRight={
         <UnitControls
