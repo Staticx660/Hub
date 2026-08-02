@@ -60,6 +60,19 @@ module.exports = {
   				border: 'hsl(var(--sidebar-border))',
   				ring: 'hsl(var(--sidebar-ring))'
   			},
+  			mdt: {
+  				bg: 'hsl(var(--mdt-bg))',
+  				surface: 'hsl(var(--mdt-surface))',
+  				'surface-2': 'hsl(var(--mdt-surface-2))',
+  				'surface-3': 'hsl(var(--mdt-surface-3))',
+  				'surface-4': 'hsl(var(--mdt-surface-4))',
+  				line: 'hsl(var(--mdt-line))',
+  				'line-2': 'hsl(var(--mdt-line-2))',
+  				text: 'hsl(var(--mdt-text))',
+  				muted: 'hsl(var(--mdt-muted))',
+  				dim: 'hsl(var(--mdt-dim))',
+  				accent: 'hsl(var(--mdt-accent))'
+  			},
   			cad: {
   				bg: 'hsl(var(--cad-bg))',
   				'bg-solid': 'hsl(var(--cad-bg-solid))',

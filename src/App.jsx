@@ -48,6 +48,7 @@ import CivilianDashboard from '@/pages/CivilianDashboard';
 import MyRecords from '@/pages/MyRecords';
 import SystemLogs from '@/pages/SystemLogs';
 import Help from '@/pages/Help';
+import MDTPreview from '@/pages/MDTPreview';
 import HelpDock from '@/components/help/HelpDock';
 import { useCadTheme, syncThemeFromUser } from "@/hooks/useCadTheme";
 import { useCommunityBranding } from "@/hooks/useCommunityBranding";
@@ -128,6 +129,9 @@ const AuthenticatedApp = () => {
         <Route path="/cad/ems/:deptId" element={<EMSBoard />} />
         <Route path="/cad/fire/:deptId" element={<FireBoard />} />
         <Route path="/cad/civilian/:deptId" element={<CADCivilian />} />
+
+        {/* New MDT design language preview */}
+        <Route path="/mdt-preview" element={<MDTPreview />} />
 
         {/* Full-screen admin panel - dedicated sidebar */}
         <Route element={<CADAdminRoute />}>

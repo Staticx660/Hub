@@ -98,6 +98,31 @@
   }
 }
 
+/* ===== MDT Design Language (new UI system) ===== */
+/* Graphite enterprise palette: flat, calm, dense. One accent only. */
+:root {
+  --mdt-bg: 220 14% 9%;
+  --mdt-surface: 220 13% 12%;
+  --mdt-surface-2: 220 13% 15%;
+  --mdt-surface-3: 220 12% 19%;
+  --mdt-surface-4: 220 12% 23%;
+  --mdt-line: 220 10% 22%;
+  --mdt-line-2: 220 10% 30%;
+  --mdt-text: 210 20% 92%;
+  --mdt-muted: 215 14% 70%;
+  --mdt-dim: 215 12% 52%;
+  --mdt-accent: 213 80% 52%;
+}
+
+.mdt ::-webkit-scrollbar,
+.mdt-scroll::-webkit-scrollbar { width: 9px; height: 9px; }
+.mdt ::-webkit-scrollbar-track,
+.mdt-scroll::-webkit-scrollbar-track { background: hsl(var(--mdt-bg)); }
+.mdt ::-webkit-scrollbar-thumb,
+.mdt-scroll::-webkit-scrollbar-thumb { background: hsl(var(--mdt-line-2)); }
+.mdt ::-webkit-scrollbar-thumb:hover,
+.mdt-scroll::-webkit-scrollbar-thumb:hover { background: hsl(var(--mdt-dim)); }
+
 /* ===== CAD Theme System ===== */
 :root {
   --cad-bg: 222 47% 6%;
