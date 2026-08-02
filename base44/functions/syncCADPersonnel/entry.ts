@@ -205,9 +205,18 @@ Deno.serve(async (req) => {
 
       if (existing) {
         const updates = {};
-        if (existing.department_id !== primaryDept.id) updates.department_id = primaryDept.id;
-        if (JSON.stringify((additionalDeptIds || []).slice().sort()) !== JSON.stringify((existing.additional_department_ids || []).slice().sort())) {
-          updates.additional_department_ids = additionalDeptIds;
+        // MERGE, never overwrite: manual department assignments made in the Admin
+        // Panel must survive a Discord sync. Keep the existing primary if set.
+        const keptPrimary = existing.department_id || primaryDept.id;
+        if (!existing.department_id) updates.department_id = keptPrimary;
+
+        const mergedAdditional = new Set(existing.additional_department_ids || []);
+        for (const d of matchedDepts) mergedAdditional.add(d.id);
+        for (const id of additionalDeptIds) mergedAdditional.add(id);
+        mergedAdditional.delete(keptPrimary);
+        const mergedList = [...mergedAdditional];
+        if (JSON.stringify(mergedList.slice().sort()) !== JSON.stringify((existing.additional_department_ids || []).slice().sort())) {
+          updates.additional_department_ids = mergedList;
         }
         if (rosterMember) {
           if (rosterMember.rank && existing.rank !== rosterMember.rank) updates.rank = rosterMember.rank;
