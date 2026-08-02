@@ -1,6 +1,6 @@
 import React from "react";
 import { Outlet } from "react-router-dom";
-import CADSidebar from "./CADSidebar";
+import CADRail from "./CADRail";
 import RetroCADShell from "./RetroCADShell";
 import { useCommunityBranding } from "@/hooks/useCommunityBranding";
 import { useCadTheme } from "@/hooks/useCadTheme";
@@ -12,12 +12,10 @@ export default function CADLayout() {
   if (theme === "retro") return <RetroCADShell />;
 
   return (
-    <div className="flex h-screen overflow-hidden cad-gradient-bg cad-font">
-      <CADSidebar />
-      <main className="flex-1 overflow-y-auto cad-scroll">
-        <div className="p-4 lg:p-8 pt-16 lg:pt-8">
-          <Outlet />
-        </div>
+    <div className="mdt flex h-screen overflow-hidden bg-mdt-bg text-mdt-text">
+      <CADRail />
+      <main className="flex-1 min-w-0 overflow-auto mdt-scroll">
+        <Outlet />
       </main>
     </div>
   );
