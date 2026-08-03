@@ -15,6 +15,7 @@ import { logSystemEvent } from "@/lib/logSystemEvent";
 import { ALL_REPORT_TYPES, getReportTypes, hasCharges, shouldShowSection } from "@/lib/reportTypes";
 import { generateReportNarrative } from "@/lib/aiNarrative";
 import ReportTypeFields from "@/components/cad/mdt/ReportTypeFields";
+import ComboBox from "@/components/mdt/ui/ComboBox";
 
 function GridField({ label, children, span }) {
   return (
@@ -444,30 +445,40 @@ export default function ReportFormView({ department, session, initialType, templ
               </div>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <GridField label="Charge">
-                  {penalCodes.length > 0 ? (
-                    <Select value={charge.charge} onValueChange={v => { const pc = penalCodes.find(p => p.id === v); updateCharge(charge.id, "charge", pc ? `${pc.code} - ${pc.title}` : v); if (pc) { updateCharge(charge.id, "title_code", pc.code); updateCharge(charge.id, "bond_amount", pc.fine_amount || 0); updateCharge(charge.id, "jail_time", pc.jail_time_months ? `${pc.jail_time_months} month${pc.jail_time_months !== 1 ? 's' : ''}` : ""); if (pc.charge_type) updateCharge(charge.id, "charge_type", pc.charge_type); if (pc.bond_type) updateCharge(charge.id, "bond_type", pc.bond_type); } }}>
-                      <SelectTrigger className={darkSelect}><SelectValue placeholder="Select..." /></SelectTrigger>
-                      <SelectContent className="bg-mdt-surface border-mdt-line-2 rounded-none">{penalCodes.map(pc => <SelectItem key={pc.id} value={pc.id} className="text-mdt-text text-[12.5px]">{pc.code} - {pc.title}</SelectItem>)}</SelectContent>
-                    </Select>
-                  ) : <Input value={charge.charge} onChange={e => updateCharge(charge.id, "charge", e.target.value)} className={darkInput} placeholder="Charge..." />}
+                  <ComboBox
+                    value={charge.charge}
+                    onChange={v => updateCharge(charge.id, "charge", v)}
+                    options={penalCodes.map(pc => ({ value: pc.id, label: `${pc.code} - ${pc.title}`, data: pc }))}
+                    onSelect={(o) => {
+                      const pc = o.data;
+                      if (!pc) return;
+                      updateCharge(charge.id, "title_code", pc.code);
+                      updateCharge(charge.id, "bond_amount", pc.fine_amount || 0);
+                      updateCharge(charge.id, "jail_time", pc.jail_time_months ? `${pc.jail_time_months} month${pc.jail_time_months !== 1 ? 's' : ''}` : "");
+                      if (pc.charge_type) updateCharge(charge.id, "charge_type", pc.charge_type);
+                      if (pc.bond_type) updateCharge(charge.id, "bond_type", pc.bond_type);
+                    }}
+                    placeholder="Type or pick a charge..."
+                  />
                 </GridField>
                 <GridField label="Charge Type">
-                  {chargeTypes.length > 0 ? (
-                    <Select value={charge.charge_type} onValueChange={v => updateCharge(charge.id, "charge_type", v)}>
-                      <SelectTrigger className={darkSelect}><SelectValue placeholder="Select..." /></SelectTrigger>
-                      <SelectContent className="bg-mdt-surface border-mdt-line-2 rounded-none">{chargeTypes.map(ct => <SelectItem key={ct.id} value={ct.name} className="text-mdt-text text-[12.5px]">{ct.name}</SelectItem>)}</SelectContent>
-                    </Select>
-                  ) : <Input value={charge.charge_type} onChange={e => updateCharge(charge.id, "charge_type", e.target.value)} className={darkInput} placeholder="Type..." />}
+                  <ComboBox
+                    value={charge.charge_type}
+                    onChange={v => updateCharge(charge.id, "charge_type", v)}
+                    options={chargeTypes.map(ct => ct.name)}
+                    placeholder="Type or pick..."
+                  />
                 </GridField>
                 <GridField label="Counts"><Input type="number" value={charge.counts} onChange={e => updateCharge(charge.id, "counts", e.target.value)} className={darkInput} /></GridField>
                 <GridField label="Title, Code"><Input value={charge.title_code} onChange={e => updateCharge(charge.id, "title_code", e.target.value)} className={darkInput} /></GridField>
                 <GridField label="Bond Type">
-                  {bondTypes.length > 0 ? (
-                    <Select value={charge.bond_type} onValueChange={v => { const bt = bondTypes.find(b => b.name === v); updateCharge(charge.id, "bond_type", v); if (bt?.default_amount) updateCharge(charge.id, "bond_amount", bt.default_amount); }}>
-                      <SelectTrigger className={darkSelect}><SelectValue placeholder="Select..." /></SelectTrigger>
-                      <SelectContent className="bg-mdt-surface border-mdt-line-2 rounded-none">{bondTypes.map(bt => <SelectItem key={bt.id} value={bt.name} className="text-mdt-text text-[12.5px]">{bt.name}</SelectItem>)}</SelectContent>
-                    </Select>
-                  ) : <Input value={charge.bond_type} onChange={e => updateCharge(charge.id, "bond_type", e.target.value)} className={darkInput} placeholder="Bond..." />}
+                  <ComboBox
+                    value={charge.bond_type}
+                    onChange={v => updateCharge(charge.id, "bond_type", v)}
+                    options={bondTypes.map(bt => ({ value: bt.id, label: bt.name, data: bt }))}
+                    onSelect={(o) => { if (o.data?.default_amount) updateCharge(charge.id, "bond_amount", o.data.default_amount); }}
+                    placeholder="Type or pick..."
+                  />
                 </GridField>
                 <GridField label="Bond/Fine Amount"><Input type="number" value={charge.bond_amount} onChange={e => updateCharge(charge.id, "bond_amount", e.target.value)} className={darkInput} /></GridField>
                 <GridField label="Jail Time"><Input value={charge.jail_time} onChange={e => updateCharge(charge.id, "jail_time", e.target.value)} className={darkInput} placeholder="e.g. 30 days" /></GridField>
