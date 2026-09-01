@@ -6,6 +6,7 @@ import BoloForm from "@/components/cad/mdt/BoloForm";
 import WarrantForm from "@/components/cad/mdt/WarrantForm";
 import ReportFormView from "@/components/cad/mdt/ReportFormView";
 import { ALL_REPORT_TYPES, REPORT_TYPES_BY_CATEGORY, getReportTypes } from "@/lib/reportTypes";
+import ConfirmDialog from "@/components/mdt/ui/ConfirmDialog";
 
 const FILTER_CHECKBOXES_BY_CATEGORY = {
   Police: [{ key: "warrant", label: "Warrant" }, { key: "bolo", label: "BOLO" }, { key: "license", label: "License" }, { key: "vehicle", label: "Vehicle Registration" }],
@@ -96,10 +97,16 @@ export default function RecordsPanel({ department, session }) {
     setShowForm(true);
   };
 
-  const deleteReport = async (id) => {
-    if (!confirm("Delete this report?")) return;
-    await base44.entities.CADReport.delete(id);
-    setSelected(null); load();
+  // window.confirm freezes inside the in-game tablet iframe — use a dialog.
+  const [pendingDelete, setPendingDelete] = useState(null);
+  const deleteReport = (id) => setPendingDelete(id);
+  const confirmDelete = async () => {
+    try {
+      await base44.entities.CADReport.delete(pendingDelete);
+      setSelected(null);
+      setPendingDelete(null);
+      load();
+    } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
   };
 
   if (loading) return <div className="flex justify-center py-16"><div className="w-8 h-8 border-2 border-slate-700 border-t-blue-500 rounded-full animate-spin" /></div>;
@@ -340,6 +347,7 @@ export default function RecordsPanel({ department, session }) {
 
       <BoloForm open={boloOpen} onOpenChange={setBoloOpen} department={department} session={session} onSaved={load} />
       <WarrantForm open={warrantOpen} onOpenChange={setWarrantOpen} department={department} session={session} onSaved={load} />
+      <ConfirmDialog open={!!pendingDelete} onOpenChange={(o) => !o && setPendingDelete(null)} title="Delete Report" description="Permanently delete this report?" confirmLabel="Delete" onConfirm={confirmDelete} />
     </div>
   );
 }

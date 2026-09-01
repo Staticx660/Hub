@@ -21,6 +21,7 @@ import { clearPanic } from "@/lib/panic";
 import { startPanicSound, stopPanicSound, playStatusBeep, stopPanicVoice, loadNotificationTones } from "@/components/cad/mdt/panicSound";
 import StationSignOn from "@/components/mdt/shell/StationSignOn";
 import { Btn } from "@/components/mdt/ui/primitives";
+import ConfirmDialog from "@/components/mdt/ui/ConfirmDialog";
 import MDTShell from "@/components/mdt/shell/MDTShell";
 import useWorkspaceTabs from "@/components/mdt/shell/useWorkspaceTabs";
 import { AlertBanner } from "@/components/mdt/shell/StatusStrip";
@@ -163,8 +164,11 @@ export default function CADMDT() {
     };
   }, []);
 
-  const handleClockOut = async () => {
-    if (!confirm("Clock out and end your shift?")) return;
+  // window.confirm is blocked inside sandboxed iframes (in-game tablet) and
+  // freezes the UI — use a non-blocking dialog instead.
+  const [clockOutConfirm, setClockOutConfirm] = useState(false);
+  const handleClockOut = () => setClockOutConfirm(true);
+  const confirmClockOut = async () => {
     try {
       await performClockOut(session);
       setSession(null);
@@ -389,6 +393,7 @@ export default function CADMDT() {
         </MDTShell>
         <PanicDialog open={panicOpen} department={department} session={session} onClose={() => setPanicOpen(false)} onActivated={(s) => setSession(s)} />
         <KeybindsDialog open={keybindsOpen} onOpenChange={setKeybindsOpen} keybinds={keybinds} setKeybinds={setKeybinds} />
+        <ConfirmDialog open={clockOutConfirm} onOpenChange={setClockOutConfirm} title="Clock Out" description="Clock out and end your shift?" confirmLabel="Clock Out" onConfirm={confirmClockOut} />
       </>
     );
   }
@@ -400,6 +405,7 @@ export default function CADMDT() {
       <Taskbar activeView={activeView} setActiveView={(v) => { if (v === "dispatch" && department.category === "Fire") { navigate(`/cad/fire/${deptId}`); } else if (v === "dispatch" && department.category === "EMS") { navigate(`/cad/ems/${deptId}`); } else { setActiveView(v); } }} session={session} departmentCategory={department.category} onStatusChange={handleStatusChange} onPanic={handlePanic} onClockOut={handleClockOut} onOpenKeybinds={() => setKeybindsOpen(true)} onSessionUpdate={setSession} />
       <PanicDialog open={panicOpen} department={department} session={session} onClose={() => setPanicOpen(false)} onActivated={(s) => setSession(s)} />
       <KeybindsDialog open={keybindsOpen} onOpenChange={setKeybindsOpen} keybinds={keybinds} setKeybinds={setKeybinds} />
+      <ConfirmDialog open={clockOutConfirm} onOpenChange={setClockOutConfirm} title="Clock Out" description="Clock out and end your shift?" confirmLabel="Clock Out" onConfirm={confirmClockOut} />
     </div>
   );
 }

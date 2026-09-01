@@ -9,6 +9,7 @@ import WarrantForm from "@/components/cad/mdt/WarrantForm";
 import ReportFormView from "@/components/cad/mdt/ReportFormView";
 import { getReportTypes } from "@/lib/reportTypes";
 import { Plus, X, Loader2, ChevronDown } from "lucide-react";
+import ConfirmDialog from "@/components/mdt/ui/ConfirmDialog";
 
 const INPUT = "h-7 px-2 bg-mdt-surface border border-mdt-line-2 text-[12.5px] text-mdt-text placeholder:text-mdt-dim focus:outline-none focus:border-mdt-accent";
 const TONE = { Draft: "warn", Active: "crit", Closed: "neutral", Filed: "ok", Reviewed: "info", Approved: "ok", Served: "neutral" };
@@ -75,10 +76,16 @@ export default function RecordsWorkspace({ department, session, newFileRequest =
 
   const openNewFile = (type) => { setFormType(type); setEditingReport(null); setShowForm(true); setSelected(null); setNewMenu(false); };
   const openEditFile = (report) => { setEditingReport(report); setFormType(report.report_type || "Incident"); setShowForm(true); };
-  const deleteReport = async (id) => {
-    if (!confirm("Delete this report?")) return;
-    await base44.entities.CADReport.delete(id);
-    setSelected(null); load();
+  // window.confirm freezes inside the in-game tablet iframe — use a dialog.
+  const [pendingDelete, setPendingDelete] = useState(null);
+  const deleteReport = (id) => setPendingDelete(id);
+  const confirmDelete = async () => {
+    try {
+      await base44.entities.CADReport.delete(pendingDelete);
+      setSelected(null);
+      setPendingDelete(null);
+      load();
+    } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
   };
 
   if (showForm) {
@@ -147,6 +154,7 @@ export default function RecordsWorkspace({ department, session, newFileRequest =
 
       <BoloForm open={boloOpen} onOpenChange={setBoloOpen} department={department} session={session} onSaved={load} />
       <WarrantForm open={warrantOpen} onOpenChange={setWarrantOpen} department={department} session={session} onSaved={load} />
+      <ConfirmDialog open={!!pendingDelete} onOpenChange={(o) => !o && setPendingDelete(null)} title="Delete Report" description="Permanently delete this report?" confirmLabel="Delete" onConfirm={confirmDelete} />
     </>
   );
 }

@@ -16,6 +16,7 @@ import { ALL_REPORT_TYPES, getReportTypes, hasCharges, shouldShowSection } from 
 import { generateReportNarrative } from "@/lib/aiNarrative";
 import ReportTypeFields from "@/components/cad/mdt/ReportTypeFields";
 import ComboBox from "@/components/mdt/ui/ComboBox";
+import { formatPenalCharge, derivePenalChargeType } from "@/lib/chargeUtils";
 
 function GridField({ label, children, span }) {
   return (
@@ -452,10 +453,13 @@ export default function ReportFormView({ department, session, initialType, templ
                     onSelect={(o) => {
                       const pc = o.data;
                       if (!pc) return;
+                      // Always keep code AND name attached to the charge
+                      updateCharge(charge.id, "charge", formatPenalCharge(pc));
                       updateCharge(charge.id, "title_code", pc.code);
                       updateCharge(charge.id, "bond_amount", pc.fine_amount || 0);
                       updateCharge(charge.id, "jail_time", pc.jail_time_months ? `${pc.jail_time_months} month${pc.jail_time_months !== 1 ? 's' : ''}` : "");
-                      if (pc.charge_type) updateCharge(charge.id, "charge_type", pc.charge_type);
+                      const ct = derivePenalChargeType(pc, chargeTypes);
+                      if (ct) updateCharge(charge.id, "charge_type", ct);
                       if (pc.bond_type) updateCharge(charge.id, "bond_type", pc.bond_type);
                     }}
                     placeholder="Type or pick a charge..."

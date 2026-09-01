@@ -299,11 +299,9 @@ export default function Roster() {
                               <Ban className="w-3.5 h-3.5 mr-2" /> Suspend
                             </DropdownMenuItem>
                           )}
-                          {m.status === "Inactive" && (
-                            <DropdownMenuItem onClick={() => handleDelete(m.id)} className="text-red-400">
-                              <Trash2 className="w-3.5 h-3.5 mr-2" /> Remove
-                            </DropdownMenuItem>
-                          )}
+                          <DropdownMenuItem onClick={() => handleDelete(m.id)} className="text-red-400">
+                            <Trash2 className="w-3.5 h-3.5 mr-2" /> Remove from Roster
+                          </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </td>

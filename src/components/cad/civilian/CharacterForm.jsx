@@ -18,11 +18,9 @@ const MEDICAL_HISTORY_OPTIONS = ["Diabetes Type 1", "Diabetes Type 2", "Asthma",
 const FOOD_ALLERGY_OPTIONS = ["Peanuts", "Shellfish", "Dairy", "Gluten", "Eggs", "Soy", "Tree Nuts", "Wheat", "Fish", "Sesame", "Corn", "Rice", "Oats", "Barley", "Rye", "Beef", "Pork", "Chicken", "Lamb", "Tomato", "Potato", "Carrot", "Celery", "Mustard", "Garlic", "Onion", "Apple", "Banana", "Strawberry", "Citrus", "Chocolate", "Caffeine", "Mushroom", "Avocado", "Coconut"];
 
 function formatPhone(value) {
-  const digits = (value || "").replace(/\D/g, "").slice(0, 10);
-  if (digits.length === 0) return "";
-  if (digits.length <= 3) return `(${digits}`;
-  if (digits.length <= 6) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
-  return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+  const digits = (value || "").replace(/\D/g, "").slice(0, 7);
+  if (digits.length <= 3) return digits;
+  return `${digits.slice(0, 3)}-${digits.slice(3)}`;
 }
 
 function calculateAge(dob) {
@@ -73,7 +71,10 @@ export default function CharacterForm({ open, onOpenChange, editing, department,
       return;
     }
     try {
-      const data = { ...form, department_id: department.id, owner_user_id: user.id, created_by_name: user.full_name };
+      // Strip record built-ins that leak into the form when editing — sending
+      // them back on update makes the save fail silently.
+      const { id, created_date, updated_date, created_by_id, created_by, ...clean } = form;
+      const data = { ...clean, department_id: department.id, owner_user_id: user.id, created_by_name: user.full_name };
       if (editing) {
         await base44.entities.Civilian.update(editing.id, data);
         toast({ title: "Persona updated" });
@@ -141,10 +142,10 @@ export default function CharacterForm({ open, onOpenChange, editing, department,
                 />
               </MField>
               <MField label="Zip Code"><MInput value={form.zip_code} onChange={e => set("zip_code", e.target.value)} /></MField>
-              <MField label="Phone"><MInput value={form.phone} onChange={e => set("phone", formatPhone(e.target.value))} placeholder="(555) 123-4567" /></MField>
+              <MField label="Phone"><MInput value={form.phone} onChange={e => set("phone", formatPhone(e.target.value))} placeholder="555-0100" /></MField>
               <MField label="Occupation"><MInput value={form.occupation} onChange={e => set("occupation", e.target.value)} /></MField>
               <MField label="Emergency Contact"><MInput value={form.emergency_contact_name} onChange={e => set("emergency_contact_name", e.target.value)} /></MField>
-              <MField label="EC Phone"><MInput value={form.emergency_contact_phone} onChange={e => set("emergency_contact_phone", formatPhone(e.target.value))} placeholder="(555) 123-4567" /></MField>
+              <MField label="EC Phone"><MInput value={form.emergency_contact_phone} onChange={e => set("emergency_contact_phone", formatPhone(e.target.value))} placeholder="555-0100" /></MField>
               <MField label="EC Relationship"><MInput value={form.emergency_contact_relationship} onChange={e => set("emergency_contact_relationship", e.target.value)} /></MField>
             </div>
           </MSection>
