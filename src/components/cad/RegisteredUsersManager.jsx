@@ -110,7 +110,7 @@ export default function RegisteredUsersManager() {
         {updatingIds.has(u.id) && <Loader2 className="w-3 h-3 animate-spin text-mdt-accent" />}
       </span>
     )},
-    { key: "email", label: "Email" },
+    { key: "email", label: "Email", width: 190 },
     { key: "role", label: "Admin Role", width: 120, render: (u) => (
       <button onClick={() => toggleAdmin(u)}>
         <StatusPill tone={u.role === "admin" ? "info" : "neutral"}><Crown className="w-2.5 h-2.5" /> {u.role === "admin" ? "Admin" : "User"}</StatusPill>
@@ -129,8 +129,8 @@ export default function RegisteredUsersManager() {
       <StatusPill tone={u.discord_id ? "ok" : "neutral"}>{u.discord_id ? "Linked" : "None"}</StatusPill>
     )},
     { key: "created_date", label: "Joined", width: 100, mono: true, render: (u) => u.created_date ? new Date(u.created_date).toLocaleDateString() : "—" },
-    { key: "remove", label: "", width: 70, sortable: false, render: (u) => (
-      <Btn variant="danger" icon={Trash2} disabled={updatingIds.has(u.id)} onClick={() => removeUser(u)} className="h-6 px-1.5">Remove</Btn>
+    { key: "remove", label: "", width: 46, sortable: false, render: (u) => (
+      <Btn variant="danger" icon={Trash2} title="Remove user" disabled={updatingIds.has(u.id)} onClick={() => removeUser(u)} className="h-6 px-1.5" />
     )},
   ];
 

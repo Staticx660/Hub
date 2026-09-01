@@ -5,6 +5,7 @@ import DataTable from "@/components/mdt/ui/DataTable";
 import DockedDetail from "@/components/mdt/ui/DockedDetail";
 import { StatusPill } from "@/components/mdt/ui/primitives";
 import { Plus, Loader2 } from "lucide-react";
+import NewCallDialog from "@/components/mdt/workspaces/police/NewCallDialog";
 
 const PRI_TONE = { "1 - High": "crit", "2 - Medium": "warn", "3 - Low": "info" };
 const PRI_BAR = { "1 - High": "#ef4444", "2 - Medium": "#f59e0b", "3 - Low": "#3b82f6" };
@@ -19,6 +20,8 @@ export default function CallQueueWorkspace({ department, session, setSession, on
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("open");
   const [selectedId, setSelectedId] = useState(null);
+  const [newCallOpen, setNewCallOpen] = useState(false);
+  const [creating, setCreating] = useState(false);
 
   const load = async () => {
     const [allCalls, allSessions] = await Promise.all([
@@ -48,16 +51,25 @@ export default function CallQueueWorkspace({ department, session, setSession, on
   const unitsOn = (call) => sessions.filter((s) => (call.assigned_unit_ids || []).includes(s.id));
   const attached = selected ? (selected.assigned_unit_ids || []).includes(session.id) : false;
 
-  const newCall = async () => {
+  const createCall = async (form) => {
+    setCreating(true);
     try {
-      const runNum = `911-${Date.now().toString().slice(-6)}`;
       const c = await base44.entities.ActiveCall.create({
-        call_type: "New Call", priority: "2 - Medium", status: "Pending", location: "", description: "",
-        department_id: department.id, run_number: runNum, assigned_unit_ids: [], cad_notes: "",
-        call_origin: "911", postal: "", block: "",
+        ...form,
+        status: "Active",
+        department_id: department.id,
+        run_number: `911-${Date.now().toString().slice(-6)}`,
+        call_origin: "Unit Initiated",
+        assigned_unit_ids: [session.id],
+        assignment_log: [{ unit_name: session.callsign || session.user_name, action: "attached", timestamp: new Date().toISOString() }],
       });
+      const sessionUpdates = { active_call_id: c.id, status: "On Call" };
+      await base44.entities.CADSession.update(session.id, sessionUpdates);
+      setSession({ ...session, ...sessionUpdates });
+      setNewCallOpen(false);
       onOpenCall(c.id);
     } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
+    setCreating(false);
   };
 
   const toggleAttach = async () => {
@@ -122,7 +134,7 @@ export default function CallQueueWorkspace({ department, session, setSession, on
         ))}
         <span className="text-[12.5px] text-mdt-muted ml-1">{rows.length} shown</span>
         <div className="flex-1" />
-        <button onClick={newCall} className="flex items-center gap-1.5 h-6 px-2.5 border border-mdt-accent/60 bg-mdt-accent/15 text-mdt-accent text-[12.5px]">
+        <button onClick={() => setNewCallOpen(true)} className="flex items-center gap-1.5 h-6 px-2.5 border border-mdt-accent/60 bg-mdt-accent/15 text-mdt-accent text-[12.5px]">
           <Plus className="w-3.5 h-3.5" /> New Call
         </button>
       </div>
@@ -156,6 +168,8 @@ export default function CallQueueWorkspace({ department, session, setSession, on
           }
         />
       )}
+
+      <NewCallDialog open={newCallOpen} onOpenChange={setNewCallOpen} onCreate={createCall} creating={creating} />
     </>
   );
 }

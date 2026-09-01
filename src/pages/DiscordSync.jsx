@@ -106,14 +106,16 @@ export default function DiscordSync() {
     setSyncing(true);
     setSyncReport(null);
     try {
+      // One sync covers both systems: roster members and CAD personnel
       const res = await base44.functions.invoke("syncDiscordMembers", {});
       setSyncReport(res.data);
       if (res.data?.error) {
         toast({ title: "Sync failed", description: res.data.error, variant: "destructive" });
       } else {
+        const cadRes = await base44.functions.invoke("syncCADPersonnel", {});
         toast({
-          title: "Sync complete",
-          description: `Added ${res.data.report.added}, updated ${res.data.report.updated}, skipped ${res.data.report.skipped}`
+          title: "Roster + CAD sync complete",
+          description: `Roster: added ${res.data.report.added}, updated ${res.data.report.updated}. CAD personnel synced${cadRes.data?.error ? ` (CAD error: ${cadRes.data.error})` : ""}.`
         });
       }
     } catch (e) {
@@ -273,15 +275,15 @@ export default function DiscordSync() {
       {/* Sync panel */}
       <div className="bg-mdt-surface border border-mdt-line p-6">
         <h2 className="text-lg font-semibold text-mdt-text mb-4 flex items-center gap-2">
-          <RefreshCw className="w-4 h-4 text-blue-400" /> Sync Members
+          <RefreshCw className="w-4 h-4 text-mdt-accent" /> Sync Roster &amp; CAD
         </h2>
         <p className="text-sm text-mdt-muted mb-4">
-          Pull all Discord members who have a mapped role into the roster. New members are added;
-          existing members are updated. Syncs also run automatically every hour.
+          One sync for both systems: Discord members with a mapped role are added or updated on the
+          roster, then CAD personnel records are rebuilt from those roles. Also runs automatically every hour.
         </p>
         <Button onClick={handleSync} disabled={syncing} className="bg-mdt-accent hover:brightness-110 rounded-none">
           {syncing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-2" />}
-          {syncing ? "Syncing..." : "Sync Now"}
+          {syncing ? "Syncing Roster & CAD..." : "Sync Roster & CAD Now"}
         </Button>
 
         {syncReport && !syncReport.error && (

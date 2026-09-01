@@ -1,10 +1,12 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Crown, ShieldCheck } from "lucide-react";
 import { StatusPill } from "@/components/mdt/ui/primitives";
 
 /** Flat operational rail for the admin console — no glass, no rounded cards. */
 export default function AdminRail({ sections, active, onSelect, isPlatformAdmin, isCADAdmin, isSupervisor, communityName }) {
+  const navigate = useNavigate();
   return (
     <aside className="w-[180px] xl:w-[228px] flex-shrink-0 border-r border-mdt-line bg-mdt-surface flex flex-col min-h-0">
       <div className="h-11 px-3 flex items-center border-b border-mdt-line bg-mdt-surface-2">
@@ -42,9 +44,12 @@ export default function AdminRail({ sections, active, onSelect, isPlatformAdmin,
         ))}
       </nav>
 
-      <Link to="/cad" className="h-8 px-2.5 flex items-center gap-1.5 border-t border-mdt-line text-[11.5px] text-mdt-muted hover:text-mdt-text hover:bg-mdt-surface-3/60">
-        <ArrowLeft className="w-3.5 h-3.5" /> Back to CAD
-      </Link>
+      <button
+        onClick={() => (window.history.length > 1 ? navigate(-1) : navigate("/cad"))}
+        className="w-full h-8 px-2.5 flex items-center gap-1.5 border-t border-mdt-line text-[11.5px] text-mdt-muted hover:text-mdt-text hover:bg-mdt-surface-3/60"
+      >
+        <ArrowLeft className="w-3.5 h-3.5" /> Back
+      </button>
     </aside>
   );
 }
