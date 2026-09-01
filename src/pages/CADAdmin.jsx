@@ -15,10 +15,20 @@ import { useUserPermissions } from "@/hooks/useUserPermissions";
 import AdminRail from "@/components/cad/admin/AdminRail";
 import { Users, IdCard, Settings, Building2, MapPin, Gavel, ShieldCheck, Bell, MessageCircle, ScrollText, KeyRound, Trash2, Bot } from "lucide-react";
 import SystemLogs from "@/pages/SystemLogs";
+import Roster from "@/pages/Roster";
+import Departments from "@/pages/Departments";
+import DiscordSync from "@/pages/DiscordSync";
+import { ClipboardList, Network, RefreshCw } from "lucide-react";
 import { APP_VERSION } from "@/lib/version";
 
-// access: "supervisor" = visible to supervisors+, "admin" = visible to CAD/platform admins only
+// access: "supervisor" = visible to supervisors+, "admin" = visible to CAD/platform admins,
+// "platform" = platform admins only (roster administration keeps its original gating)
 const ALL_SECTIONS = [
+  { title: "ROSTER", items: [
+    { id: "roster", label: "Full Roster", icon: ClipboardList, access: "platform" },
+    { id: "rosterdepts", label: "Roster Departments", icon: Network, access: "platform" },
+    { id: "discordsync", label: "Discord Sync", icon: RefreshCw, access: "platform" },
+  ]},
   { title: "ACCOUNTS", items: [
     { id: "members", label: "Members", icon: Users, access: "supervisor" },
     { id: "permissions", label: "Role Permissions", icon: KeyRound, access: "admin" },
@@ -48,6 +58,7 @@ export default function CADAdmin() {
   const visibleSections = ALL_SECTIONS.map((section) => ({
     ...section,
     items: section.items.filter((item) => {
+      if (item.access === "platform") return isPlatformAdmin;
       if (item.access === "admin") return canSeeAdminSections;
       return canSeeAdminSections || isSupervisor;
     }),
@@ -59,6 +70,9 @@ export default function CADAdmin() {
 
   const renderPanel = () => {
     switch (effectiveActive) {
+      case "roster": return <Roster />;
+      case "rosterdepts": return <Departments />;
+      case "discordsync": return <DiscordSync />;
       case "members": return <RegisteredUsersManager />;
       case "permissions": return <PermissionsManager />;
       case "identifiers": return <DiscordMembersManager />;

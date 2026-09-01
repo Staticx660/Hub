@@ -56,6 +56,7 @@ export default function IdentityPane({ character, fullName }) {
       <Block title="Residence & Contact">
         <Field label="Address" value={character.address} />
         <Field label="Zip" value={character.zip_code} />
+        <Field label="Phone" value={character.phone} />
         <Field label="Occupation" value={character.occupation} />
         <Field label="Emergency Contact" value={character.emergency_contact_name} />
         <Field label="Contact Phone" value={character.emergency_contact_phone} />

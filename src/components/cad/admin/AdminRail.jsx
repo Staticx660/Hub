@@ -9,8 +9,8 @@ export default function AdminRail({ sections, active, onSelect, isPlatformAdmin,
     <aside className="w-[228px] flex-shrink-0 border-r border-mdt-line bg-mdt-surface flex flex-col min-h-0">
       <div className="h-11 px-3 flex items-center border-b border-mdt-line bg-mdt-surface-2">
         <div className="min-w-0">
-          <div className="text-[12.5px] font-semibold leading-tight">CAD Administration</div>
-          <div className="text-[10px] uppercase tracking-[0.1em] text-mdt-dim">System Console</div>
+          <div className="text-[12.5px] font-semibold leading-tight">Administration</div>
+          <div className="text-[10px] uppercase tracking-[0.1em] text-mdt-dim">CAD · Roster · System</div>
         </div>
       </div>
 

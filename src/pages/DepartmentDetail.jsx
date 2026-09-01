@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/components/ui/use-toast";
+import RankOrderManager from "@/components/roster/RankOrderManager";
 
 const statusColors = {
   "Active": "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
@@ -266,11 +267,9 @@ export default function DepartmentDetail() {
                             <DropdownMenuItem onClick={() => updateSlotStatus(member.id, "Unavailable")} className="text-red-400">
                               <UserX className="w-3.5 h-3.5 mr-2" /> Mark Unavailable
                             </DropdownMenuItem>
-                            {member.status === "Inactive" && (
-                              <DropdownMenuItem onClick={() => handleDelete(member.id)} className="text-red-400">
-                                <Trash2 className="w-3.5 h-3.5 mr-2" /> Remove
-                              </DropdownMenuItem>
-                            )}
+                            <DropdownMenuItem onClick={() => handleDelete(member.id)} className="text-red-400">
+                              <Trash2 className="w-3.5 h-3.5 mr-2" /> Remove from Roster
+                            </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </td>
@@ -282,6 +281,8 @@ export default function DepartmentDetail() {
           </div>
         </div>
       )}
+
+      <RankOrderManager department={department} onSaved={loadData} />
 
       <Dialog open={showForm} onOpenChange={setShowForm}>
         <DialogContent className="bg-slate-900 border-slate-700 text-white max-w-lg max-h-[90vh] overflow-y-auto">
