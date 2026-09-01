@@ -66,24 +66,10 @@ export default function CAD() {
 
   const handleCreateCall = async () => {
     try {
-      await base44.entities.ActiveCall.create({ ...callForm, status: callForm.status || "Active" });
-      const dept = departments.find(d => d.id === callForm.department_id);
-      if (dept?.discord_webhook_url) {
-        try {
-          await base44.functions.invoke('sendDiscordNotification', {
-            webhook_url: dept.discord_webhook_url,
-            title: `🚨 New Call: ${callForm.call_type}`,
-            description: callForm.description || `Location: ${callForm.location}`,
-            color: callForm.priority === "1 - High" ? 15158332 : callForm.priority === "2 - Medium" ? 15844367 : 3447003,
-            fields: [
-              { name: "Priority", value: callForm.priority, inline: true },
-              { name: "Location", value: callForm.location, inline: true },
-              { name: "Department", value: dept.name, inline: true },
-              ...(callForm.caller_name ? [{ name: "Caller", value: `${callForm.caller_name}${callForm.caller_phone ? ` · ${callForm.caller_phone}` : ""}`, inline: false }] : []),
-            ]
-          });
-        } catch (e) { console.error("Discord notification failed:", e); }
-      }
+      const createdCall = await base44.entities.ActiveCall.create({ ...callForm, status: callForm.status || "Active" });
+      try {
+        await base44.functions.invoke('sendDiscordNotification', { call_id: createdCall.id });
+      } catch (e) { console.error("Discord notification failed:", e); }
       toast({ title: "Call created" });
       setDialogOpen(false); setCallForm(emptyCallForm); load();
     } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
