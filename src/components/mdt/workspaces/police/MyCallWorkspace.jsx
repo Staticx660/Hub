@@ -3,6 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { useToast } from "@/components/ui/use-toast";
 import { Panel, Field, StatusPill, Btn, EmptyState } from "@/components/mdt/ui/primitives";
 import GTA5Map from "@/components/cad/mdt/GTA5Map";
+import ConfirmDialog from "@/components/mdt/ui/ConfirmDialog";
 import { Radio, Link2, Unlink, CheckCircle2, Save, Send, Loader2, ArrowLeft } from "lucide-react";
 
 const INPUT = "h-7 px-2 bg-mdt-surface border border-mdt-line-2 text-[12.5px] text-mdt-text placeholder:text-mdt-dim focus:outline-none focus:border-mdt-accent";
@@ -16,6 +17,7 @@ export default function MyCallWorkspace({ department, session, setSession, selec
   const [logInput, setLogInput] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [clearConfirm, setClearConfirm] = useState(false);
 
   const callId = selectedCallId || session.active_call_id;
 
@@ -38,8 +40,11 @@ export default function MyCallWorkspace({ department, session, setSession, selec
   useEffect(() => {
     const unsub = base44.entities.ActiveCall.subscribe((event) => {
       if (!callId) return;
-      if (event.type === "delete" && event.data?.id === callId) { setCall(null); setSelectedCallId(null); }
-      else if (event.type === "update" && event.data?.id === callId) load();
+      // delete events carry the id on the event itself, not always in data
+      const eventId = event.id || event.data?.id;
+      if (eventId !== callId) return;
+      if (event.type === "delete") { setCall(null); setSelectedCallId(null); }
+      else if (event.type === "update") load();
     });
     return unsub;
   }, [callId]);
@@ -81,7 +86,6 @@ export default function MyCallWorkspace({ department, session, setSession, selec
   };
 
   const clearCall = async () => {
-    if (!confirm("Mark this call as cleared/closed?")) return;
     try {
       const log = [...(call.assignment_log || []), { unit_name: session.callsign || session.user_name, action: "cleared", timestamp: new Date().toISOString() }];
       await base44.entities.ActiveCall.update(call.id, { status: "Closed", assignment_log: log });
@@ -125,7 +129,7 @@ export default function MyCallWorkspace({ department, session, setSession, selec
         <span className="text-[12.5px] text-mdt-text">{call.run_number || "—"} · {call.call_type}</span>
         <StatusPill tone={call.status === "Active" ? "info" : "ok"}>{call.status}</StatusPill>
         <div className="flex-1" />
-        <Btn icon={CheckCircle2} onClick={clearCall}>Clear Call</Btn>
+        <Btn icon={CheckCircle2} onClick={() => setClearConfirm(true)}>Clear Call</Btn>
         {isAttached ? <Btn variant="danger" icon={Unlink} onClick={detach}>Detach</Btn> : <Btn variant="primary" icon={Link2} onClick={attach}>Attach</Btn>}
       </div>
 
@@ -192,6 +196,15 @@ export default function MyCallWorkspace({ department, session, setSession, selec
           </div>
         </Panel>
       </div>
+
+      <ConfirmDialog
+        open={clearConfirm}
+        onOpenChange={setClearConfirm}
+        title="Clear Call"
+        description="Mark this call as cleared/closed?"
+        confirmLabel="Clear Call"
+        onConfirm={clearCall}
+      />
     </>
   );
 }

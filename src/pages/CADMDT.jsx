@@ -112,6 +112,37 @@ export default function CADMDT() {
     return unsub;
   }, [department]);
 
+  // In-app call notifications — new calls for this department, and dispatch
+  // assigning this unit to a call. Uses toasts/tones so it works inside the
+  // in-game tablet iframe (no browser popups).
+  useEffect(() => {
+    if (!department) return;
+    const unsub = base44.entities.ActiveCall.subscribe((event) => {
+      const call = event.data;
+      const s = sessionRef.current;
+      if (!call || !s) return;
+      if (call.department_id && call.department_id !== department.id) return;
+
+      if (event.type === "create" && call.status !== "Closed") {
+        playStatusBeep();
+        toast({
+          title: `📻 New Call — ${call.priority || "Priority 3"}`,
+          description: `${call.call_type}${call.location ? " · " + call.location : ""}`,
+        });
+        return;
+      }
+
+      if (event.type === "update" && (call.assigned_unit_ids || []).includes(s.id) && s.active_call_id !== call.id) {
+        playStatusBeep();
+        toast({
+          title: "🚨 You have been dispatched",
+          description: `${call.run_number ? call.run_number + " · " : ""}${call.call_type}${call.location ? " · " + call.location : ""}`,
+        });
+      }
+    });
+    return unsub;
+  }, [department]);
+
   const handleClockIn = async (formData) => {
     try {
       const now = new Date().toISOString();

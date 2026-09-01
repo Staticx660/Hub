@@ -2,12 +2,14 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/lib/AuthContext";
 import { base44 } from "@/api/base44Client";
+import { useCommunityBranding } from "@/hooks/useCommunityBranding";
 import {
   Users, Radio, Shield, LogOut, Settings as SettingsIcon, ChevronRight, Home, HelpCircle
 } from "lucide-react";
 
 export default function Landing() {
   const { user } = useAuth();
+  const { branding } = useCommunityBranding();
   const isAdmin = user?.role === "admin";
 
   const handleLogout = () => {
@@ -37,7 +39,16 @@ export default function Landing() {
       <div className="flex-1 flex flex-col">
         <header className="flex items-center justify-between px-8 py-6">
           <div className="flex items-center gap-3">
-            <img src="https://media.base44.com/images/public/6a441f279b9d3cd678958799/5a43a1b46_OCRP20.png" alt="OCRP" className="w-12 h-12 rounded-xl object-cover" />
+            {branding?.logo_url ? (
+              <img src={branding.logo_url} alt="" className="w-12 h-12 rounded-xl object-cover" />
+            ) : (
+              <div className="w-12 h-12 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center">
+                <Radio className="w-6 h-6 text-blue-400" />
+              </div>
+            )}
+            {branding?.community_name && (
+              <span className="text-lg font-semibold text-white">{branding.community_name}</span>
+            )}
           </div>
         </header>
 
