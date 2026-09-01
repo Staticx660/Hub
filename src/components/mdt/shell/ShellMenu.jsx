@@ -1,30 +1,62 @@
 import React, { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { Menu as MenuIcon } from "lucide-react";
 
 /**
  * Single consolidated command menu — used by layouts that don't show a
- * desktop-style menu strip. Accepts the same `menus` shape as MenuStrip.
+ * desktop-style menu strip. The dropdown renders in a portal with fixed
+ * positioning so scrolling/overflow parents can never clip it (which made it
+ * look like an inline page section instead of a popup).
  */
 export default function ShellMenu({ menus = [], label = "Menu", className = "" }) {
   const [open, setOpen] = useState(false);
+  const [pos, setPos] = useState({ top: 0, right: 0 });
   const ref = useRef(null);
+  const btnRef = useRef(null);
+
+  const place = () => {
+    const r = btnRef.current?.getBoundingClientRect();
+    if (r) setPos({ top: r.bottom + 4, right: Math.max(6, window.innerWidth - r.right) });
+  };
 
   useEffect(() => {
-    const onDown = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    const onDown = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    };
     document.addEventListener("mousedown", onDown);
     return () => document.removeEventListener("mousedown", onDown);
   }, []);
 
+  useEffect(() => {
+    if (!open) return;
+    place();
+    window.addEventListener("resize", place);
+    window.addEventListener("scroll", place, true);
+    return () => {
+      window.removeEventListener("resize", place);
+      window.removeEventListener("scroll", place, true);
+    };
+  }, [open]);
+
+  const toggle = () => {
+    place();
+    setOpen((o) => !o);
+  };
+
   return (
     <div ref={ref} className={`relative ${className}`}>
       <button
-        onClick={() => setOpen((o) => !o)}
+        ref={btnRef}
+        onClick={toggle}
         className="flex items-center gap-1.5 h-7 px-2 border border-mdt-line-2 bg-mdt-surface text-mdt-muted hover:text-mdt-text text-[12.5px] rounded-[var(--cad-radius)]"
       >
         <MenuIcon className="w-3.5 h-3.5" /> {label}
       </button>
-      {open && (
-        <div className="absolute right-0 top-8 z-[60] w-[min(250px,calc(100vw-1.5rem))] max-h-[60vh] overflow-auto mdt-scroll border border-mdt-line-2 bg-mdt-surface shadow-2xl py-1">
+      {open && createPortal(
+        <div
+          className="mdt fixed z-[200] w-[min(250px,calc(100vw-1.5rem))] max-h-[70vh] overflow-auto mdt-scroll border border-mdt-line-2 bg-mdt-surface shadow-2xl py-1 text-mdt-text"
+          style={{ top: pos.top, right: pos.right }}
+        >
           {menus.map((m) => (
             <div key={m.label}>
               <p className="px-3 h-6 flex items-center text-[10px] font-semibold uppercase tracking-[0.1em] text-mdt-dim bg-mdt-surface-3">{m.label}</p>
@@ -47,7 +79,8 @@ export default function ShellMenu({ menus = [], label = "Menu", className = "" }
               )}
             </div>
           ))}
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
