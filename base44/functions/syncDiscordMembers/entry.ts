@@ -1,11 +1,12 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
-import { requireAdmin } from '../../shared/authGuards.js';
+import { requireSystemManager } from '../../shared/authGuards.js';
 
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const denied = await requireAdmin(base44);
-    if (denied) return denied;
+    // Pulls Discord identities into the roster — System Manager only.
+    const actor = await requireSystemManager(base44);
+    if (actor.error) return actor.error;
 
     const botToken = Deno.env.get("DISCORD_BOT_TOKEN");
     const guildId = Deno.env.get("DISCORD_GUILD_ID");

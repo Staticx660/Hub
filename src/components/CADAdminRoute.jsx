@@ -8,7 +8,7 @@ import { ShieldAlert, Loader2 } from 'lucide-react';
  * Section-level filtering inside CADAdmin determines what each role sees.
  */
 export default function CADAdminRoute() {
-  const { isPlatformAdmin, isCADAdmin, isSupervisor, loading } = useUserPermissions();
+  const { isSystemAdmin, isSupervisor, loading } = useUserPermissions();
 
   if (loading) {
     return (
@@ -18,7 +18,7 @@ export default function CADAdminRoute() {
     );
   }
 
-  if (!isPlatformAdmin && !isCADAdmin && !isSupervisor) {
+  if (!isSystemAdmin && !isSupervisor) {
     return (
       <div className="flex flex-col items-center justify-center h-[60vh] text-center px-4">
         <ShieldAlert className="w-12 h-12 text-amber-400 mb-4" />

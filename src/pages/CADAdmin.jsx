@@ -113,7 +113,15 @@ export default function CADAdmin() {
         </div>
         <div className="flex-1 min-h-0 overflow-auto mdt-scroll p-3">
           {/* min-w-0 keeps wide managers scrollable instead of clipping their action buttons */}
-          <div className="min-w-0">{renderPanel()}</div>
+          <div className="min-w-0">
+            {visibleSections.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-20 text-center">
+                <ShieldCheck className="w-8 h-8 text-mdt-dim mb-3" />
+                <p className="text-[13px] text-mdt-muted">No administrative sections are available for your access level.</p>
+                <p className="text-[11.5px] text-mdt-dim mt-1">Ask a System Manager to grant you Supervisor or System Admin permissions.</p>
+              </div>
+            ) : renderPanel()}
+          </div>
         </div>
       </main>
     </div>

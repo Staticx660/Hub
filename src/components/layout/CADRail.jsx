@@ -16,8 +16,9 @@ const ITEMS = [
 /** Flat operational rail — no glass, no rounded cards, icon + label, fixed width. */
 export default function CADRail() {
   const location = useLocation();
-  const { isPlatformAdmin, isCADAdmin, isSupervisor } = useUserPermissions();
-  const canSee = isPlatformAdmin || isCADAdmin || isSupervisor;
+  const { isSystemAdmin, isSupervisor } = useUserPermissions();
+  // Matches CADAdminRoute exactly, so the button never leads to an empty console.
+  const canSee = isSystemAdmin || isSupervisor;
   const { branding } = useCommunityBranding();
 
   const isActive = (path) =>
