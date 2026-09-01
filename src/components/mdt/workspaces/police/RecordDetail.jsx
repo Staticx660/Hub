@@ -3,7 +3,7 @@ import { Panel, Field, StatusPill, Btn } from "@/components/mdt/ui/primitives";
 import { Link2, Gavel, Eye, FileText } from "lucide-react";
 
 /** Detail pane for a selected record (report, warrant, BOLO, or closed call). */
-export default function RecordDetail({ record, onEdit, onDelete }) {
+export default function RecordDetail({ record, onEdit, onDelete, canEdit = true }) {
   const isClosedCall = record.call_type !== undefined;
   const fd = record.field_data || {};
   const flags = fd.flags || {};
@@ -42,9 +42,9 @@ export default function RecordDetail({ record, onEdit, onDelete }) {
             {flags.mentally_ill && <StatusPill tone="crit">Mentally Ill</StatusPill>}
           </div>
         )}
-        {record.title && (
+        {record.title && canEdit && (
           <div className="flex gap-2 px-3 pb-3">
-            <Btn onClick={() => onEdit(record)}>Edit Report</Btn>
+            <Btn onClick={() => onEdit(record)}>{record.status === "Draft" ? "Continue Draft" : "Edit Report"}</Btn>
             <Btn variant="danger" onClick={() => onDelete(record.id)}>Delete Report</Btn>
           </div>
         )}

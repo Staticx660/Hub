@@ -18,10 +18,12 @@ export default function LinkedRecordsDialog({ open, onOpenChange, department, li
     if (!open) return;
     const load = async () => {
       try {
+        // Records are linkable across departments — PD units need to attach
+        // warrants/BOLOs/reports filed by other agencies.
         const [r, w, b] = await Promise.all([
-          base44.entities.CADReport.filter({ department_id: department.id }),
-          base44.entities.Warrant.filter({ department_id: department.id }),
-          base44.entities.BOLO.filter({ department_id: department.id }),
+          base44.entities.CADReport.list("-created_date", 200),
+          base44.entities.Warrant.list("-created_date", 200),
+          base44.entities.BOLO.list("-created_date", 200),
         ]);
         setReports(r); setWarrants(w); setBolos(b);
       } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }

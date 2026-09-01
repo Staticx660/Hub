@@ -4,13 +4,13 @@ import { ArrowLeft, Crown, ShieldCheck } from "lucide-react";
 import { StatusPill } from "@/components/mdt/ui/primitives";
 
 /** Flat operational rail for the admin console — no glass, no rounded cards. */
-export default function AdminRail({ sections, active, onSelect, isPlatformAdmin, isCADAdmin, isSupervisor }) {
+export default function AdminRail({ sections, active, onSelect, isPlatformAdmin, isCADAdmin, isSupervisor, communityName }) {
   return (
-    <aside className="w-[228px] flex-shrink-0 border-r border-mdt-line bg-mdt-surface flex flex-col min-h-0">
+    <aside className="w-[180px] xl:w-[228px] flex-shrink-0 border-r border-mdt-line bg-mdt-surface flex flex-col min-h-0">
       <div className="h-11 px-3 flex items-center border-b border-mdt-line bg-mdt-surface-2">
         <div className="min-w-0">
-          <div className="text-[12.5px] font-semibold leading-tight">Administration</div>
-          <div className="text-[10px] uppercase tracking-[0.1em] text-mdt-dim">CAD · Roster · System</div>
+          <div className="text-[12.5px] font-semibold leading-tight truncate">Administration</div>
+          <div className="text-[10px] uppercase tracking-[0.1em] text-mdt-dim truncate">{communityName || "CAD · Roster · System"}</div>
         </div>
       </div>
 

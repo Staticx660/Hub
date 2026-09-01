@@ -32,8 +32,7 @@ import UnitBoardWorkspace from "@/components/mdt/workspaces/police/UnitBoardWork
 import LookupsWorkspace from "@/components/mdt/workspaces/police/LookupsWorkspace";
 import RecordsWorkspace from "@/components/mdt/workspaces/police/RecordsWorkspace";
 import MyCallWorkspace from "@/components/mdt/workspaces/police/MyCallWorkspace";
-
-const OCRP_LOGO = "https://media.base44.com/images/public/6a441f279b9d3cd678958799/5a43a1b46_OCRP20.png";
+import { useCommunityBranding } from "@/hooks/useCommunityBranding";
 
 // Workspace views that can be opened as browser-style tabs
 const VIEW_LABELS = {
@@ -50,6 +49,7 @@ export default function CADMDT() {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
+  const { branding } = useCommunityBranding();
   const [department, setDepartment] = useState(null);
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -115,6 +115,9 @@ export default function CADMDT() {
   // In-app call notifications — new calls for this department, and dispatch
   // assigning this unit to a call. Uses toasts/tones so it works inside the
   // in-game tablet iframe (no browser popups).
+  // Each call only ever notifies once per kind — entity updates fire repeatedly
+  // and were producing duplicate dispatch alerts inside the tablet.
+  const notifiedRef = useRef(new Set());
   useEffect(() => {
     if (!department) return;
     const unsub = base44.entities.ActiveCall.subscribe((event) => {
@@ -122,8 +125,10 @@ export default function CADMDT() {
       const s = sessionRef.current;
       if (!call || !s) return;
       if (call.department_id && call.department_id !== department.id) return;
+      const seen = notifiedRef.current;
+      const mark = (key) => { if (seen.has(key)) return false; seen.add(key); return true; };
 
-      if (event.type === "create" && call.status !== "Closed") {
+      if (event.type === "create" && call.status !== "Closed" && mark(`new:${call.id}`)) {
         playStatusBeep();
         toast({
           title: `📻 New Call — ${call.priority || "Priority 3"}`,
@@ -132,7 +137,7 @@ export default function CADMDT() {
         return;
       }
 
-      if (event.type === "update" && (call.assigned_unit_ids || []).includes(s.id) && s.active_call_id !== call.id) {
+      if (event.type === "update" && (call.assigned_unit_ids || []).includes(s.id) && s.active_call_id !== call.id && mark(`dispatch:${call.id}:${s.id}`)) {
         playStatusBeep();
         toast({
           title: "🚨 You have been dispatched",
@@ -146,8 +151,9 @@ export default function CADMDT() {
   const handleClockIn = async (formData) => {
     try {
       const now = new Date().toISOString();
-      // Deactivate any existing active sessions for this user+department to prevent duplicates
-      const existing = await base44.entities.CADSession.filter({ user_id: user.id, department_id: deptId, is_active: true });
+      // A unit can only be on duty in one department at a time — close every
+      // active session for this user, not just this department's.
+      const existing = await base44.entities.CADSession.filter({ user_id: user.id, is_active: true });
       for (const s of existing) {
         await base44.entities.CADSession.update(s.id, { is_active: false, logout_time: now, status: "Unavailable" });
         if (s.shift_id) {
@@ -352,7 +358,7 @@ export default function CADMDT() {
         { label: "Keybind Settings…", onSelect: () => setKeybindsOpen(true) },
         { label: "Help Center", onSelect: () => navigate("/help") },
         { separator: true },
-        { label: `About — ${department.name} MDT`, onSelect: () => toast({ title: `${department.name} MDT`, description: "OCRP Hub Mobile Data Terminal" }) },
+        { label: `About — ${department.name} MDT`, onSelect: () => toast({ title: `${department.name} MDT`, description: `${branding?.community_name || "CAD"} Mobile Data Terminal` }) },
       ],
     },
   ];

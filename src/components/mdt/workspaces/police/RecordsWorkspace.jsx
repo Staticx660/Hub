@@ -147,7 +147,12 @@ export default function RecordsWorkspace({ department, session, newFileRequest =
         </div>
         {selected && (
           <div className="w-[46%] min-w-[380px] bg-mdt-bg">
-            <RecordDetail record={selected} onEdit={openEditFile} onDelete={deleteReport} />
+            <RecordDetail
+              record={selected}
+              canEdit={selected.filed_by_id === session.user_id || !!isSupervisor}
+              onEdit={openEditFile}
+              onDelete={deleteReport}
+            />
           </div>
         )}
       </div>

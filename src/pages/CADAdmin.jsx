@@ -20,6 +20,7 @@ import Departments from "@/pages/Departments";
 import DiscordSync from "@/pages/DiscordSync";
 import { ClipboardList, Network, RefreshCw } from "lucide-react";
 import { APP_VERSION } from "@/lib/version";
+import { useCommunityBranding } from "@/hooks/useCommunityBranding";
 
 // access: "supervisor" = visible to supervisors+, "admin" = visible to CAD/platform admins,
 // "platform" = platform admins only (roster administration keeps its original gating)
@@ -52,6 +53,7 @@ const ALL_SECTIONS = [
 
 export default function CADAdmin() {
   const { isPlatformAdmin, isCADAdmin, isSupervisor } = useUserPermissions();
+  const { branding } = useCommunityBranding();
   const canSeeAdminSections = isPlatformAdmin || isCADAdmin;
   const [active, setActive] = useState(null);
 
@@ -101,15 +103,17 @@ export default function CADAdmin() {
         isPlatformAdmin={isPlatformAdmin}
         isCADAdmin={isCADAdmin}
         isSupervisor={isSupervisor}
+        communityName={branding?.community_name}
       />
       <main className="flex-1 min-w-0 flex flex-col min-h-0">
         <div className="flex items-center gap-2 h-11 px-3 border-b border-mdt-line bg-mdt-surface-2 flex-shrink-0">
           <span className="text-[12.5px] font-semibold truncate">{activeLabel}</span>
-          <span className="ml-auto text-[11px] font-mono uppercase tracking-wide text-mdt-dim">Admin Console</span>
-          <span className="text-[11px] font-mono text-mdt-dim border-l border-mdt-line pl-2">v{APP_VERSION}</span>
+          <span className="ml-auto hidden lg:block text-[11px] font-mono uppercase tracking-wide text-mdt-dim">{branding?.community_name || "Admin Console"}</span>
+          <span className="text-[11px] font-mono text-mdt-dim lg:border-l border-mdt-line lg:pl-2 ml-auto lg:ml-0 flex-shrink-0">v{APP_VERSION}</span>
         </div>
         <div className="flex-1 min-h-0 overflow-auto mdt-scroll p-3">
-          {renderPanel()}
+          {/* min-w-0 keeps wide managers scrollable instead of clipping their action buttons */}
+          <div className="min-w-0">{renderPanel()}</div>
         </div>
       </main>
     </div>
