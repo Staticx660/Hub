@@ -1,6 +1,7 @@
 /* App version — patch number is the count of shipped changes below.
    Add a new entry at the TOP for every change/update; the version bumps itself. */
 export const CHANGELOG = [
+  { date: "2026-09-01", note: "Security hardening: private record protection for the in-game iFrame, consolidated Discord sync, and auto-dispatch re-check fix" },
   { date: "2026-08-02", note: "Rebuilt Admin Customization & Advanced panels on the enterprise design system" },
   { date: "2026-08-02", note: "Purged the legacy retro theme system across the entire CAD" },
   { date: "2026-08-02", note: "Street/cross-street dropdown combo inputs in dispatch" },
