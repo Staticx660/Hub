@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import { requireCADAccess } from '../../shared/authGuards.js';
+import { stripAccountFieldsDeep } from '../../shared/sanitize.js';
 
 Deno.serve(async (req) => {
   try {
@@ -48,10 +49,10 @@ Deno.serve(async (req) => {
           (name && b.description?.toLowerCase().includes(name.toLowerCase()))
         );
 
-        return Response.json({ results, warrants: matchingWarrants, vehicles, firearms, reports: matchingReports, bolos: matchingBolos });
+        return Response.json(stripAccountFieldsDeep({ results, warrants: matchingWarrants, vehicles, firearms, reports: matchingReports, bolos: matchingBolos }));
       }
 
-      return Response.json({ results });
+      return Response.json(stripAccountFieldsDeep({ results }));
     } else if (searchType === 'vehicle') {
       const all = await base44.asServiceRole.entities.CivilianVehicle.list('-created_date', 500);
       const results = all.filter(v => matchField(v.plate, plate));
@@ -72,14 +73,14 @@ Deno.serve(async (req) => {
           (searchPlate && b.description?.toLowerCase().includes(searchPlate.toLowerCase()))
         );
 
-        return Response.json({ results, reports: matchingReports, bolos: matchingBolos });
+        return Response.json(stripAccountFieldsDeep({ results, reports: matchingReports, bolos: matchingBolos }));
       }
 
-      return Response.json({ results });
+      return Response.json(stripAccountFieldsDeep({ results }));
     } else if (searchType === 'firearm') {
       const all = await base44.asServiceRole.entities.Firearm.list('-created_date', 500);
       const results = all.filter(f => matchField(f.serial_number, serial));
-      return Response.json({ results });
+      return Response.json(stripAccountFieldsDeep({ results }));
     }
 
     return Response.json({ results: [] });
