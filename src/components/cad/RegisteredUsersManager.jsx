@@ -5,6 +5,7 @@ import { Users, Search, UserPlus, Mail, Loader2, Crown, Eye, Trash2 } from "luci
 import { useToast } from "@/components/ui/use-toast";
 import { Btn, StatusPill, EmptyState } from "@/components/mdt/ui/primitives";
 import DataTable from "@/components/mdt/ui/DataTable";
+import { permTier } from "@/lib/permTiers";
 
 const input = "h-7 px-2 bg-mdt-bg border border-mdt-line-2 text-[12px] text-mdt-text placeholder:text-mdt-dim focus:outline-none focus:border-mdt-accent";
 const cap = "text-[9.5px] font-semibold uppercase tracking-[0.09em] text-mdt-dim";
@@ -62,19 +63,6 @@ export default function RegisteredUsersManager() {
     finally { setUpdatingIds(prev => { const n = new Set(prev); n.delete(user.id); return n; }); }
   };
 
-  const toggleSupervisor = async (user) => {
-    const cp = personnelByDiscordId[user.discord_id];
-    if (!cp) { toast({ title: "No personnel record", description: "This user has no linked CAD personnel record to update.", variant: "destructive" }); return; }
-    setUpdatingIds(prev => new Set(prev).add(user.id));
-    try {
-      const res = await base44.functions.invoke('manageCADPermissions', { action: 'setFlag', id: cp.id, field: 'is_supervisor', value: !cp.is_supervisor });
-      if (res.data?.error) throw new Error(res.data.error);
-      setPersonnel(prev => prev.map(p => p.id === cp.id ? { ...p, is_supervisor: !cp.is_supervisor } : p));
-      toast({ title: `Supervisor ${!cp.is_supervisor ? "granted" : "revoked"}`, duration: 2000 });
-    } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
-    finally { setUpdatingIds(prev => { const n = new Set(prev); n.delete(user.id); return n; }); }
-  };
-
   const removeUser = async (user) => {
     const cp = user.discord_id ? personnelByDiscordId[user.discord_id] : null;
     if (!window.confirm(`Remove ${user.email} from the system?\n\nThis deletes their account${cp ? " and their CAD personnel record" : ""}. This cannot be undone.`)) return;
@@ -112,20 +100,19 @@ export default function RegisteredUsersManager() {
       </span>
     )},
     { key: "email", label: "Email", width: 190 },
-    { key: "role", label: "Admin Role", width: 120, render: (u) => (
-      <button onClick={() => toggleAdmin(u)}>
-        <StatusPill tone={u.role === "admin" ? "info" : "neutral"}><Crown className="w-2.5 h-2.5" /> {u.role === "admin" ? "Admin" : "User"}</StatusPill>
-      </button>
-    )},
-    { key: "supervisor", label: "Supervisor", width: 120, sortable: false, render: (u) => {
+    // Access tier is derived from the same personnel flags Role Permissions edits,
+    // so both panels always report the same level.
+    { key: "tier", label: "Access Tier", width: 140, sortable: false, render: (u) => {
       const cp = u.discord_id ? personnelByDiscordId[u.discord_id] : null;
       if (!cp) return <span className="text-mdt-dim">—</span>;
-      return (
-        <button onClick={() => toggleSupervisor(u)}>
-          <StatusPill tone={cp.is_supervisor ? "ok" : "neutral"}><Eye className="w-2.5 h-2.5" /> {cp.is_supervisor ? "Supervisor" : "Standard"}</StatusPill>
-        </button>
-      );
+      const tier = permTier(cp);
+      return <StatusPill tone={tier.tone}><Eye className="w-2.5 h-2.5" /> {tier.label}</StatusPill>;
     }},
+    { key: "role", label: "Platform Admin", width: 130, render: (u) => (
+      <button onClick={() => toggleAdmin(u)}>
+        <StatusPill tone={u.role === "admin" ? "info" : "neutral"}><Crown className="w-2.5 h-2.5" /> {u.role === "admin" ? "Yes" : "No"}</StatusPill>
+      </button>
+    )},
     { key: "discord_id", label: "Discord", width: 100, render: (u) => (
       <StatusPill tone={u.discord_id ? "ok" : "neutral"}>{u.discord_id ? "Linked" : "None"}</StatusPill>
     )},
