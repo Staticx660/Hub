@@ -157,15 +157,15 @@ export default function DiscordSync() {
   return (
     <div className="space-y-6 max-w-4xl">
       <div>
-        <h1 className="text-2xl font-bold text-white">Discord Sync</h1>
-        <p className="text-sm text-slate-400 mt-1">
+        <h1 className="text-2xl font-bold text-mdt-text">Discord Sync</h1>
+        <p className="text-sm text-mdt-muted mt-1">
           Sync Discord members into your roster by mapping roles to departments
         </p>
       </div>
 
       {/* Guild info */}
-      <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-6">
-        <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+      <div className="bg-mdt-surface border border-mdt-line p-6">
+        <h2 className="text-lg font-semibold text-mdt-text mb-4 flex items-center gap-2">
           <Server className="w-4 h-4 text-blue-400" /> Connected Server
         </h2>
         {guild ? (
@@ -174,8 +174,8 @@ export default function DiscordSync() {
               <img src={guildIconUrl} alt={guild.name} className="w-12 h-12 rounded-full" />
             )}
             <div>
-              <p className="text-white font-medium">{guild.name}</p>
-              <p className="text-xs text-slate-500">{guild.member_count || "—"} members</p>
+              <p className="text-mdt-text font-medium">{guild.name}</p>
+              <p className="text-xs text-mdt-dim">{guild.member_count || "—"} members</p>
             </div>
           </div>
         ) : (
@@ -186,68 +186,68 @@ export default function DiscordSync() {
       </div>
 
       {/* Role mapping table */}
-      <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-6">
+      <div className="bg-mdt-surface border border-mdt-line p-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+          <h2 className="text-lg font-semibold text-mdt-text flex items-center gap-2">
             <Link2 className="w-4 h-4 text-emerald-400" /> Role Mapping
           </h2>
-          <Button onClick={handleSaveMappings} disabled={saving} size="sm" className="bg-emerald-600 hover:bg-emerald-700">
+          <Button onClick={handleSaveMappings} disabled={saving} size="sm" className="bg-mdt-accent hover:brightness-110 rounded-none">
             {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
             Save Mappings
           </Button>
         </div>
         <div className="space-y-1">
-          <div className="flex items-center gap-4 pb-2 border-b border-slate-800">
+          <div className="flex items-center gap-4 pb-2 border-b border-mdt-line">
             <div className="flex-1">
-              <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Department</p>
+              <p className="text-xs font-medium text-mdt-dim uppercase tracking-wide">Department</p>
             </div>
             <div className="flex flex-col gap-1.5 w-52">
-              <p className="text-xs font-medium text-slate-400">Member Role ID</p>
+              <p className="text-xs font-medium text-mdt-muted">Member Role ID</p>
               <p className="text-xs font-medium text-amber-500/70">Supervisor Role ID</p>
               <p className="text-xs font-medium text-cyan-500/70">LOA Role ID</p>
             </div>
           </div>
           {departments.map(dept => (
-            <div key={dept.id} className="flex items-center gap-4 py-3 border-b border-slate-800 last:border-0">
+            <div key={dept.id} className="flex items-center gap-4 py-3 border-b border-mdt-line last:border-0">
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-white truncate">{dept.name}</p>
-                <p className="text-xs text-slate-500">{dept.category}</p>
+                <p className="text-sm font-medium text-mdt-text truncate">{dept.name}</p>
+                <p className="text-xs text-mdt-dim">{dept.category}</p>
               </div>
               <div className="flex flex-col gap-1.5">
                 <Input
                   value={roleMappings[dept.id] || ""}
                   onChange={(e) => handleRoleChange(dept.id, e.target.value)}
                   placeholder="Member Role ID"
-                  className="w-52 bg-slate-800 border-slate-700 text-white placeholder:text-slate-600 font-mono text-xs h-8"
+                  className="w-52 bg-mdt-bg border-mdt-line-2 text-mdt-text placeholder:text-mdt-dim font-mono text-xs h-8"
                 />
                 <Input
                   value={supervisorMappings[dept.id] || ""}
                   onChange={(e) => handleSupervisorChange(dept.id, e.target.value)}
                   placeholder="Supervisor Role ID"
-                  className="w-52 bg-slate-800 border-amber-700/50 text-white placeholder:text-slate-600 font-mono text-xs h-8"
+                  className="w-52 bg-mdt-bg border-amber-700/50 text-mdt-text placeholder:text-mdt-dim font-mono text-xs h-8"
                 />
                 <Input
                   value={loaRoleMappings[dept.id] || ""}
                   onChange={(e) => handleLoaRoleChange(dept.id, e.target.value)}
                   placeholder="LOA Role ID"
-                  className="w-52 bg-slate-800 border-cyan-700/50 text-white placeholder:text-slate-600 font-mono text-xs h-8"
+                  className="w-52 bg-mdt-bg border-cyan-700/50 text-mdt-text placeholder:text-mdt-dim font-mono text-xs h-8"
                 />
               </div>
             </div>
           ))}
           {departments.length === 0 && (
-            <p className="text-sm text-slate-400 py-4 text-center">No departments yet. Create departments first.</p>
+            <p className="text-sm text-mdt-muted py-4 text-center">No departments yet. Create departments first.</p>
           )}
         </div>
 
         {/* Available roles reference */}
         {roles.length > 0 && (
-          <div className="mt-4 pt-4 border-t border-slate-800">
-            <p className="text-xs text-slate-500 mb-2">Available Discord Roles (copy the ID you need):</p>
+          <div className="mt-4 pt-4 border-t border-mdt-line">
+            <p className="text-xs text-mdt-dim mb-2">Available Discord Roles (copy the ID you need):</p>
             <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
               {roles.filter(r => r.name !== "@everyone").map(r => (
-                <div key={r.id} className="px-2 py-1 rounded bg-slate-800 border border-slate-700 text-xs text-slate-400 font-mono">
-                  <span className="text-slate-300">{r.name}</span> → {r.id}
+                <div key={r.id} className="px-2 py-1 bg-mdt-surface-2 border border-mdt-line-2 text-xs text-mdt-muted font-mono">
+                  <span className="text-mdt-text">{r.name}</span> → {r.id}
                 </div>
               ))}
             </div>
@@ -256,30 +256,30 @@ export default function DiscordSync() {
       </div>
 
       {/* Slash command registration */}
-      <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-6">
-        <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+      <div className="bg-mdt-surface border border-mdt-line p-6">
+        <h2 className="text-lg font-semibold text-mdt-text mb-4 flex items-center gap-2">
           <Terminal className="w-4 h-4 text-cyan-400" /> Slash Commands
         </h2>
-        <p className="text-sm text-slate-400 mb-4">
-          Register the <code className="text-cyan-400 bg-slate-800 px-1.5 py-0.5 rounded text-xs">/loa-request</code> slash command in your Discord server.
+        <p className="text-sm text-mdt-muted mb-4">
+          Register the <code className="text-cyan-400 bg-mdt-surface-2 px-1.5 py-0.5 rounded text-xs">/loa-request</code> slash command in your Discord server.
           This lets members submit LOA requests directly from Discord.
         </p>
-        <Button onClick={handleRegisterCommands} disabled={registering} className="bg-cyan-600 hover:bg-cyan-700">
+        <Button onClick={handleRegisterCommands} disabled={registering} className="bg-mdt-accent hover:brightness-110 rounded-none">
           {registering ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Terminal className="w-4 h-4 mr-2" />}
           {registering ? "Registering..." : "Register Slash Command"}
         </Button>
       </div>
 
       {/* Sync panel */}
-      <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-6">
-        <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+      <div className="bg-mdt-surface border border-mdt-line p-6">
+        <h2 className="text-lg font-semibold text-mdt-text mb-4 flex items-center gap-2">
           <RefreshCw className="w-4 h-4 text-blue-400" /> Sync Members
         </h2>
-        <p className="text-sm text-slate-400 mb-4">
+        <p className="text-sm text-mdt-muted mb-4">
           Pull all Discord members who have a mapped role into the roster. New members are added;
           existing members are updated. Syncs also run automatically every hour.
         </p>
-        <Button onClick={handleSync} disabled={syncing} className="bg-blue-600 hover:bg-blue-700">
+        <Button onClick={handleSync} disabled={syncing} className="bg-mdt-accent hover:brightness-110 rounded-none">
           {syncing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-2" />}
           {syncing ? "Syncing..." : "Sync Now"}
         </Button>
@@ -292,20 +292,20 @@ export default function DiscordSync() {
             </div>
             <div className="grid grid-cols-4 gap-3 text-sm">
               <div>
-                <p className="text-slate-500 text-xs">Discord Members</p>
-                <p className="text-white font-semibold">{syncReport.report.totalDiscordMembers}</p>
+                <p className="text-mdt-dim text-xs">Discord Members</p>
+                <p className="text-mdt-text font-semibold">{syncReport.report.totalDiscordMembers}</p>
               </div>
               <div>
-                <p className="text-slate-500 text-xs">Added</p>
+                <p className="text-mdt-dim text-xs">Added</p>
                 <p className="text-emerald-400 font-semibold">{syncReport.report.added}</p>
               </div>
               <div>
-                <p className="text-slate-500 text-xs">Updated</p>
+                <p className="text-mdt-dim text-xs">Updated</p>
                 <p className="text-blue-400 font-semibold">{syncReport.report.updated}</p>
               </div>
               <div>
-                <p className="text-slate-500 text-xs">Skipped</p>
-                <p className="text-slate-400 font-semibold">{syncReport.report.skipped}</p>
+                <p className="text-mdt-dim text-xs">Skipped</p>
+                <p className="text-mdt-muted font-semibold">{syncReport.report.skipped}</p>
               </div>
             </div>
             {syncReport.report.errors.length > 0 && (

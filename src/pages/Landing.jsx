@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { useAuth } from "@/lib/AuthContext";
 import { base44 } from "@/api/base44Client";
 import { useCommunityBranding } from "@/hooks/useCommunityBranding";
+import { useUserPermissions } from "@/hooks/useUserPermissions";
 import {
   Users, Radio, Shield, LogOut, Settings as SettingsIcon, ChevronRight, Home, HelpCircle
 } from "lucide-react";
@@ -10,6 +11,8 @@ import {
 export default function Landing() {
   const { user } = useAuth();
   const { branding } = useCommunityBranding();
+  const { isPlatformAdmin, isCADAdmin, isSupervisor } = useUserPermissions();
+  const canAdmin = isPlatformAdmin || isCADAdmin || isSupervisor;
   const isAdmin = user?.role === "admin";
 
   const handleLogout = () => {
@@ -117,6 +120,18 @@ export default function Landing() {
         </div>
 
         <div className="p-6 space-y-2">
+          {canAdmin && (
+            <Link
+              to="/cad/admin"
+              className="flex items-center justify-between px-4 py-3 rounded-xl bg-blue-500/10 text-blue-300 hover:bg-blue-500/20 transition-colors text-sm font-medium border border-blue-500/20"
+            >
+              <span className="flex items-center gap-3">
+                <Shield className="w-4 h-4" />
+                Admin Console
+              </span>
+              <ChevronRight className="w-4 h-4 text-blue-400/60" />
+            </Link>
+          )}
           <Link
             to="/help"
             className="flex items-center justify-between px-4 py-3 rounded-xl bg-slate-800/60 text-slate-300 hover:bg-slate-800 hover:text-white transition-colors text-sm font-medium border border-slate-700/50"

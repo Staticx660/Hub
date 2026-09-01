@@ -7,6 +7,7 @@ import {
 "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
+import { useUserPermissions } from "@/hooks/useUserPermissions";
 
 const categoryIcons = {
   "Police & Sheriff": Shield,
@@ -37,6 +38,8 @@ export default function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const { user } = useAuth();
+  const { isPlatformAdmin, isCADAdmin, isSupervisor } = useUserPermissions();
+  const canAdmin = isPlatformAdmin || isCADAdmin || isSupervisor;
   const isAdmin = user?.role === "admin";
 
   const handleLogout = () => {
@@ -94,7 +97,16 @@ export default function Sidebar() {
       })}
       </nav>
 
-      <div className="p-3 border-t border-slate-700/50">
+      <div className="p-3 border-t border-slate-700/50 space-y-1">
+        {canAdmin &&
+        <Link
+          to="/cad/admin"
+          onClick={() => setMobileOpen(false)}
+          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-blue-400 hover:bg-blue-500/10 transition-all w-full">
+            <Shield className="w-4.5 h-4.5" />
+            {!collapsed && <span>Admin Console</span>}
+          </Link>
+        }
         <button
         onClick={handleLogout}
         className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-all w-full">

@@ -14,7 +14,7 @@ const statusColors = {
   "Active": "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
   "On LOA": "bg-amber-500/10 text-amber-400 border-amber-500/20",
   "Suspended": "bg-red-500/10 text-red-400 border-red-500/20",
-  "Inactive": "bg-slate-500/10 text-slate-400 border-slate-500/20",
+  "Inactive": "bg-slate-500/10 text-mdt-muted border-slate-500/20",
   "Terminated": "bg-red-500/10 text-red-400 border-red-500/20",
 };
 
@@ -138,7 +138,7 @@ export default function Roster() {
   };
 
   if (loading) {
-    return <div className="flex items-center justify-center h-64"><div className="w-8 h-8 border-4 border-slate-700 border-t-blue-500 rounded-full animate-spin" /></div>;
+    return <div className="flex items-center justify-center h-64"><div className="w-8 h-8 border-4 border-mdt-line-2 border-t-blue-500 rounded-full animate-spin" /></div>;
   }
 
   const getDeptName = (id) => departments.find(d => d.id === id)?.name || "Unknown";
@@ -158,89 +158,89 @@ export default function Roster() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Full Roster</h1>
-          <p className="text-sm text-slate-400 mt-1">View and manage all members across departments</p>
+          <h1 className="text-2xl font-bold text-mdt-text">Full Roster</h1>
+          <p className="text-sm text-mdt-muted mt-1">View and manage all members across departments</p>
         </div>
-        <Button onClick={() => { setEditing(null); resetForm(); setShowForm(true); }} className="bg-blue-600 hover:bg-blue-700">
+        <Button onClick={() => { setEditing(null); resetForm(); setShowForm(true); }} className="bg-mdt-accent hover:brightness-110 text-mdt-text rounded-none">
           <Plus className="w-4 h-4 mr-2" /> Add Member
         </Button>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-mdt-dim" />
           <Input
             placeholder="Search members..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="pl-10 bg-slate-900 border-slate-700 text-white"
+            className="pl-10 bg-mdt-bg border-mdt-line-2 text-mdt-text"
           />
         </div>
         <Select value={filterDept} onValueChange={setFilterDept}>
-          <SelectTrigger className="w-48 bg-slate-900 border-slate-700 text-white">
+          <SelectTrigger className="w-48 bg-mdt-bg border-mdt-line-2 text-mdt-text">
             <SelectValue placeholder="All Departments" />
           </SelectTrigger>
-          <SelectContent className="bg-slate-800 border-slate-700">
-            <SelectItem value="all" className="text-white">All Departments</SelectItem>
-            {departments.map(d => <SelectItem key={d.id} value={d.id} className="text-white">{d.name}</SelectItem>)}
+          <SelectContent className="bg-mdt-surface-2 border-mdt-line-2">
+            <SelectItem value="all" className="text-mdt-text">All Departments</SelectItem>
+            {departments.map(d => <SelectItem key={d.id} value={d.id} className="text-mdt-text">{d.name}</SelectItem>)}
           </SelectContent>
         </Select>
         <Select value={filterStatus} onValueChange={setFilterStatus}>
-          <SelectTrigger className="w-40 bg-slate-900 border-slate-700 text-white">
+          <SelectTrigger className="w-40 bg-mdt-bg border-mdt-line-2 text-mdt-text">
             <SelectValue placeholder="All Status" />
           </SelectTrigger>
-          <SelectContent className="bg-slate-800 border-slate-700">
-            <SelectItem value="all" className="text-white">All Status</SelectItem>
+          <SelectContent className="bg-mdt-surface-2 border-mdt-line-2">
+            <SelectItem value="all" className="text-mdt-text">All Status</SelectItem>
             {["Active", "On LOA", "Suspended", "Inactive", "Terminated"].map(s => (
-              <SelectItem key={s} value={s} className="text-white">{s}</SelectItem>
+              <SelectItem key={s} value={s} className="text-mdt-text">{s}</SelectItem>
             ))}
           </SelectContent>
         </Select>
       </div>
 
-      <p className="text-sm text-slate-500">{filtered.length} member{filtered.length !== 1 ? "s" : ""}</p>
+      <p className="text-sm text-mdt-dim">{filtered.length} member{filtered.length !== 1 ? "s" : ""}</p>
 
-      <div className="bg-slate-900/80 border border-slate-800 rounded-xl overflow-hidden">
+      <div className="bg-mdt-surface border border-mdt-line overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-slate-800">
-                <th className="text-left px-5 py-3 text-xs font-medium text-slate-500 uppercase">Member</th>
-                <th className="text-left px-5 py-3 text-xs font-medium text-slate-500 uppercase">Department</th>
-                <th className="text-left px-5 py-3 text-xs font-medium text-slate-500 uppercase">Rank</th>
-                <th className="text-left px-5 py-3 text-xs font-medium text-slate-500 uppercase">Badge</th>
-                <th className="text-left px-5 py-3 text-xs font-medium text-slate-500 uppercase">Status</th>
-                <th className="text-left px-5 py-3 text-xs font-medium text-slate-500 uppercase">Slot</th>
-                <th className="text-left px-5 py-3 text-xs font-medium text-slate-500 uppercase">Discord</th>
-                <th className="text-right px-5 py-3 text-xs font-medium text-slate-500 uppercase">Actions</th>
+              <tr className="border-b border-mdt-line">
+                <th className="text-left px-5 py-3 text-xs font-medium text-mdt-dim uppercase">Member</th>
+                <th className="text-left px-5 py-3 text-xs font-medium text-mdt-dim uppercase">Department</th>
+                <th className="text-left px-5 py-3 text-xs font-medium text-mdt-dim uppercase">Rank</th>
+                <th className="text-left px-5 py-3 text-xs font-medium text-mdt-dim uppercase">Badge</th>
+                <th className="text-left px-5 py-3 text-xs font-medium text-mdt-dim uppercase">Status</th>
+                <th className="text-left px-5 py-3 text-xs font-medium text-mdt-dim uppercase">Slot</th>
+                <th className="text-left px-5 py-3 text-xs font-medium text-mdt-dim uppercase">Discord</th>
+                <th className="text-right px-5 py-3 text-xs font-medium text-mdt-dim uppercase">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/50">
+            <tbody className="divide-y divide-mdt-line">
               {filtered.length === 0 && (
-                <tr><td colSpan={8} className="text-center py-12 text-slate-500">No members found</td></tr>
+                <tr><td colSpan={8} className="text-center py-12 text-mdt-dim">No members found</td></tr>
               )}
               {filtered.map((m) => {
                 const dept = departments.find(d => d.id === m.department_id);
                 const rankData = dept?.ranks?.find(r => r.name === m.rank);
                 return (
-                  <tr key={m.id} className="hover:bg-slate-800/30 transition-colors">
+                  <tr key={m.id} className="hover:bg-mdt-surface-2 transition-colors">
                     <td className="px-5 py-3">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-xs font-bold text-slate-300">
+                        <div className="w-8 h-8 rounded-full bg-mdt-surface-3 flex items-center justify-center text-xs font-bold text-mdt-text">
                           {m.name?.charAt(0)?.toUpperCase()}
                         </div>
                         <div>
-                          <p className="text-sm font-medium text-white flex items-center gap-1.5">
+                          <p className="text-sm font-medium text-mdt-text flex items-center gap-1.5">
                             {m.name}
                             {m.is_admin && <span className="text-amber-400 text-xs">★</span>}
                           </p>
-                          {m.callsign && <p className="text-xs text-slate-500">{m.callsign}</p>}
+                          {m.callsign && <p className="text-xs text-mdt-dim">{m.callsign}</p>}
                         </div>
                       </div>
                     </td>
                     <td className="px-5 py-3">
                       <div className="flex flex-wrap gap-1">
-                        <Link to={`/departments/${m.department_id}`} className="text-sm text-blue-400 hover:text-blue-300">
+                        <Link to={`/departments/${m.department_id}`} className="text-sm text-mdt-accent hover:brightness-125">
                           {getDeptName(m.department_id)}
                         </Link>
                         {(m.additional_department_ids || []).map(depId => (
@@ -251,12 +251,12 @@ export default function Roster() {
                       </div>
                     </td>
                     <td className="px-5 py-3">
-                      <span className="text-sm text-slate-300 flex items-center gap-1.5">
+                      <span className="text-sm text-mdt-text flex items-center gap-1.5">
                         {rankData?.color && <span className="w-2 h-2 rounded-full" style={{ backgroundColor: rankData.color }} />}
                         {m.rank || "—"}
                       </span>
                     </td>
-                    <td className="px-5 py-3 text-sm text-slate-400">{m.badge_number || "—"}</td>
+                    <td className="px-5 py-3 text-sm text-mdt-muted">{m.badge_number || "—"}</td>
                     <td className="px-5 py-3">
                       <span className={`text-xs px-2 py-1 rounded-full border ${statusColors[m.status] || statusColors["Inactive"]}`}>
                         {m.status}
@@ -267,16 +267,16 @@ export default function Roster() {
                         {m.slot_status || "Filled"}
                       </span>
                     </td>
-                    <td className="px-5 py-3 text-sm text-slate-400">{m.discord_username || "—"}</td>
+                    <td className="px-5 py-3 text-sm text-mdt-muted">{m.discord_username || "—"}</td>
                     <td className="px-5 py-3 text-right">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <button className="p-1.5 rounded-lg hover:bg-slate-700 text-slate-400">
+                          <button className="p-1.5 rounded-lg hover:bg-mdt-surface-3 text-mdt-muted">
                             <MoreHorizontal className="w-4 h-4" />
                           </button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent className="bg-slate-800 border-slate-700" align="end">
-                          <DropdownMenuItem onClick={() => openEdit(m)} className="text-slate-300">
+                        <DropdownMenuContent className="bg-mdt-surface-2 border-mdt-line-2" align="end">
+                          <DropdownMenuItem onClick={() => openEdit(m)} className="text-mdt-text">
                             <Edit className="w-3.5 h-3.5 mr-2" /> Edit Member
                           </DropdownMenuItem>
                           {m.status !== "Active" && (
@@ -285,7 +285,7 @@ export default function Roster() {
                             </DropdownMenuItem>
                           )}
                           {m.status === "Active" && (
-                            <DropdownMenuItem onClick={() => updateStatus(m.id, "Inactive")} className="text-slate-400">
+                            <DropdownMenuItem onClick={() => updateStatus(m.id, "Inactive")} className="text-mdt-muted">
                               <UserX className="w-3.5 h-3.5 mr-2" /> Mark Inactive
                             </DropdownMenuItem>
                           )}
@@ -315,54 +315,54 @@ export default function Roster() {
 
       {/* Add/Edit Dialog */}
       <Dialog open={showForm} onOpenChange={setShowForm}>
-        <DialogContent className="bg-slate-900 border-slate-700 text-white max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogContent className="bg-mdt-bg border-mdt-line-2 text-mdt-text max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editing ? "Edit Member" : "Add Member"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 mt-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label className="text-slate-300">Name *</Label>
-                <Input value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="bg-slate-800 border-slate-700 text-white mt-1" />
+                <Label className="text-mdt-text">Name *</Label>
+                <Input value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="bg-mdt-surface-2 border-mdt-line-2 text-mdt-text mt-1" />
               </div>
               <div>
-                <Label className="text-slate-300">Badge Number</Label>
-                <Input value={form.badge_number} onChange={e => setForm({...form, badge_number: e.target.value})} className="bg-slate-800 border-slate-700 text-white mt-1" />
+                <Label className="text-mdt-text">Badge Number</Label>
+                <Input value={form.badge_number} onChange={e => setForm({...form, badge_number: e.target.value})} className="bg-mdt-surface-2 border-mdt-line-2 text-mdt-text mt-1" />
               </div>
             </div>
             <div>
-              <Label className="text-slate-300">Department *</Label>
+              <Label className="text-mdt-text">Department *</Label>
               <Select value={form.department_id} onValueChange={v => setForm({...form, department_id: v, rank: ""})}>
-                <SelectTrigger className="bg-slate-800 border-slate-700 text-white mt-1"><SelectValue placeholder="Select department" /></SelectTrigger>
-                <SelectContent className="bg-slate-800 border-slate-700">
-                  {departments.map(d => <SelectItem key={d.id} value={d.id} className="text-white">{d.name}</SelectItem>)}
+                <SelectTrigger className="bg-mdt-surface-2 border-mdt-line-2 text-mdt-text mt-1"><SelectValue placeholder="Select department" /></SelectTrigger>
+                <SelectContent className="bg-mdt-surface-2 border-mdt-line-2">
+                  {departments.map(d => <SelectItem key={d.id} value={d.id} className="text-mdt-text">{d.name}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label className="text-slate-300">Rank</Label>
+                <Label className="text-mdt-text">Rank</Label>
                 <Select value={form.rank} onValueChange={v => setForm({...form, rank: v})}>
-                  <SelectTrigger className="bg-slate-800 border-slate-700 text-white mt-1"><SelectValue placeholder="Select rank" /></SelectTrigger>
-                  <SelectContent className="bg-slate-800 border-slate-700">
+                  <SelectTrigger className="bg-mdt-surface-2 border-mdt-line-2 text-mdt-text mt-1"><SelectValue placeholder="Select rank" /></SelectTrigger>
+                  <SelectContent className="bg-mdt-surface-2 border-mdt-line-2">
                     {(selectedDept?.ranks || []).sort((a,b) => b.level - a.level).map(r => (
-                      <SelectItem key={r.name} value={r.name} className="text-white">{r.name}</SelectItem>
+                      <SelectItem key={r.name} value={r.name} className="text-mdt-text">{r.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <Label className="text-slate-300">Callsign</Label>
-                <Input value={form.callsign} onChange={e => setForm({...form, callsign: e.target.value})} className="bg-slate-800 border-slate-700 text-white mt-1" placeholder="e.g. 1-Adam-12" />
+                <Label className="text-mdt-text">Callsign</Label>
+                <Input value={form.callsign} onChange={e => setForm({...form, callsign: e.target.value})} className="bg-mdt-surface-2 border-mdt-line-2 text-mdt-text mt-1" placeholder="e.g. 1-Adam-12" />
               </div>
               <div>
-                <Label className="text-slate-300">Supervisor</Label>
+                <Label className="text-mdt-text">Supervisor</Label>
                 <Select value={form.supervisor_id} onValueChange={v => setForm({...form, supervisor_id: v})}>
-                  <SelectTrigger className="bg-slate-800 border-slate-700 text-white mt-1"><SelectValue placeholder="None" /></SelectTrigger>
-                  <SelectContent className="bg-slate-800 border-slate-700">
-                    <SelectItem value={null} className="text-white">None</SelectItem>
+                  <SelectTrigger className="bg-mdt-surface-2 border-mdt-line-2 text-mdt-text mt-1"><SelectValue placeholder="None" /></SelectTrigger>
+                  <SelectContent className="bg-mdt-surface-2 border-mdt-line-2">
+                    <SelectItem value={null} className="text-mdt-text">None</SelectItem>
                     {members.filter(m => m.id !== editing?.id).map(m => (
-                      <SelectItem key={m.id} value={m.id} className="text-white">{m.name}</SelectItem>
+                      <SelectItem key={m.id} value={m.id} className="text-mdt-text">{m.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -370,23 +370,23 @@ export default function Roster() {
               </div>
               <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label className="text-slate-300">Status</Label>
+                <Label className="text-mdt-text">Status</Label>
                 <Select value={form.status} onValueChange={v => setForm({...form, status: v})}>
-                  <SelectTrigger className="bg-slate-800 border-slate-700 text-white mt-1"><SelectValue /></SelectTrigger>
-                  <SelectContent className="bg-slate-800 border-slate-700">
+                  <SelectTrigger className="bg-mdt-surface-2 border-mdt-line-2 text-mdt-text mt-1"><SelectValue /></SelectTrigger>
+                  <SelectContent className="bg-mdt-surface-2 border-mdt-line-2">
                     {["Active", "On LOA", "Suspended", "Inactive", "Terminated"].map(s => (
-                      <SelectItem key={s} value={s} className="text-white">{s}</SelectItem>
+                      <SelectItem key={s} value={s} className="text-mdt-text">{s}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <Label className="text-slate-300">Slot Status</Label>
+                <Label className="text-mdt-text">Slot Status</Label>
                 <Select value={form.slot_status} onValueChange={v => setForm({...form, slot_status: v})}>
-                  <SelectTrigger className="bg-slate-800 border-slate-700 text-white mt-1"><SelectValue /></SelectTrigger>
-                  <SelectContent className="bg-slate-800 border-slate-700">
+                  <SelectTrigger className="bg-mdt-surface-2 border-mdt-line-2 text-mdt-text mt-1"><SelectValue /></SelectTrigger>
+                  <SelectContent className="bg-mdt-surface-2 border-mdt-line-2">
                     {["Filled", "Open", "Unavailable", "Reserved"].map(s => (
-                      <SelectItem key={s} value={s} className="text-white">{s}</SelectItem>
+                      <SelectItem key={s} value={s} className="text-mdt-text">{s}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -394,27 +394,27 @@ export default function Roster() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label className="text-slate-300">Discord Username</Label>
-                <Input value={form.discord_username} onChange={e => setForm({...form, discord_username: e.target.value})} className="bg-slate-800 border-slate-700 text-white mt-1" />
+                <Label className="text-mdt-text">Discord Username</Label>
+                <Input value={form.discord_username} onChange={e => setForm({...form, discord_username: e.target.value})} className="bg-mdt-surface-2 border-mdt-line-2 text-mdt-text mt-1" />
               </div>
               <div>
-                <Label className="text-slate-300">Discord ID</Label>
-                <Input value={form.discord_id} onChange={e => setForm({...form, discord_id: e.target.value})} className="bg-slate-800 border-slate-700 text-white mt-1" />
+                <Label className="text-mdt-text">Discord ID</Label>
+                <Input value={form.discord_id} onChange={e => setForm({...form, discord_id: e.target.value})} className="bg-mdt-surface-2 border-mdt-line-2 text-mdt-text mt-1" />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label className="text-slate-300">Join Date</Label>
-                <Input type="date" value={form.join_date} onChange={e => setForm({...form, join_date: e.target.value})} className="bg-slate-800 border-slate-700 text-white mt-1" />
+                <Label className="text-mdt-text">Join Date</Label>
+                <Input type="date" value={form.join_date} onChange={e => setForm({...form, join_date: e.target.value})} className="bg-mdt-surface-2 border-mdt-line-2 text-mdt-text mt-1" />
               </div>
               <div>
-                <Label className="text-slate-300">Phone Number</Label>
-                <Input value={form.phone_number} onChange={e => setForm({...form, phone_number: e.target.value})} className="bg-slate-800 border-slate-700 text-white mt-1" />
+                <Label className="text-mdt-text">Phone Number</Label>
+                <Input value={form.phone_number} onChange={e => setForm({...form, phone_number: e.target.value})} className="bg-mdt-surface-2 border-mdt-line-2 text-mdt-text mt-1" />
               </div>
             </div>
             <div>
-              <Label className="text-slate-300">Additional Departments</Label>
-              <p className="text-xs text-slate-500 mt-0.5 mb-2">Also show this member in other departments</p>
+              <Label className="text-mdt-text">Additional Departments</Label>
+              <p className="text-xs text-mdt-dim mt-0.5 mb-2">Also show this member in other departments</p>
               <div className="space-y-2 max-h-32 overflow-y-auto">
                 {departments.filter(d => d.id !== form.department_id).map(d => (
                   <label key={d.id} className="flex items-center gap-2 cursor-pointer">
@@ -422,24 +422,24 @@ export default function Roster() {
                       type="checkbox"
                       checked={(form.additional_department_ids || []).includes(d.id)}
                       onChange={() => toggleAdditionalDept(d.id)}
-                      className="rounded border-slate-600"
+                      className="rounded border-mdt-line-2"
                     />
-                    <span className="text-sm text-slate-300">{d.name}</span>
+                    <span className="text-sm text-mdt-text">{d.name}</span>
                   </label>
                 ))}
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <input type="checkbox" id="is_admin_roster" checked={form.is_admin} onChange={e => setForm({...form, is_admin: e.target.checked})} className="rounded border-slate-600" />
-              <Label htmlFor="is_admin_roster" className="text-slate-300">Department Admin</Label>
+              <input type="checkbox" id="is_admin_roster" checked={form.is_admin} onChange={e => setForm({...form, is_admin: e.target.checked})} className="rounded border-mdt-line-2" />
+              <Label htmlFor="is_admin_roster" className="text-mdt-text">Department Admin</Label>
             </div>
             <div>
-              <Label className="text-slate-300">Notes</Label>
-              <Input value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} className="bg-slate-800 border-slate-700 text-white mt-1" placeholder="Additional notes..." />
+              <Label className="text-mdt-text">Notes</Label>
+              <Input value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} className="bg-mdt-surface-2 border-mdt-line-2 text-mdt-text mt-1" placeholder="Additional notes..." />
             </div>
             <div className="flex justify-end gap-3 mt-6">
-              <Button variant="ghost" onClick={() => setShowForm(false)} className="text-slate-400">Cancel</Button>
-              <Button onClick={handleSave} disabled={!form.name || !form.department_id} className="bg-blue-600 hover:bg-blue-700">
+              <Button variant="ghost" onClick={() => setShowForm(false)} className="text-mdt-muted">Cancel</Button>
+              <Button onClick={handleSave} disabled={!form.name || !form.department_id} className="bg-mdt-accent hover:brightness-110 text-mdt-text rounded-none">
                 {editing ? "Update" : "Add Member"}
               </Button>
             </div>
