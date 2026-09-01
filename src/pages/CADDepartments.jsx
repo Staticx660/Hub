@@ -22,16 +22,16 @@ export default function CADDepartments() {
 
   const load = async () => {
     try {
-      const [accessRes, u, p, c, cs] = await Promise.all([
+      const [accessRes, u, rosterRes, c, cs] = await Promise.all([
         base44.functions.invoke('getUserCADDepartments', {}),
         base44.entities.CADUnit.list(),
-        base44.entities.CADPersonnel.list(),
+        base44.functions.invoke('listCADRoster', {}),
         base44.entities.ActiveCall.list(),
         base44.entities.CommunitySetting.list().catch(() => []),
       ]);
       setDepartments(accessRes.data.departments || []);
       setAccessInfo(accessRes.data);
-      setUnits(u); setPersonnel(p); setCalls(c);
+      setUnits(u); setPersonnel(rosterRes.data.personnel || []); setCalls(c);
       if (cs.length > 0) setCommunity(cs[0]);
     } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
     finally { setLoading(false); }

@@ -37,15 +37,20 @@ export default function GlobalSearch({ open, onOpenChange, onPick }) {
     let live = true;
     setBusy(true);
     const t = setTimeout(async () => {
-      const [people, vehicles, calls, warrants, bolos, reports] = await Promise.all([
-        base44.entities.Civilian.list("-updated_date", 200),
-        base44.entities.CivilianVehicle.list("-updated_date", 200),
+      // People and vehicles go through the guarded backend lookup: those records
+      // are owner-scoped at the database level, and the function returns them
+      // without any account-identifying fields.
+      const [peopleRes, vehiclesRes, calls, warrants, bolos, reports] = await Promise.all([
+        base44.functions.invoke("searchCADRecords", { searchType: "person" }),
+        base44.functions.invoke("searchCADRecords", { searchType: "vehicle" }),
         base44.entities.ActiveCall.list("-created_date", 100),
         base44.entities.Warrant.list("-created_date", 100),
         base44.entities.BOLO.list("-created_date", 100),
         base44.entities.CADReport.list("-created_date", 100),
       ]);
       if (!live) return;
+      const people = peopleRes.data.results || [];
+      const vehicles = vehiclesRes.data.results || [];
       const hit = (s) => String(s || "").toLowerCase().includes(term);
       const out = [
         ...people.filter((p) => hit(`${p.first_name} ${p.last_name}`) || hit(p.drivers_license_number) || hit(p.phone))

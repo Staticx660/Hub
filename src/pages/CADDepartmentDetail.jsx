@@ -21,16 +21,16 @@ export default function CADDepartmentDetail() {
 
   const load = async () => {
     try {
-      const [d, allUnits, allPersonnel, allCalls, allGroups] = await Promise.all([
+      const [d, allUnits, rosterRes, allCalls, allGroups] = await Promise.all([
         base44.entities.CADDepartment.get(id),
         base44.entities.CADUnit.list(),
-        base44.entities.CADPersonnel.list(),
+        base44.functions.invoke('listCADRoster', {}),
         base44.entities.ActiveCall.list("-created_date"),
         base44.entities.CADUnitGroup.list(),
       ]);
       setDept(d);
       setUnits(allUnits.filter(u => u.department_id === id));
-      setPersonnel(allPersonnel.filter(p => p.department_id === id));
+      setPersonnel((rosterRes.data.personnel || []).filter(p => p.department_id === id || (p.additional_department_ids || []).includes(id)));
       setCalls(allCalls.filter(c => c.department_id === id && c.status !== "Closed"));
       setGroups(allGroups.filter(g => g.department_id === id));
     } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
