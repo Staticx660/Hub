@@ -1,6 +1,10 @@
 /* App version — patch number is the count of shipped changes below.
    Add a new entry at the TOP for every change/update; the version bumps itself. */
 export const CHANGELOG = [
+  { date: "2026-09-01", note: "Fixed the Menu/Commands dropdown: selections (including Theme switching) now register instead of the menu closing first" },
+  { date: "2026-09-01", note: "Menu/Commands dropdown now renders as a true floating popup that can no longer be clipped by scrolling panels" },
+  { date: "2026-09-01", note: "Civilian terminal moved onto the unified workspace shell and the redundant character rail was removed" },
+  { date: "2026-09-01", note: "Responsiveness pass on Metro and Keystone shells for narrow in-game iFrame/tablet widths" },
   { date: "2026-09-01", note: "Themes now change department workspace layout as well as color: Enterprise (desktop workstation), Metro (side rail) and Keystone (station banner)" },
   { date: "2026-09-01", note: "Selectable UI themes (Enterprise, LA Style, PA Style) in CAD Settings, Edit Unit button on the MDT status strip, and removal of the Close MDT/Board menu action" },
   { date: "2026-09-01", note: "Roster side rebuilt on the enterprise MDT design system: sidebar, dashboard, shifts, LOA, org chart, certifications, documents, vehicles and uniforms" },
