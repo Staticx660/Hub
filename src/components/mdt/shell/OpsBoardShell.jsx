@@ -10,6 +10,7 @@ import MyCallWorkspace from "@/components/mdt/workspaces/police/MyCallWorkspace"
 import ApparatusWorkspace from "@/components/mdt/workspaces/ops/ApparatusWorkspace";
 import PCRWorkspace from "@/components/mdt/workspaces/ops/PCRWorkspace";
 import RecordsWorkspace from "@/components/mdt/workspaces/police/RecordsWorkspace";
+import SessionEditDialog from "@/components/cad/mdt/SessionEditDialog";
 import { Radio as RadioIcon, Users, PhoneCall, Truck, FileText, ClipboardList } from "lucide-react";
 
 const VIEW_LABELS = { incidents: "Incidents", personnel: "Personnel", mycall: "My Call", apparatus: "Apparatus", reports: "Reports", pcr: "PCR" };
@@ -25,6 +26,7 @@ export default function OpsBoardShell({
 }) {
   const navigate = useNavigate();
   const [newFileRequest, setNewFileRequest] = useState(0);
+  const [editUnitOpen, setEditUnitOpen] = useState(false);
   const hasPCR = department.category === "EMS";
   const viewLabels = Object.fromEntries(Object.entries(VIEW_LABELS).filter(([k]) => hasPCR || k !== "pcr"));
   const { tabs, activeId, activeView, setActiveId, setView: openView, addTab, closeTab } = useWorkspaceTabs("incidents");
@@ -39,12 +41,12 @@ export default function OpsBoardShell({
         { label: "Global Search…", shortcut: "Ctrl+K", onSelect: openSearch },
         { separator: true },
         { label: "Clock Out & End Shift", onSelect: onClockOut, danger: true },
-        { label: "Close Board", onSelect: () => navigate("/cad") },
       ],
     },
     {
       label: "Edit",
       items: [
+        { label: "Edit Unit Info…", onSelect: () => setEditUnitOpen(true) },
         { label: "Copy Callsign", onSelect: () => navigator.clipboard?.writeText(session.callsign || ""), disabled: !session.callsign },
         { separator: true },
         { label: "Set Status: Available", onSelect: () => onStatusChange("Available") },
@@ -77,6 +79,7 @@ export default function OpsBoardShell({
   ];
 
   return (
+    <>
     <MDTShell
       agency={department.name}
       subtitle={subtitle}
@@ -107,6 +110,7 @@ export default function OpsBoardShell({
           onPanic={onPanic}
           onOpenKeybinds={() => navigate("/keybinds")}
           onClockOut={onClockOut}
+          onEditUnit={() => setEditUnitOpen(true)}
         />
       }
     >
@@ -139,5 +143,7 @@ export default function OpsBoardShell({
         )
       )}
     </MDTShell>
+    <SessionEditDialog open={editUnitOpen} onOpenChange={setEditUnitOpen} session={session} onSaved={setSession} />
+    </>
   );
 }

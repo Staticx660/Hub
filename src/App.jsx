@@ -50,10 +50,12 @@ import SystemLogs from '@/pages/SystemLogs';
 import Help from '@/pages/Help';
 import MDTPreview from '@/pages/MDTPreview';
 import { useCommunityBranding } from "@/hooks/useCommunityBranding";
+import { useUITheme } from "@/hooks/useUITheme";
 
 const AuthenticatedApp = () => {
   const { user, isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
   useCommunityBranding();
+  useUITheme();
 
   if (isLoadingPublicSettings || isLoadingAuth) {
     return (

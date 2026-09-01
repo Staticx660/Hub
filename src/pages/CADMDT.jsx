@@ -14,6 +14,7 @@ import GroupsView from "@/components/cad/mdt/GroupsView";
 import PCRForm from "@/components/cad/mdt/PCRForm";
 import CallViewer from "@/components/cad/mdt/CallViewer";
 import ClockInDialog from "@/components/cad/mdt/ClockInDialog";
+import SessionEditDialog from "@/components/cad/mdt/SessionEditDialog";
 import KeybindsDialog from "@/components/cad/mdt/KeybindsDialog";
 import PanicDialog from "@/components/cad/mdt/PanicDialog";
 import { useKeybinds, loadKeybinds } from "@/hooks/useKeybinds";
@@ -59,6 +60,7 @@ export default function CADMDT() {
   const [keybinds, setKeybinds] = useState(loadKeybinds());
   const [keybindsOpen, setKeybindsOpen] = useState(false);
   const [panicOpen, setPanicOpen] = useState(false);
+  const [editUnitOpen, setEditUnitOpen] = useState(false);
   const [myDepts, setMyDepts] = useState([]);
   const [newFileRequest, setNewFileRequest] = useState(0);
   const { tabs, activeId, activeView, setActiveId, setView: setActiveView, addTab, closeTab } = useWorkspaceTabs(location.state?.initialView || "dispatch");
@@ -314,12 +316,12 @@ export default function CADMDT() {
         { label: "Global Search…", shortcut: "Ctrl+K", onSelect: openSearch },
         { separator: true },
         { label: "Clock Out & End Shift", onSelect: handleClockOut, danger: true },
-        { label: "Close MDT", onSelect: () => navigate("/cad") },
       ],
     },
     {
       label: "Edit",
       items: [
+        { label: "Edit Unit Info…", onSelect: () => setEditUnitOpen(true) },
         { label: "Copy Callsign", onSelect: () => navigator.clipboard?.writeText(session.callsign || ""), disabled: !session.callsign },
         { label: "Copy Unit Info", onSelect: () => navigator.clipboard?.writeText(`${session.callsign || ""} ${session.user_name}${session.rank ? " (" + session.rank + ")" : ""}`.trim()) },
         { separator: true },
@@ -396,6 +398,7 @@ export default function CADMDT() {
               onPanic={handlePanic}
               onOpenKeybinds={() => setKeybindsOpen(true)}
               onClockOut={handleClockOut}
+              onEditUnit={() => setEditUnitOpen(true)}
             />
           }
         >
@@ -431,6 +434,7 @@ export default function CADMDT() {
         <PanicDialog open={panicOpen} department={department} session={session} onClose={() => setPanicOpen(false)} onActivated={(s) => setSession(s)} />
         <KeybindsDialog open={keybindsOpen} onOpenChange={setKeybindsOpen} keybinds={keybinds} setKeybinds={setKeybinds} />
         <ConfirmDialog open={clockOutConfirm} onOpenChange={setClockOutConfirm} title="Clock Out" description="Clock out and end your shift?" confirmLabel="Clock Out" onConfirm={confirmClockOut} />
+        <SessionEditDialog open={editUnitOpen} onOpenChange={setEditUnitOpen} session={session} onSaved={setSession} />
       </>
     );
   }

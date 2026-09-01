@@ -3,8 +3,11 @@ import { base44 } from "@/api/base44Client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
+import { Btn } from "@/components/mdt/ui/primitives";
+
+const inputCls = "h-8 rounded-sm bg-mdt-surface-2 border-mdt-line-2 text-mdt-text text-[12px] mt-1";
+const labelCls = "text-[10px] font-semibold uppercase tracking-[0.09em] text-mdt-dim";
 
 export default function SessionEditDialog({ open, onOpenChange, session, onSaved }) {
   const [callsign, setCallsign] = useState("");
@@ -34,18 +37,18 @@ export default function SessionEditDialog({ open, onOpenChange, session, onSaved
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-slate-900 border-slate-700">
+      <DialogContent className="mdt bg-mdt-surface border-mdt-line text-mdt-text max-w-sm">
         <DialogHeader>
-          <DialogTitle className="text-white">Edit Unit Info</DialogTitle>
+          <DialogTitle className="text-[13px] font-semibold uppercase tracking-[0.06em]">Edit Unit Info</DialogTitle>
         </DialogHeader>
-        <div className="space-y-3 py-2">
-          <div><Label className="text-slate-400 text-xs">Callsign</Label><Input value={callsign} onChange={e => setCallsign(e.target.value)} className="bg-slate-800 border-slate-700 text-white" /></div>
-          <div><Label className="text-slate-400 text-xs">Name</Label><Input value={userName} onChange={e => setUserName(e.target.value)} className="bg-slate-800 border-slate-700 text-white" /></div>
-          <div><Label className="text-slate-400 text-xs">Rank</Label><Input value={rank} onChange={e => setRank(e.target.value)} className="bg-slate-800 border-slate-700 text-white" /></div>
+        <div className="space-y-3 py-1">
+          <div><Label className={labelCls}>Callsign</Label><Input value={callsign} onChange={e => setCallsign(e.target.value)} className={inputCls} /></div>
+          <div><Label className={labelCls}>Name</Label><Input value={userName} onChange={e => setUserName(e.target.value)} className={inputCls} /></div>
+          <div><Label className={labelCls}>Rank</Label><Input value={rank} onChange={e => setRank(e.target.value)} className={inputCls} /></div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} className="border-slate-700 text-slate-300">Cancel</Button>
-          <Button onClick={handleSave} disabled={saving} className="bg-blue-600 hover:bg-blue-700">{saving ? "Saving..." : "Save"}</Button>
+          <Btn variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Btn>
+          <Btn variant="primary" onClick={handleSave} disabled={saving}>{saving ? "Saving..." : "Save"}</Btn>
         </DialogFooter>
       </DialogContent>
     </Dialog>
