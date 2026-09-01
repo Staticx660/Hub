@@ -8,6 +8,7 @@ import {
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
+import { useCommunityBranding } from "@/hooks/useCommunityBranding";
 
 const sections = [
   {
@@ -45,6 +46,7 @@ export default function Sidebar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { user } = useAuth();
   const { isPlatformAdmin, isCADAdmin, isSupervisor } = useUserPermissions();
+  const { branding } = useCommunityBranding();
   const canAdmin = isPlatformAdmin || isCADAdmin || isSupervisor;
   const isAdmin = user?.role === "admin";
 
@@ -79,9 +81,12 @@ export default function Sidebar() {
     <div className="flex flex-col h-full">
       <div className="h-11 px-3 flex items-center justify-between border-b border-mdt-line bg-mdt-surface-2 flex-shrink-0">
         {!collapsed && (
-          <div className="min-w-0">
-            <div className="text-[12.5px] font-semibold leading-tight truncate">OCRP Roster</div>
+          <div className="min-w-0 flex items-center gap-2">
+            {branding?.logo_url && <img src={branding.logo_url} alt="" className="w-6 h-6 object-contain flex-shrink-0" />}
+            <div className="min-w-0">
+            <div className="text-[12.5px] font-semibold leading-tight truncate">{branding?.community_name || "Community"} Roster</div>
             <div className="text-[10px] uppercase tracking-[0.1em] text-mdt-dim truncate">Personnel · Operations</div>
+            </div>
           </div>
         )}
         <button
