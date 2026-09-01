@@ -1,18 +1,18 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useToast } from "@/components/ui/use-toast";
-import { RefreshCw, Users, Loader2, CheckCircle2 } from "lucide-react";
+import { RefreshCw, Users, Loader2, CheckCircle2, Terminal } from "lucide-react";
 import { MSection } from "@/components/mdt/ui/formFields";
 import { Btn, Field } from "@/components/mdt/ui/primitives";
+import DiscordRoleMappings from "@/components/cad/discord/DiscordRoleMappings";
 
 export default function DiscordSettings() {
   const [guild, setGuild] = useState(null);
   const [roles, setRoles] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [syncingRoster, setSyncingRoster] = useState(false);
-  const [syncingPersonnel, setSyncingPersonnel] = useState(false);
-  const [rosterReport, setRosterReport] = useState(null);
-  const [personnelReport, setPersonnelReport] = useState(null);
+  const [syncing, setSyncing] = useState(false);
+  const [report, setReport] = useState(null);
+  const [registering, setRegistering] = useState(false);
   const { toast } = useToast();
 
   const load = async () => {
@@ -26,35 +26,36 @@ export default function DiscordSettings() {
 
   useEffect(() => { load(); }, []);
 
-  const syncRoster = async () => {
-    setSyncingRoster(true);
+  // Single sync for both systems: roster from Discord, then CAD personnel from roster.
+  const syncAll = async () => {
+    setSyncing(true);
     try {
-      const res = await base44.functions.invoke('syncDiscordMembers', {});
-      setRosterReport(res.data.report);
-      toast({ title: "Roster synced", description: `${res.data.report.added} added, ${res.data.report.updated} updated` });
+      const rosterRes = await base44.functions.invoke('syncDiscordMembers', {});
+      if (rosterRes.data?.error) throw new Error(rosterRes.data.error);
+      const cadRes = await base44.functions.invoke('syncCADPersonnel', {});
+      setReport({ roster: rosterRes.data.report, cad: cadRes.data?.report, cadError: cadRes.data?.error });
+      toast({
+        title: "Roster & CAD synced",
+        description: `Roster: ${rosterRes.data.report.added} added, ${rosterRes.data.report.updated} updated${cadRes.data?.error ? ` · CAD error: ${cadRes.data.error}` : ` · CAD: ${cadRes.data?.report?.added || 0} added, ${cadRes.data?.report?.updated || 0} updated`}`,
+      });
     } catch (e) { toast({ title: "Sync failed", description: e.message, variant: "destructive" }); }
-    setSyncingRoster(false);
+    setSyncing(false);
   };
 
-  const syncPersonnel = async () => {
-    setSyncingPersonnel(true);
+  const registerCommands = async () => {
+    setRegistering(true);
     try {
-      const res = await base44.functions.invoke('syncCADPersonnel', {});
-      if (res.data.error) {
-        toast({ title: "Sync failed", description: res.data.error, variant: "destructive" });
-      } else {
-        const report = res.data.report;
-        setPersonnelReport(report);
-        toast({ title: "Personnel synced", description: `${report.added} added, ${report.updated} updated${report.skipped > 0 ? `, ${report.skipped} skipped` : ""}` });
-      }
-    } catch (e) { toast({ title: "Sync failed", description: e.message, variant: "destructive" }); }
-    setSyncingPersonnel(false);
+      const res = await base44.functions.invoke('registerDiscordCommands', {});
+      if (res.data?.error) toast({ title: "Registration failed", description: res.data.error, variant: "destructive" });
+      else toast({ title: "Slash commands registered", description: "/loa-request, /clock-in and /clock-out are now available." });
+    } catch (e) { toast({ title: "Registration failed", description: e.message, variant: "destructive" }); }
+    setRegistering(false);
   };
 
   if (loading) return <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-mdt-accent" /></div>;
 
   return (
-    <div className="max-w-3xl space-y-2.5">
+    <div className="max-w-5xl space-y-2.5">
       <MSection title="Discord Guild">
         <div className="grid grid-cols-3 gap-2.5">
           <Field label="Guild ID" value={<span className="font-mono">{guild ? guild.id : "—"}</span>} />
@@ -75,25 +76,28 @@ export default function DiscordSettings() {
         )}
       </MSection>
 
-      <MSection title="Sync Roster from Discord" actions={<Btn variant="primary" icon={syncingRoster ? Loader2 : RefreshCw} disabled={syncingRoster} onClick={syncRoster}>Sync</Btn>}>
-        <p className="text-[11.5px] text-mdt-muted">Pulls all Discord members with department roles into the Roster.</p>
-        {rosterReport && (
-          <div className="mt-2 flex items-center gap-1.5 border border-mdt-line bg-mdt-bg/40 p-2 text-[11.5px] text-mdt-muted">
-            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-300" />
-            Added: {rosterReport.added} · Updated: {rosterReport.updated} · Skipped: {rosterReport.skipped}
-            {rosterReport.errors?.length > 0 && <span className="text-red-300">· {rosterReport.errors.length} errors</span>}
+      <DiscordRoleMappings roles={roles} />
+
+      <MSection title="Sync Roster & CAD" actions={<Btn variant="primary" icon={syncing ? Loader2 : RefreshCw} disabled={syncing} onClick={syncAll}>{syncing ? "Syncing…" : "Sync Now"}</Btn>}>
+        <p className="text-[11.5px] text-mdt-muted">One sync for both systems: Discord members with a mapped role are added or updated on the Roster, then CAD personnel are rebuilt from the Roster (matched by Discord Role ID). Also runs automatically every hour.</p>
+        {report && (
+          <div className="mt-2 border border-mdt-line bg-mdt-bg/40 p-2 text-[11.5px] text-mdt-muted space-y-1">
+            <div className="flex items-center gap-1.5">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-300" />
+              Roster — Added: {report.roster.added} · Updated: {report.roster.updated} · Skipped: {report.roster.skipped}
+              {report.roster.errors?.length > 0 && <span className="text-red-300">· {report.roster.errors.length} errors</span>}
+            </div>
+            <div className="pl-5">
+              {report.cadError
+                ? <span className="text-red-300">CAD Personnel — {report.cadError}</span>
+                : <>CAD Personnel — Added: {report.cad?.added || 0} · Updated: {report.cad?.updated || 0} · Skipped: {report.cad?.skipped || 0}</>}
+            </div>
           </div>
         )}
       </MSection>
 
-      <MSection title="Sync CAD Personnel from Roster" actions={<Btn variant="primary" icon={syncingPersonnel ? Loader2 : RefreshCw} disabled={syncingPersonnel} onClick={syncPersonnel}>Sync</Btn>}>
-        <p className="text-[11.5px] text-mdt-muted">Creates and updates CAD personnel from the Roster. Roster departments are matched to CAD departments by Discord Role ID — both must have the same role ID set.</p>
-        {personnelReport && (
-          <div className="mt-2 flex items-center gap-1.5 border border-mdt-line bg-mdt-bg/40 p-2 text-[11.5px] text-mdt-muted">
-            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-300" />
-            Added: {personnelReport.added} · Updated: {personnelReport.updated} · Skipped: {personnelReport.skipped || 0} · Total roster members: {personnelReport.total}
-          </div>
-        )}
+      <MSection title="Slash Commands" actions={<Btn variant="primary" icon={registering ? Loader2 : Terminal} disabled={registering} onClick={registerCommands}>{registering ? "Registering…" : "Register"}</Btn>}>
+        <p className="text-[11.5px] text-mdt-muted">Registers /loa-request, /clock-in and /clock-out in your Discord server so members can use them without leaving Discord.</p>
       </MSection>
 
       {roles.length > 0 && (

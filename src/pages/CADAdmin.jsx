@@ -17,8 +17,7 @@ import { Users, IdCard, Settings, Building2, MapPin, Gavel, ShieldCheck, Bell, M
 import SystemLogs from "@/pages/SystemLogs";
 import Roster from "@/pages/Roster";
 import Departments from "@/pages/Departments";
-import DiscordSync from "@/pages/DiscordSync";
-import { ClipboardList, Network, RefreshCw } from "lucide-react";
+import { ClipboardList, Network } from "lucide-react";
 import { APP_VERSION } from "@/lib/version";
 import { useCommunityBranding } from "@/hooks/useCommunityBranding";
 
@@ -28,7 +27,6 @@ const ALL_SECTIONS = [
   { title: "ROSTER", items: [
     { id: "roster", label: "Full Roster", icon: ClipboardList, access: "platform" },
     { id: "rosterdepts", label: "Roster Departments", icon: Network, access: "platform" },
-    { id: "discordsync", label: "Discord Sync", icon: RefreshCw, access: "platform" },
   ]},
   { title: "ACCOUNTS", items: [
     { id: "members", label: "Members", icon: Users, access: "supervisor" },
@@ -74,7 +72,6 @@ export default function CADAdmin() {
     switch (effectiveActive) {
       case "roster": return <Roster />;
       case "rosterdepts": return <Departments />;
-      case "discordsync": return <DiscordSync />;
       case "members": return <RegisteredUsersManager />;
       case "permissions": return <PermissionsManager />;
       case "identifiers": return <DiscordMembersManager />;

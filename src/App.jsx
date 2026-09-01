@@ -43,7 +43,6 @@ import Certifications from '@/pages/Certifications';
 import Documents from '@/pages/Documents';
 import Vehicles from '@/pages/Vehicles';
 import Uniforms from '@/pages/Uniforms';
-import DiscordSync from '@/pages/DiscordSync';
 import Settings from '@/pages/Settings';
 import CivilianDashboard from '@/pages/CivilianDashboard';
 import MyRecords from '@/pages/MyRecords';
@@ -100,7 +99,6 @@ const AuthenticatedApp = () => {
           </Route>
           <Route element={<AdminRoute />}>
             <Route path="/roster" element={<Roster />} />
-            <Route path="/discord-sync" element={<DiscordSync />} />
           </Route>
         </Route>
 

@@ -102,13 +102,38 @@ Return the incident category, a priority ("1 - High", "2 - Medium" or "3 - Low")
     const callPostalById = {};
     for (const c of openCalls) if (c.postal) callPostalById[c.id] = c.postal;
 
-    const recommended = recommendUnits({
+    let recommended = recommendUnits({
       sessions,
       departments,
       departmentIds: responding.map((d) => d.id),
       call,
       callPostalById,
       limit: settings.max_recommended_units || 3,
+    });
+
+    // ── Re-read the call: the AI step takes seconds, and units may have
+    // detached or the call may have closed in the meantime. Never re-attach a
+    // unit that intentionally left, and never resurrect a closed call. ──
+    const fresh = await svc.entities.ActiveCall.get(callId).catch(() => null);
+    if (!fresh || fresh.status === 'Closed') {
+      return await finish('Failed', { error: 'Call was closed or removed before dispatch completed' });
+    }
+    call = fresh;
+
+    const detachedUnitIds = new Set(
+      (fresh.assignment_log || []).filter((e) => e.action === 'detached').map((e) => e.unit_name)
+    );
+    const freshIds = fresh.assigned_unit_ids || [];
+    const freshSessions = await svc.entities.CADSession.filter({ is_active: true });
+    const freshById = {};
+    for (const s of freshSessions) freshById[s.id] = s;
+
+    recommended = recommended.filter((r) => {
+      const s = freshById[r.session_id];
+      if (!s) return false; // clocked out mid-run
+      if (detachedUnitIds.has(r.callsign || r.unit_name) && !freshIds.includes(r.session_id)) return false;
+      if (s.active_call_id && s.active_call_id !== callId) return false; // now busy elsewhere
+      return true;
     });
 
     const priority = ['1 - High', '2 - Medium', '3 - Low'].includes(ai.priority) ? ai.priority : call.priority;
@@ -130,7 +155,7 @@ Return the incident category, a priority ("1 - High", "2 - Medium" or "3 - Low")
     const updates = {
       priority,
       department_id: responding[0].id,
-      status: assignedIds.length > 0 ? 'Active' : 'Pending',
+      status: assignedIds.length > 0 || (call.assigned_unit_ids || []).length > 0 ? 'Active' : 'Pending',
       cad_notes: [call.cad_notes, noteLines.join('\n')].filter(Boolean).join('\n\n'),
       assignment_log: [
         ...(call.assignment_log || []),

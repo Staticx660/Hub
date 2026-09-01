@@ -29,7 +29,6 @@ const navItems = [
 { label: "Documents", path: "/documents", icon: FileText },
 { label: "Vehicles", path: "/vehicles", icon: Car },
 { label: "Uniforms", path: "/uniforms", icon: Shirt },
-{ label: "Discord Sync", path: "/discord-sync", icon: RefreshCw, adminOnly: true },
 { label: "Settings", path: "/settings", icon: Settings, adminOnly: true }];
 
 
