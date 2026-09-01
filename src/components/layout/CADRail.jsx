@@ -56,7 +56,7 @@ export default function CADRail() {
       <div className="border-t border-mdt-line">
         <Link to="/" className="flex items-center gap-2 h-8 px-2.5 text-[12px] text-mdt-muted hover:bg-mdt-surface-3/60 hover:text-mdt-text">
           <Home className="w-3.5 h-3.5 flex-shrink-0" />
-          <span className="hidden sm:block">Roster Hub</span>
+          <span className="hidden sm:block">Back to Home</span>
         </Link>
         <button
           onClick={() => base44.auth.logout("/login")}
