@@ -1,6 +1,10 @@
 /* App version — patch number is the count of shipped changes below.
    Add a new entry at the TOP for every change/update; the version bumps itself. */
 export const CHANGELOG = [
+  { date: "2026-09-01", note: "Theme selection persists per user and applies instantly across every CAD and roster surface" },
+  { date: "2026-09-01", note: "Keystone theme: station banner, full-width segmented navigation and a docked bottom command bar (charcoal / gold)" },
+  { date: "2026-09-01", note: "Metro theme: vertical navigation rail with a tall unit header (midnight navy / patrol blue)" },
+  { date: "2026-09-01", note: "Enterprise theme: desktop workstation layout with menu strip, record tabs and toolbar (graphite / teal)" },
   { date: "2026-09-01", note: "Fixed the Menu/Commands dropdown: selections (including Theme switching) now register instead of the menu closing first" },
   { date: "2026-09-01", note: "Menu/Commands dropdown now renders as a true floating popup that can no longer be clipped by scrolling panels" },
   { date: "2026-09-01", note: "Civilian terminal moved onto the unified workspace shell and the redundant character rail was removed" },
