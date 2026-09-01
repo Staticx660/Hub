@@ -18,6 +18,7 @@ import { useKeybinds, loadKeybinds } from "@/hooks/useKeybinds";
 import { clearPanic } from "@/lib/panic";
 import { playStatusBeep, loadNotificationTones } from "@/components/cad/mdt/panicSound";
 import { dedupeActiveSessions } from "@/lib/cadSessions";
+import useCallNotifications from "@/hooks/useCallNotifications";
 
 export default function DepartmentBoard() {
   const { deptId } = useParams();
@@ -101,6 +102,7 @@ export default function DepartmentBoard() {
 
   const sessionRef = useRef(null);
   useEffect(() => { sessionRef.current = session; }, [session]);
+  useCallNotifications(department, sessionRef);
 
   const performClockOut = async (s) => {
     if (!s) return;

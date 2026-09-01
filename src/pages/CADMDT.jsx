@@ -34,6 +34,7 @@ import LookupsWorkspace from "@/components/mdt/workspaces/police/LookupsWorkspac
 import RecordsWorkspace from "@/components/mdt/workspaces/police/RecordsWorkspace";
 import MyCallWorkspace from "@/components/mdt/workspaces/police/MyCallWorkspace";
 import { useCommunityBranding } from "@/hooks/useCommunityBranding";
+import useCallNotifications from "@/hooks/useCallNotifications";
 
 // Workspace views that can be opened as browser-style tabs
 const VIEW_LABELS = {
@@ -112,41 +113,11 @@ export default function CADMDT() {
     return unsub;
   }, [department]);
 
-  // In-app call notifications — new calls for this department, and dispatch
-  // assigning this unit to a call. Uses toasts/tones so it works inside the
-  // in-game tablet iframe (no browser popups).
-  // Each call only ever notifies once per kind — entity updates fire repeatedly
-  // and were producing duplicate dispatch alerts inside the tablet.
-  const notifiedRef = useRef(new Set());
-  useEffect(() => {
-    if (!department) return;
-    const unsub = base44.entities.ActiveCall.subscribe((event) => {
-      const call = event.data;
-      const s = sessionRef.current;
-      if (!call || !s) return;
-      if (call.department_id && call.department_id !== department.id) return;
-      const seen = notifiedRef.current;
-      const mark = (key) => { if (seen.has(key)) return false; seen.add(key); return true; };
+  const sessionRef = useRef(null);
+  useEffect(() => { sessionRef.current = session; }, [session]);
 
-      if (event.type === "create" && call.status !== "Closed" && mark(`new:${call.id}`)) {
-        playStatusBeep();
-        toast({
-          title: `📻 New Call — ${call.priority || "Priority 3"}`,
-          description: `${call.call_type}${call.location ? " · " + call.location : ""}`,
-        });
-        return;
-      }
-
-      if (event.type === "update" && (call.assigned_unit_ids || []).includes(s.id) && s.active_call_id !== call.id && mark(`dispatch:${call.id}:${s.id}`)) {
-        playStatusBeep();
-        toast({
-          title: "🚨 You have been dispatched",
-          description: `${call.run_number ? call.run_number + " · " : ""}${call.call_type}${call.location ? " · " + call.location : ""}`,
-        });
-      }
-    });
-    return unsub;
-  }, [department]);
+  // Tones + AI voice for new calls, dispatch assignment, notes, updates, closes
+  useCallNotifications(department, sessionRef);
 
   const handleClockIn = async (formData) => {
     try {
@@ -174,9 +145,6 @@ export default function CADMDT() {
       setClockInOpen(false);
     } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
   };
-
-  const sessionRef = useRef(null);
-  useEffect(() => { sessionRef.current = session; }, [session]);
 
   const performClockOut = async (s) => {
     if (!s) return;

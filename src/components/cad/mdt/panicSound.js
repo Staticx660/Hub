@@ -158,6 +158,58 @@ export function playDispatchTone() {
   } catch (e) { /* silent */ }
 }
 
+// Plays a configured tone by key; falls back to the built-in beep when none is set.
+export function playToneKey(key) {
+  const custom = getToneUrl(key);
+  if (custom) { playCustomTone(custom); return; }
+  if (key === "new_dispatch" || key === "signal") playDispatchTone();
+  else playStatusBeep();
+}
+
+// Browsers block audio until the page has had a user gesture. Prime the audio
+// context and speech engine on the first click/key so alerts fire later.
+let unlockInstalled = false;
+export function installAudioUnlock() {
+  if (unlockInstalled || typeof window === "undefined") return;
+  unlockInstalled = true;
+  const unlock = () => {
+    try { getAudioContext(); } catch (e) {}
+    try { if ('speechSynthesis' in window) { const u = new SpeechSynthesisUtterance(""); u.volume = 0; window.speechSynthesis.speak(u); } } catch (e) {}
+    window.removeEventListener("pointerdown", unlock);
+    window.removeEventListener("keydown", unlock);
+  };
+  window.addEventListener("pointerdown", unlock);
+  window.addEventListener("keydown", unlock);
+}
+
+export function speak(text) {
+  try {
+    if (!('speechSynthesis' in window) || !text) return;
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.rate = 1.0; u.pitch = 0.9; u.volume = 1;
+    window.speechSynthesis.speak(u);
+  } catch (e) { /* silent */ }
+}
+
+// Postal codes are read digit-by-digit ("postal four one two")
+const spellPostal = (p) => String(p || "").trim().split("").join(" ");
+
+export function dispatchVoiceText(call, session) {
+  const unit = session?.callsign || session?.user_name || "Unit";
+  const parts = [`${unit}, you are attached to ${call.call_type || "a call"}`];
+  if (call.location) parts.push(`at ${call.location}`);
+  if (call.postal) parts.push(`postal ${spellPostal(call.postal)}`);
+  if (call.priority) parts.push(`priority ${call.priority.charAt(0)}`);
+  return parts.join(", ") + ".";
+}
+
+// Unit attached to a call — dispatch tone, then AI voice with call type, location and postal
+export function announceUnitAttached(call, session) {
+  playToneKey("new_dispatch");
+  setTimeout(() => speak(dispatchVoiceText(call, session)), 700);
+}
+
 // Dispatch announcement — tone then voice
 export function playDispatchAnnouncement(text) {
   try {

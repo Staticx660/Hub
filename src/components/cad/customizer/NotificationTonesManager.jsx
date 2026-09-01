@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useToast } from "@/components/ui/use-toast";
 import { Save, Upload, Play, Loader2 } from "lucide-react";
-import { setTonesCache } from "@/components/cad/mdt/panicSound";
+import { setTonesCache, speak, dispatchVoiceText, speakPanicAlert } from "@/components/cad/mdt/panicSound";
 import { MSection, MInput } from "@/components/mdt/ui/formFields";
 import { Btn } from "@/components/mdt/ui/primitives";
 
@@ -87,6 +87,13 @@ export default function NotificationTonesManager() {
               </button>
             </div>
           ))}
+        </div>
+      </MSection>
+      <MSection title="AI Voice Announcements">
+        <p className="text-[11.5px] text-mdt-dim mb-2">Voice plays after the tone when a unit is attached to a call (call type, location, postal) and after the panic siren.</p>
+        <div className="flex gap-1.5">
+          <Btn icon={Play} onClick={() => speak(dispatchVoiceText({ call_type: "Shots Fired", location: "Vinewood Blvd & Alta St", postal: "412", priority: "1 - High" }, { callsign: "1-Adam-12" }))}>Test Dispatch Voice</Btn>
+          <Btn icon={Play} onClick={() => speakPanicAlert("1-Adam-12")}>Test Panic Voice</Btn>
         </div>
       </MSection>
       <Btn variant="primary" icon={Save} onClick={handleSave}>Save Tones</Btn>

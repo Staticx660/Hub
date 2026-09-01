@@ -17,6 +17,7 @@ import PanicDialog from "@/components/cad/mdt/PanicDialog";
 import { useKeybinds, loadKeybinds } from "@/hooks/useKeybinds";
 import { clearPanic } from "@/lib/panic";
 import { playStatusBeep, loadNotificationTones } from "@/components/cad/mdt/panicSound";
+import useCallNotifications from "@/hooks/useCallNotifications";
 
 export default function EMSBoard() {
   const { deptId } = useParams();
@@ -54,6 +55,7 @@ export default function EMSBoard() {
 
   const sessionRef = useRef(null);
   useEffect(() => { sessionRef.current = session; }, [session]);
+  useCallNotifications(department, sessionRef);
 
   // Live-sync own session (status changes from dispatch or other tabs)
   useEffect(() => {
