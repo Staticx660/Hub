@@ -61,7 +61,6 @@ export default function CADMDT() {
   const [keybindsOpen, setKeybindsOpen] = useState(false);
   const [panicOpen, setPanicOpen] = useState(false);
   const [editUnitOpen, setEditUnitOpen] = useState(false);
-  const [myDepts, setMyDepts] = useState([]);
   const [newFileRequest, setNewFileRequest] = useState(0);
   const { tabs, activeId, activeView, setActiveId, setView: setActiveView, addTab, closeTab } = useWorkspaceTabs(location.state?.initialView || "dispatch");
   const openView = setActiveView;
@@ -73,7 +72,6 @@ export default function CADMDT() {
         const dept = await base44.entities.CADDepartment.get(deptId);
         setDepartment(dept);
         const accessRes = await base44.functions.invoke('getUserCADDepartments', {});
-        setMyDepts((accessRes.data.departments || []).filter(d => d.hasAccess));
         const deptAccess = accessRes.data.departments.find(d => d.id === deptId);
         if (deptAccess && !deptAccess.hasAccess) {
           setAccessDenied(true);
@@ -301,13 +299,6 @@ export default function CADMDT() {
     </>
   );
 
-  const deptRoute = (d) =>
-    d.category === "Fire" ? `/cad/fire/${d.id}`
-    : d.category === "EMS" ? `/cad/ems/${d.id}`
-    : d.category === "Civilian" ? `/cad/civilian/${d.id}`
-    : d.category === "Dispatch" ? `/cad/dispatch`
-    : `/cad/mdt/${d.id}`;
-
   const buildMenus = ({ openSearch, toggleDetail, detailCollapsed }) => [
     {
       label: "File",
@@ -348,8 +339,6 @@ export default function CADMDT() {
     {
       label: "Window",
       items: [
-        ...myDepts.filter(d => d.category !== "Dispatch").map(d => ({ label: d.name, disabled: d.id === deptId, onSelect: () => navigate(deptRoute(d)) })),
-        { separator: true },
         { label: "CAD Home", onSelect: () => navigate("/cad") },
         { label: "My Records", onSelect: () => navigate("/my-records") },
       ],

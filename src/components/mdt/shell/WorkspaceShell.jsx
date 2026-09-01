@@ -3,7 +3,7 @@ import MDTShell from "@/components/mdt/shell/MDTShell";
 import MetroShell from "@/components/mdt/shell/MetroShell";
 import KeystoneShell from "@/components/mdt/shell/KeystoneShell";
 import { useUITheme } from "@/hooks/useUITheme";
-import { getTheme } from "@/lib/themes";
+import { getTheme, THEMES } from "@/lib/themes";
 
 const SHELLS = {
   enterprise: MDTShell,
@@ -13,10 +13,25 @@ const SHELLS = {
 
 /**
  * Renders the workspace chrome for the user's selected theme. Every shell
- * takes identical props, so pages stay layout-agnostic.
+ * takes identical props, so pages stay layout-agnostic. A "Theme" menu group
+ * is appended so units can switch look & layout without clocking out.
  */
-export default function WorkspaceShell(props) {
-  const { themeId } = useUITheme();
+export default function WorkspaceShell({ menus, ...props }) {
+  const { themeId, setTheme } = useUITheme();
   const Shell = SHELLS[getTheme(themeId).layout] || MDTShell;
-  return <Shell {...props} />;
+
+  const themeMenu = {
+    label: "Theme",
+    items: THEMES.map((t) => ({
+      label: `${t.id === themeId ? "✓ " : ""}${t.name}`,
+      disabled: t.id === themeId,
+      onSelect: () => setTheme(t.id),
+    })),
+  };
+
+  const withTheme = typeof menus === "function"
+    ? (ctx) => [...menus(ctx), themeMenu]
+    : [...(menus || []), themeMenu];
+
+  return <Shell {...props} menus={withTheme} />;
 }
