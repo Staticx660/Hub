@@ -8,9 +8,29 @@ Deno.serve(async (req) => {
     let body = {};
     try { body = await req.json(); } catch {}
 
-    const loaRequest = body.data || body;
+    // Caller-supplied content is never trusted: the notification is built only from
+    // the stored LOA record, and only for a record that was just created. That makes
+    // the endpoint useless to an anonymous caller — no arbitrary payloads, no replays.
+    const entityId = body.event?.entity_id;
+    if (!entityId) {
+      return Response.json({ error: 'Forbidden' }, { status: 403 });
+    }
 
-    if (!loaRequest || !loaRequest.department_id) {
+    let loaRequest = null;
+    try {
+      loaRequest = await base44.asServiceRole.entities.LOARequest.get(entityId);
+    } catch {}
+
+    if (!loaRequest) {
+      return Response.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    const ageMs = Date.now() - new Date(loaRequest.created_date).getTime();
+    if (!(ageMs >= 0 && ageMs < 5 * 60 * 1000)) {
+      return Response.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    if (!loaRequest.department_id) {
       return Response.json({ skipped: true, reason: 'No department_id on LOA request' });
     }
 
