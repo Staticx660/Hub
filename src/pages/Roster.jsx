@@ -84,6 +84,8 @@ export default function Roster() {
       const data = {
         ...form,
         rank_level: rankObj?.level || 0,
+        // primary department must never also appear as an additional department
+        additional_department_ids: (form.additional_department_ids || []).filter(id => id !== form.department_id),
         is_admin: form.is_admin === true || form.is_admin === "true",
       };
       if (editing) {
@@ -243,7 +245,7 @@ export default function Roster() {
                         <Link to={`/departments/${m.department_id}`} className="text-sm text-mdt-accent hover:brightness-125">
                           {getDeptName(m.department_id)}
                         </Link>
-                        {(m.additional_department_ids || []).map(depId => (
+                        {(m.additional_department_ids || []).filter(depId => depId !== m.department_id).map(depId => (
                           <Link key={depId} to={`/departments/${depId}`} className="text-sm text-teal-400 hover:text-teal-300">
                             {getDeptName(depId)}
                           </Link>
@@ -332,7 +334,7 @@ export default function Roster() {
             </div>
             <div>
               <Label className="text-mdt-text">Department *</Label>
-              <Select value={form.department_id} onValueChange={v => setForm({...form, department_id: v, rank: ""})}>
+              <Select value={form.department_id} onValueChange={v => setForm({...form, department_id: v, rank: "", additional_department_ids: (form.additional_department_ids || []).filter(id => id !== v)})}>
                 <SelectTrigger className="bg-mdt-surface-2 border-mdt-line-2 text-mdt-text mt-1"><SelectValue placeholder="Select department" /></SelectTrigger>
                 <SelectContent className="bg-mdt-surface-2 border-mdt-line-2">
                   {departments.map(d => <SelectItem key={d.id} value={d.id} className="text-mdt-text">{d.name}</SelectItem>)}
