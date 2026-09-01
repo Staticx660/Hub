@@ -24,7 +24,7 @@ export default function ShellMenu({ menus = [], label = "Menu", className = "" }
         <MenuIcon className="w-3.5 h-3.5" /> {label}
       </button>
       {open && (
-        <div className="absolute right-0 top-8 z-[60] w-[250px] max-h-[70vh] overflow-auto mdt-scroll border border-mdt-line-2 bg-mdt-surface shadow-2xl py-1">
+        <div className="absolute right-0 top-8 z-[60] w-[min(250px,calc(100vw-1.5rem))] max-h-[60vh] overflow-auto mdt-scroll border border-mdt-line-2 bg-mdt-surface shadow-2xl py-1">
           {menus.map((m) => (
             <div key={m.label}>
               <p className="px-3 h-6 flex items-center text-[10px] font-semibold uppercase tracking-[0.1em] text-mdt-dim bg-mdt-surface-3">{m.label}</p>

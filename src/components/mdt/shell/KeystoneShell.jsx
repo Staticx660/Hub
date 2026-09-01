@@ -27,19 +27,19 @@ export default function KeystoneShell({ agency, subtitle, unit, status, metrics 
   return (
     <div className="mdt fixed inset-0 flex flex-col bg-mdt-bg text-mdt-text font-body antialiased">
       {/* Station banner */}
-      <header className="flex items-center gap-4 h-14 px-4 bg-mdt-surface border-b-2 border-mdt-accent flex-shrink-0">
+      <header className="flex items-center gap-2 sm:gap-4 h-14 px-2 sm:px-4 bg-mdt-surface border-b-2 border-mdt-accent flex-shrink-0 overflow-x-auto mdt-scroll">
         <div className="min-w-0">
           <p className="text-[15px] font-bold uppercase tracking-[0.06em] text-mdt-text truncate">{agency}</p>
           <p className="text-[10px] uppercase tracking-[0.14em] text-mdt-dim truncate">{subtitle}</p>
         </div>
-        <div className="h-8 w-px bg-mdt-line-2" />
-        <div className="min-w-0">
+        <div className="h-8 w-px bg-mdt-line-2 hidden sm:block" />
+        <div className="min-w-0 hidden sm:block">
           <p className="text-[13px] text-mdt-text truncate">{unit || "—"}</p>
           {status && (
             <p className="text-[10.5px] font-bold uppercase tracking-[0.1em] text-mdt-accent">{status.label}</p>
           )}
         </div>
-        <div className="flex items-center gap-5 ml-4">
+        <div className="hidden lg:flex items-center gap-5 ml-4">
           {metrics.map((m) => (
             <div key={m.label} className="text-center">
               <p className={`text-[16px] font-bold tabular-nums leading-none ${m.alert ? "text-red-400" : "text-mdt-text"}`}>{m.value}</p>
@@ -48,11 +48,11 @@ export default function KeystoneShell({ agency, subtitle, unit, status, metrics 
           ))}
         </div>
         <div className="flex-1" />
-        <button onClick={() => setSearchOpen(true)} className="flex items-center gap-2 h-7 px-2.5 border border-mdt-line-2 bg-mdt-surface-2 text-mdt-dim hover:text-mdt-muted">
-          <Search className="w-3.5 h-3.5" /> <span className="text-[12.5px]">Search</span>
+        <button onClick={() => setSearchOpen(true)} className="flex items-center gap-2 h-7 px-2.5 border border-mdt-line-2 bg-mdt-surface-2 text-mdt-dim hover:text-mdt-muted flex-shrink-0">
+          <Search className="w-3.5 h-3.5" /> <span className="text-[12.5px] hidden md:inline">Search</span>
         </button>
-        <ShellMenu menus={menuItems} label="Commands" />
-        <span className="text-[15px] font-bold text-mdt-text tabular-nums">{clock}</span>
+        <ShellMenu menus={menuItems} label="Commands" className="flex-shrink-0" />
+        <span className="text-[15px] font-bold text-mdt-text tabular-nums hidden md:inline flex-shrink-0">{clock}</span>
       </header>
 
       {/* Segmented navigation */}
@@ -63,12 +63,12 @@ export default function KeystoneShell({ agency, subtitle, unit, status, metrics 
             <button
               key={it.key}
               onClick={() => onNavigate(it.key)}
-              className={`flex-1 flex items-center justify-center gap-2 h-10 text-[12.5px] font-semibold uppercase tracking-[0.07em] border-r border-mdt-line last:border-r-0 ${
+              className={`flex-1 min-w-[64px] flex items-center justify-center gap-2 h-10 text-[11.5px] lg:text-[12.5px] font-semibold uppercase tracking-[0.07em] border-r border-mdt-line last:border-r-0 ${
                 on ? "bg-mdt-accent/20 text-mdt-text border-b-2 border-b-mdt-accent" : "text-mdt-muted hover:bg-mdt-surface-3 hover:text-mdt-text"
               }`}
             >
-              <it.icon className="w-4 h-4" />
-              {it.label}
+              <it.icon className="w-4 h-4 flex-shrink-0" />
+              <span className="hidden sm:inline truncate">{it.label}</span>
             </button>
           );
         })}
@@ -111,8 +111,8 @@ export default function KeystoneShell({ agency, subtitle, unit, status, metrics 
       </main>
 
       {/* Docked command bar */}
-      <div className="flex items-center gap-3 h-11 px-3 bg-mdt-surface border-t border-mdt-line flex-shrink-0">
-        <button onClick={() => setDetailCollapsed((c) => !c)} className="text-[11.5px] text-mdt-muted hover:text-mdt-text">
+      <div className="flex items-center gap-3 min-h-[44px] px-2 sm:px-3 bg-mdt-surface border-t border-mdt-line flex-shrink-0 overflow-x-auto mdt-scroll">
+        <button onClick={() => setDetailCollapsed((c) => !c)} className="text-[11.5px] text-mdt-muted hover:text-mdt-text whitespace-nowrap flex-shrink-0">
           {detailCollapsed ? "Expand Detail" : "Collapse Detail"}
         </button>
         <div className="flex-1" />
