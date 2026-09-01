@@ -45,10 +45,11 @@ export default function AdminRail({ sections, active, onSelect, isPlatformAdmin,
       </nav>
 
       <button
-        onClick={() => (window.history.length > 1 ? navigate(-1) : navigate("/cad"))}
+        type="button"
+        onClick={() => navigate("/cad")}
         className="w-full h-8 px-2.5 flex items-center gap-1.5 border-t border-mdt-line text-[11.5px] text-mdt-muted hover:text-mdt-text hover:bg-mdt-surface-3/60"
       >
-        <ArrowLeft className="w-3.5 h-3.5" /> Back
+        <ArrowLeft className="w-3.5 h-3.5" /> Back to CAD
       </button>
     </aside>
   );
