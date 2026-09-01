@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { CalendarDays, Plus, Check, X, ChevronLeft, ChevronRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -9,7 +8,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/lib/AuthContext";
+import { Panel, Btn, EmptyState } from "@/components/mdt/ui/primitives";
 import moment from "moment";
+
+const inputCls = "h-8 rounded-sm bg-mdt-surface-2 border-mdt-line-2 text-mdt-text text-[12px] mt-1";
+const selCls = "h-8 rounded-sm bg-mdt-surface-2 border-mdt-line-2 text-mdt-text text-[12px] mt-1";
+const selContentCls = "bg-mdt-surface-2 border-mdt-line-2 text-mdt-text rounded-sm";
+const labelCls = "text-[10px] font-semibold uppercase tracking-[0.09em] text-mdt-dim";
 
 export default function LOACalendar() {
   const [requests, setRequests] = useState([]);
@@ -114,37 +119,41 @@ export default function LOACalendar() {
   };
 
   if (loading) {
-    return <div className="flex items-center justify-center h-64"><div className="w-8 h-8 border-4 border-slate-700 border-t-blue-500 rounded-full animate-spin" /></div>;
+    return <div className="flex items-center justify-center h-64"><div className="w-7 h-7 border-2 border-mdt-line border-t-mdt-accent rounded-full animate-spin" /></div>;
   }
 
   const days = getDaysInMonth();
+  const pending = requests.filter(r => r.status === "Pending");
+  const active = requests.filter(r => r.status === "Approved");
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">LOA Calendar</h1>
-          <p className="text-sm text-slate-400 mt-1">Manage leave of absence requests</p>
+          <h1 className="text-[15px] font-semibold text-mdt-text tracking-tight">LOA Calendar</h1>
+          <p className="text-[11.5px] text-mdt-dim">Manage leave of absence requests</p>
         </div>
-        <Button onClick={() => setShowForm(true)} className="bg-blue-600 hover:bg-blue-700">
-          <Plus className="w-4 h-4 mr-2" /> New LOA Request
-        </Button>
+        <Btn variant="primary" icon={Plus} onClick={() => setShowForm(true)}>New LOA Request</Btn>
       </div>
 
       {/* Calendar */}
-      <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-5">
-        <div className="flex items-center justify-between mb-4">
-          <button onClick={() => setCurrentMonth(m => m.clone().subtract(1, "month"))} className="p-2 hover:bg-slate-800 rounded-lg text-slate-400">
-            <ChevronLeft className="w-4 h-4" />
-          </button>
-          <h2 className="text-lg font-semibold text-white">{currentMonth.format("MMMM YYYY")}</h2>
-          <button onClick={() => setCurrentMonth(m => m.clone().add(1, "month"))} className="p-2 hover:bg-slate-800 rounded-lg text-slate-400">
-            <ChevronRight className="w-4 h-4" />
-          </button>
-        </div>
-        <div className="grid grid-cols-7 gap-px">
+      <Panel
+        title={currentMonth.format("MMMM YYYY")}
+        actions={
+          <>
+            <button onClick={() => setCurrentMonth(m => m.clone().subtract(1, "month"))} className="w-6 h-6 flex items-center justify-center rounded-sm text-mdt-dim hover:bg-mdt-surface-3 hover:text-mdt-text">
+              <ChevronLeft className="w-3.5 h-3.5" />
+            </button>
+            <button onClick={() => setCurrentMonth(m => m.clone().add(1, "month"))} className="w-6 h-6 flex items-center justify-center rounded-sm text-mdt-dim hover:bg-mdt-surface-3 hover:text-mdt-text">
+              <ChevronRight className="w-3.5 h-3.5" />
+            </button>
+          </>
+        }
+        scroll={false}
+      >
+        <div className="grid grid-cols-7 gap-px bg-mdt-line p-px">
           {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(d => (
-            <div key={d} className="text-center py-2 text-xs font-medium text-slate-500">{d}</div>
+            <div key={d} className="text-center py-1.5 text-[10px] font-semibold uppercase tracking-[0.09em] text-mdt-dim bg-mdt-surface-2">{d}</div>
           ))}
           {days.map((day, i) => {
             const loaItems = getLoaForDay(day);
@@ -153,151 +162,137 @@ export default function LOACalendar() {
             return (
               <div
                 key={i}
-                className={`min-h-[80px] p-1.5 border border-slate-800/50 rounded ${
-                  isCurrentMonth ? "bg-slate-900/50" : "bg-slate-950/50"
-                } ${isToday ? "ring-1 ring-blue-500/30" : ""}`}
+                className={`min-h-[72px] p-1 ${isCurrentMonth ? "bg-mdt-surface" : "bg-mdt-bg"} ${isToday ? "outline outline-1 -outline-offset-1 outline-mdt-accent" : ""}`}
               >
-                <span className={`text-xs ${isToday ? "text-blue-400 font-bold" : isCurrentMonth ? "text-slate-400" : "text-slate-600"}`}>
+                <span className={`text-[10.5px] ${isToday ? "text-mdt-accent font-bold" : isCurrentMonth ? "text-mdt-muted" : "text-mdt-dim"}`}>
                   {day.date()}
                 </span>
                 {loaItems.slice(0, 2).map((loa) => (
                   <div
                     key={loa.id}
-                    className={`mt-0.5 text-[10px] px-1 py-0.5 rounded truncate ${
-                      loa.status === "Approved" ? "bg-amber-500/10 text-amber-400" : "bg-purple-500/10 text-purple-400"
+                    className={`mt-0.5 text-[9.5px] px-1 py-0.5 rounded-sm truncate border ${
+                      loa.status === "Approved" ? "bg-amber-500/10 text-amber-300 border-amber-500/25" : "bg-mdt-surface-3 text-mdt-muted border-mdt-line-2"
                     }`}
                   >
                     {loa.member_name}
                   </div>
                 ))}
                 {loaItems.length > 2 && (
-                  <p className="text-[10px] text-slate-500 mt-0.5">+{loaItems.length - 2} more</p>
+                  <p className="text-[9.5px] text-mdt-dim mt-0.5">+{loaItems.length - 2} more</p>
                 )}
               </div>
             );
           })}
         </div>
-      </div>
+      </Panel>
 
       {/* Pending Requests */}
-      <div>
-        <h2 className="text-lg font-semibold text-white mb-3">Pending Requests</h2>
-        {requests.filter(r => r.status === "Pending").length === 0 ? (
-          <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-8 text-center text-slate-500">
-            No pending requests
-          </div>
+      <Panel title={`Pending Requests · ${pending.length}`} scroll={false}>
+        {pending.length === 0 ? (
+          <div className="py-4"><EmptyState icon={CalendarDays} title="No pending requests" /></div>
         ) : (
-          <div className="space-y-2">
-            {requests.filter(r => r.status === "Pending").map((r) => (
-              <div key={r.id} className="bg-slate-900/80 border border-slate-800 rounded-xl px-5 py-4 flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-white">{r.member_name}</p>
-                  <p className="text-xs text-slate-400">{r.start_date} → {r.end_date}</p>
-                  {r.reason && <p className="text-xs text-slate-500 mt-1">{r.reason}</p>}
+          <div className="divide-y divide-mdt-line/60">
+            {pending.map((r) => (
+              <div key={r.id} className="px-3 py-2 flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-[12px] font-medium text-mdt-text truncate">{r.member_name}</p>
+                  <p className="text-[10.5px] text-mdt-dim">{r.start_date} → {r.end_date}</p>
+                  {r.reason && <p className="text-[10.5px] text-mdt-dim truncate">{r.reason}</p>}
                 </div>
                 {isAdmin && (
-                  <div className="flex gap-2">
-                    <Button size="sm" onClick={() => handleReview(r.id, "Approved")} className="bg-emerald-600 hover:bg-emerald-700">
-                      <Check className="w-3.5 h-3.5 mr-1" /> Approve
-                    </Button>
-                    <Button size="sm" variant="outline" onClick={() => handleReview(r.id, "Denied")} className="border-red-500/30 text-red-400 hover:bg-red-500/10">
-                      <X className="w-3.5 h-3.5 mr-1" /> Deny
-                    </Button>
+                  <div className="flex gap-1.5 flex-shrink-0">
+                    <Btn variant="primary" icon={Check} onClick={() => handleReview(r.id, "Approved")}>Approve</Btn>
+                    <Btn variant="danger" icon={X} onClick={() => handleReview(r.id, "Denied")}>Deny</Btn>
                   </div>
                 )}
               </div>
             ))}
           </div>
         )}
-      </div>
+      </Panel>
 
       {/* Active LOAs */}
-      <div>
-        <h2 className="text-lg font-semibold text-white mb-3">Active LOAs</h2>
-        {requests.filter(r => r.status === "Approved").length === 0 ? (
-          <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-8 text-center text-slate-500">
-            No active LOAs
-          </div>
+      <Panel title={`Active LOAs · ${active.length}`} scroll={false}>
+        {active.length === 0 ? (
+          <div className="py-4"><EmptyState icon={CalendarDays} title="No active LOAs" /></div>
         ) : (
-          <div className="space-y-2">
-            {requests.filter(r => r.status === "Approved").map((r) => (
-              <div key={r.id} className="bg-slate-900/80 border border-slate-800 rounded-xl px-5 py-4 flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-white">{r.member_name}</p>
-                  <p className="text-xs text-slate-400">{r.start_date} → {r.end_date}</p>
-                  {r.reason && <p className="text-xs text-slate-500 mt-1">{r.reason}</p>}
+          <div className="divide-y divide-mdt-line/60">
+            {active.map((r) => (
+              <div key={r.id} className="px-3 py-2 flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-[12px] font-medium text-mdt-text truncate">{r.member_name}</p>
+                  <p className="text-[10.5px] text-mdt-dim">{r.start_date} → {r.end_date}</p>
+                  {r.reason && <p className="text-[10.5px] text-mdt-dim truncate">{r.reason}</p>}
                 </div>
                 {isAdmin && (
-                  <Button size="sm" variant="outline" onClick={() => { setRemoveTarget(r); setShowRemove(true); }} className="border-amber-500/30 text-amber-400 hover:bg-amber-500/10">
-                    Remove from LOA
-                  </Button>
+                  <Btn onClick={() => { setRemoveTarget(r); setShowRemove(true); }}>Remove from LOA</Btn>
                 )}
               </div>
             ))}
           </div>
         )}
-      </div>
+      </Panel>
 
       <Dialog open={showForm} onOpenChange={setShowForm}>
-        <DialogContent className="bg-slate-900 border-slate-700 text-white max-w-md">
-          <DialogHeader><DialogTitle>New LOA Request</DialogTitle></DialogHeader>
-          <div className="space-y-4 mt-4">
+        <DialogContent className="mdt bg-mdt-surface border-mdt-line text-mdt-text max-w-md rounded-none sm:rounded-none">
+          <DialogHeader><DialogTitle className="text-[13px] font-semibold uppercase tracking-[0.06em]">New LOA Request</DialogTitle></DialogHeader>
+          <div className="space-y-3 mt-2">
             <div>
-              <Label className="text-slate-300">Department</Label>
+              <Label className={labelCls}>Department</Label>
               <Select value={form.department_id} onValueChange={v => setForm({...form, department_id: v, member_id: ""})}>
-                <SelectTrigger className="bg-slate-800 border-slate-700 text-white mt-1"><SelectValue placeholder="Select" /></SelectTrigger>
-                <SelectContent className="bg-slate-800 border-slate-700">
-                  {departments.map(d => <SelectItem key={d.id} value={d.id} className="text-white">{d.name}</SelectItem>)}
+                <SelectTrigger className={selCls}><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectContent className={selContentCls}>
+                  {departments.map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <Label className="text-slate-300">Member</Label>
+              <Label className={labelCls}>Member</Label>
               <Select value={form.member_id} onValueChange={v => setForm({...form, member_id: v})}>
-                <SelectTrigger className="bg-slate-800 border-slate-700 text-white mt-1"><SelectValue placeholder="Select" /></SelectTrigger>
-                <SelectContent className="bg-slate-800 border-slate-700">
+                <SelectTrigger className={selCls}><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectContent className={selContentCls}>
                   {members.filter(m => !form.department_id || m.department_id === form.department_id).map(m => (
-                    <SelectItem key={m.id} value={m.id} className="text-white">{m.name}</SelectItem>
+                    <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-slate-300">Start Date</Label>
-                <Input type="date" value={form.start_date} onChange={e => setForm({...form, start_date: e.target.value})} className="bg-slate-800 border-slate-700 text-white mt-1" />
+                <Label className={labelCls}>Start Date</Label>
+                <Input type="date" value={form.start_date} onChange={e => setForm({...form, start_date: e.target.value})} className={inputCls} />
               </div>
               <div>
-                <Label className="text-slate-300">End Date</Label>
-                <Input type="date" value={form.end_date} onChange={e => setForm({...form, end_date: e.target.value})} className="bg-slate-800 border-slate-700 text-white mt-1" />
+                <Label className={labelCls}>End Date</Label>
+                <Input type="date" value={form.end_date} onChange={e => setForm({...form, end_date: e.target.value})} className={inputCls} />
               </div>
             </div>
             <div>
-              <Label className="text-slate-300">Reason</Label>
-              <Input value={form.reason} onChange={e => setForm({...form, reason: e.target.value})} className="bg-slate-800 border-slate-700 text-white mt-1" placeholder="Optional reason" />
+              <Label className={labelCls}>Reason</Label>
+              <Input value={form.reason} onChange={e => setForm({...form, reason: e.target.value})} className={inputCls} placeholder="Optional reason" />
             </div>
-            <div className="flex justify-end gap-3">
-              <Button variant="ghost" onClick={() => setShowForm(false)} className="text-slate-400">Cancel</Button>
-              <Button onClick={handleSubmit} disabled={!form.member_id || !form.start_date || !form.end_date} className="bg-blue-600 hover:bg-blue-700">Submit</Button>
+            <div className="flex justify-end gap-2 pt-1">
+              <Btn variant="ghost" onClick={() => setShowForm(false)}>Cancel</Btn>
+              <Btn variant="primary" onClick={handleSubmit} disabled={!form.member_id || !form.start_date || !form.end_date}>Submit</Btn>
             </div>
           </div>
         </DialogContent>
       </Dialog>
 
       <Dialog open={showRemove} onOpenChange={setShowRemove}>
-        <DialogContent className="bg-slate-900 border-slate-700 text-white max-w-md">
-          <DialogHeader><DialogTitle>Remove from LOA</DialogTitle></DialogHeader>
-          <div className="space-y-4 mt-4">
-            <p className="text-sm text-slate-400">
+        <DialogContent className="mdt bg-mdt-surface border-mdt-line text-mdt-text max-w-md rounded-none sm:rounded-none">
+          <DialogHeader><DialogTitle className="text-[13px] font-semibold uppercase tracking-[0.06em]">Remove from LOA</DialogTitle></DialogHeader>
+          <div className="space-y-3 mt-2">
+            <p className="text-[12px] text-mdt-muted">
               End {removeTarget?.member_name}'s leave of absence early and return them to active status.
             </p>
             <div>
-              <Label className="text-slate-300">Reason</Label>
-              <Textarea value={removeReason} onChange={e => setRemoveReason(e.target.value)} className="bg-slate-800 border-slate-700 text-white mt-1" placeholder="Reason for early removal" rows={3} />
+              <Label className={labelCls}>Reason</Label>
+              <Textarea value={removeReason} onChange={e => setRemoveReason(e.target.value)} className="rounded-sm bg-mdt-surface-2 border-mdt-line-2 text-mdt-text text-[12px] mt-1" placeholder="Reason for early removal" rows={3} />
             </div>
-            <div className="flex justify-end gap-3">
-              <Button variant="ghost" onClick={() => setShowRemove(false)} className="text-slate-400">Cancel</Button>
-              <Button onClick={handleRemove} className="bg-amber-600 hover:bg-amber-700">Remove from LOA</Button>
+            <div className="flex justify-end gap-2 pt-1">
+              <Btn variant="ghost" onClick={() => setShowRemove(false)}>Cancel</Btn>
+              <Btn variant="primary" onClick={handleRemove}>Remove from LOA</Btn>
             </div>
           </div>
         </DialogContent>

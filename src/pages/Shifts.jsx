@@ -1,14 +1,20 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
-import { Clock, Plus, Download, Play, Square, Search } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Plus, Download, Play, Square } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
+import { Panel, Btn, StatusPill, EmptyState } from "@/components/mdt/ui/primitives";
+import { Clock } from "lucide-react";
 import moment from "moment";
+
+const inputCls = "h-8 rounded-sm bg-mdt-surface-2 border-mdt-line-2 text-mdt-text text-[12px] mt-1";
+const selCls = "h-8 rounded-sm bg-mdt-surface-2 border-mdt-line-2 text-mdt-text text-[12px] mt-1";
+const selContentCls = "bg-mdt-surface-2 border-mdt-line-2 text-mdt-text rounded-sm";
+const labelCls = "text-[10px] font-semibold uppercase tracking-[0.09em] text-mdt-dim";
 
 export default function Shifts() {
   const [shifts, setShifts] = useState([]);
@@ -121,81 +127,69 @@ export default function Shifts() {
   });
 
   if (loading) {
-    return <div className="flex items-center justify-center h-64"><div className="w-8 h-8 border-4 border-slate-700 border-t-blue-500 rounded-full animate-spin" /></div>;
+    return <div className="flex items-center justify-center h-64"><div className="w-7 h-7 border-2 border-mdt-line border-t-mdt-accent rounded-full animate-spin" /></div>;
   }
 
   const filtered = getFiltered();
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Shift Tracking</h1>
-          <p className="text-sm text-slate-400 mt-1">Track and manage member shifts</p>
+          <h1 className="text-[15px] font-semibold text-mdt-text tracking-tight">Shift Tracking</h1>
+          <p className="text-[11.5px] text-mdt-dim">Track and manage member shifts</p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={exportPDF} className="border-slate-700 text-slate-300 hover:bg-slate-800">
-            <Download className="w-4 h-4 mr-2" /> Export PDF
-          </Button>
-          {isAdmin && <Button onClick={() => setShowForm(true)} className="bg-blue-600 hover:bg-blue-700">
-            <Plus className="w-4 h-4 mr-2" /> Log Shift
-          </Button>}
+        <div className="flex gap-1.5">
+          <Btn icon={Download} onClick={exportPDF}>Export PDF</Btn>
+          {isAdmin && <Btn variant="primary" icon={Plus} onClick={() => setShowForm(true)}>Log Shift</Btn>}
         </div>
       </div>
 
-      <div className="flex gap-3">
+      <div className="flex gap-2">
         <Select value={filterDept} onValueChange={setFilterDept}>
-          <SelectTrigger className="w-48 bg-slate-900 border-slate-700 text-white"><SelectValue placeholder="All Departments" /></SelectTrigger>
-          <SelectContent className="bg-slate-800 border-slate-700">
-            <SelectItem value="all" className="text-white">All Departments</SelectItem>
-            {departments.map(d => <SelectItem key={d.id} value={d.id} className="text-white">{d.name}</SelectItem>)}
+          <SelectTrigger className={`w-48 ${selCls} mt-0`}><SelectValue placeholder="All Departments" /></SelectTrigger>
+          <SelectContent className={selContentCls}>
+            <SelectItem value="all">All Departments</SelectItem>
+            {departments.map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
           </SelectContent>
         </Select>
         <Select value={filterStatus} onValueChange={setFilterStatus}>
-          <SelectTrigger className="w-40 bg-slate-900 border-slate-700 text-white"><SelectValue /></SelectTrigger>
-          <SelectContent className="bg-slate-800 border-slate-700">
-            <SelectItem value="all" className="text-white">All Status</SelectItem>
-            <SelectItem value="In Progress" className="text-white">In Progress</SelectItem>
-            <SelectItem value="Completed" className="text-white">Completed</SelectItem>
+          <SelectTrigger className={`w-40 ${selCls} mt-0`}><SelectValue /></SelectTrigger>
+          <SelectContent className={selContentCls}>
+            <SelectItem value="all">All Status</SelectItem>
+            <SelectItem value="In Progress">In Progress</SelectItem>
+            <SelectItem value="Completed">Completed</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
-      <div className="bg-slate-900/80 border border-slate-800 rounded-xl overflow-hidden">
-        <div className="overflow-x-auto">
+      <Panel title={`Shift History · ${filtered.length}`} scroll={false}>
+        <div className="overflow-x-auto mdt-scroll">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-slate-800">
-                <th className="text-left px-5 py-3 text-xs font-medium text-slate-500 uppercase">Member</th>
-                <th className="text-left px-5 py-3 text-xs font-medium text-slate-500 uppercase">Department</th>
-                <th className="text-left px-5 py-3 text-xs font-medium text-slate-500 uppercase">Start</th>
-                <th className="text-left px-5 py-3 text-xs font-medium text-slate-500 uppercase">End</th>
-                <th className="text-left px-5 py-3 text-xs font-medium text-slate-500 uppercase">Hours</th>
-                <th className="text-left px-5 py-3 text-xs font-medium text-slate-500 uppercase">Status</th>
-                <th className="text-right px-5 py-3 text-xs font-medium text-slate-500 uppercase">Action</th>
+              <tr className="border-b border-mdt-line bg-mdt-surface-2">
+                {["Member", "Department", "Start", "End", "Hours", "Status", ""].map((h, i) => (
+                  <th key={i} className={`px-3 h-7 text-[10px] font-semibold uppercase tracking-[0.09em] text-mdt-dim whitespace-nowrap ${i === 6 ? "text-right" : "text-left"}`}>{h}</th>
+                ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/50">
+            <tbody className="divide-y divide-mdt-line/60">
               {filtered.length === 0 && (
-                <tr><td colSpan={7} className="text-center py-12 text-slate-500">No shifts found</td></tr>
+                <tr><td colSpan={7}><EmptyState icon={Clock} title="No shifts found" /></td></tr>
               )}
               {filtered.map((s) => (
-                <tr key={s.id} className="hover:bg-slate-800/30">
-                  <td className="px-5 py-3 text-sm text-white font-medium">{s.member_name || "—"}</td>
-                  <td className="px-5 py-3 text-sm text-slate-400">{getDeptName(s.department_id)}</td>
-                  <td className="px-5 py-3 text-sm text-slate-300">{moment(s.start_time).format("MMM D, h:mm A")}</td>
-                  <td className="px-5 py-3 text-sm text-slate-300">{s.end_time ? moment(s.end_time).format("MMM D, h:mm A") : "—"}</td>
-                  <td className="px-5 py-3 text-sm text-slate-300">{s.duration_hours?.toFixed(1) || "—"}</td>
-                  <td className="px-5 py-3">
-                    <span className={`text-xs px-2 py-1 rounded-full ${s.status === "In Progress" ? "bg-amber-500/10 text-amber-400" : "bg-emerald-500/10 text-emerald-400"}`}>
-                      {s.status}
-                    </span>
+                <tr key={s.id} className="hover:bg-mdt-surface-2">
+                  <td className="px-3 h-9 text-[12px] text-mdt-text font-medium whitespace-nowrap">{s.member_name || "—"}</td>
+                  <td className="px-3 h-9 text-[12px] text-mdt-muted whitespace-nowrap">{getDeptName(s.department_id)}</td>
+                  <td className="px-3 h-9 text-[12px] text-mdt-muted whitespace-nowrap">{moment(s.start_time).format("MMM D, h:mm A")}</td>
+                  <td className="px-3 h-9 text-[12px] text-mdt-muted whitespace-nowrap">{s.end_time ? moment(s.end_time).format("MMM D, h:mm A") : "—"}</td>
+                  <td className="px-3 h-9 text-[12px] text-mdt-muted">{s.duration_hours?.toFixed(1) || "—"}</td>
+                  <td className="px-3 h-9">
+                    <StatusPill tone={s.status === "In Progress" ? "warn" : "ok"}>{s.status}</StatusPill>
                   </td>
-                  <td className="px-5 py-3 text-right">
+                  <td className="px-3 h-9 text-right">
                     {isAdmin && s.status === "In Progress" && (
-                      <Button size="sm" variant="outline" onClick={() => handleClockOut(s)} className="border-slate-700 text-slate-300 hover:bg-slate-800">
-                        <Square className="w-3 h-3 mr-1" /> Clock Out
-                      </Button>
+                      <Btn icon={Square} onClick={() => handleClockOut(s)}>Clock Out</Btn>
                     )}
                   </td>
                 </tr>
@@ -203,41 +197,39 @@ export default function Shifts() {
             </tbody>
           </table>
         </div>
-      </div>
+      </Panel>
 
       <Dialog open={showForm} onOpenChange={setShowForm}>
-        <DialogContent className="bg-slate-900 border-slate-700 text-white max-w-md">
-          <DialogHeader><DialogTitle>Log Shift</DialogTitle></DialogHeader>
-          <div className="space-y-4 mt-4">
+        <DialogContent className="mdt bg-mdt-surface border-mdt-line text-mdt-text max-w-md rounded-none sm:rounded-none">
+          <DialogHeader><DialogTitle className="text-[13px] font-semibold uppercase tracking-[0.06em]">Log Shift</DialogTitle></DialogHeader>
+          <div className="space-y-3 mt-2">
             <div>
-              <Label className="text-slate-300">Department</Label>
+              <Label className={labelCls}>Department</Label>
               <Select value={form.department_id} onValueChange={v => setForm({...form, department_id: v, member_id: ""})}>
-                <SelectTrigger className="bg-slate-800 border-slate-700 text-white mt-1"><SelectValue placeholder="Select department" /></SelectTrigger>
-                <SelectContent className="bg-slate-800 border-slate-700">
-                  {departments.map(d => <SelectItem key={d.id} value={d.id} className="text-white">{d.name}</SelectItem>)}
+                <SelectTrigger className={selCls}><SelectValue placeholder="Select department" /></SelectTrigger>
+                <SelectContent className={selContentCls}>
+                  {departments.map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <Label className="text-slate-300">Member</Label>
+              <Label className={labelCls}>Member</Label>
               <Select value={form.member_id} onValueChange={v => setForm({...form, member_id: v})}>
-                <SelectTrigger className="bg-slate-800 border-slate-700 text-white mt-1"><SelectValue placeholder="Select member" /></SelectTrigger>
-                <SelectContent className="bg-slate-800 border-slate-700">
+                <SelectTrigger className={selCls}><SelectValue placeholder="Select member" /></SelectTrigger>
+                <SelectContent className={selContentCls}>
                   {members.filter(m => !form.department_id || m.department_id === form.department_id).map(m => (
-                    <SelectItem key={m.id} value={m.id} className="text-white">{m.name}</SelectItem>
+                    <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <Label className="text-slate-300">Notes</Label>
-              <Input value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} className="bg-slate-800 border-slate-700 text-white mt-1" placeholder="Optional notes..." />
+              <Label className={labelCls}>Notes</Label>
+              <Input value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} className={inputCls} placeholder="Optional notes..." />
             </div>
-            <div className="flex justify-end gap-3">
-              <Button variant="ghost" onClick={() => setShowForm(false)} className="text-slate-400">Cancel</Button>
-              <Button onClick={handleClockIn} disabled={!form.member_id} className="bg-emerald-600 hover:bg-emerald-700">
-                <Play className="w-4 h-4 mr-2" /> Clock In
-              </Button>
+            <div className="flex justify-end gap-2 pt-1">
+              <Btn variant="ghost" onClick={() => setShowForm(false)}>Cancel</Btn>
+              <Btn variant="primary" icon={Play} onClick={handleClockIn} disabled={!form.member_id}>Clock In</Btn>
             </div>
           </div>
         </DialogContent>

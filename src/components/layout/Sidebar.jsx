@@ -3,34 +3,41 @@ import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, Users, Clock, CalendarDays, Network, Award,
   FileText, Car, Shirt, Settings, ChevronLeft, ChevronRight,
-  Shield, Flame, HeartPulse, Landmark, Lock, Bike, LogOut, Menu, X, RefreshCw, Home, Radio } from
+  Shield, LogOut, Menu, X, Home } from
 "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
 
-const categoryIcons = {
-  "Police & Sheriff": Shield,
-  "Fire & EMS": Flame,
-  "Hospitals & Medical": HeartPulse,
-  "Government & State": Landmark,
-  "Private Security": Lock,
-  "Motorcycle Clubs": Bike
-};
-
-const navItems = [
-{ label: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
-{ label: "Departments", path: "/departments", icon: Shield, adminOnly: true },
-{ label: "Roster", path: "/roster", icon: Users, adminOnly: true },
-{ label: "Shifts", path: "/shifts", icon: Clock },
-{ label: "LOA Calendar", path: "/loa", icon: CalendarDays },
-{ label: "Org Chart", path: "/org-chart", icon: Network },
-{ label: "Certifications", path: "/certifications", icon: Award },
-{ label: "Documents", path: "/documents", icon: FileText },
-{ label: "Vehicles", path: "/vehicles", icon: Car },
-{ label: "Uniforms", path: "/uniforms", icon: Shirt },
-{ label: "Settings", path: "/settings", icon: Settings, adminOnly: true }];
-
+const sections = [
+  {
+    title: "Operations",
+    items: [
+      { label: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
+      { label: "Shifts", path: "/shifts", icon: Clock },
+      { label: "LOA Calendar", path: "/loa", icon: CalendarDays },
+      { label: "Org Chart", path: "/org-chart", icon: Network },
+    ],
+  },
+  {
+    title: "Resources",
+    items: [
+      { label: "Certifications", path: "/certifications", icon: Award },
+      { label: "Documents", path: "/documents", icon: FileText },
+      { label: "Vehicles", path: "/vehicles", icon: Car },
+      { label: "Uniforms", path: "/uniforms", icon: Shirt },
+    ],
+  },
+  {
+    title: "Management",
+    adminOnly: true,
+    items: [
+      { label: "Departments", path: "/departments", icon: Shield },
+      { label: "Roster", path: "/roster", icon: Users },
+      { label: "Settings", path: "/settings", icon: Settings },
+    ],
+  },
+];
 
 export default function Sidebar() {
   const location = useLocation();
@@ -45,112 +52,125 @@ export default function Sidebar() {
     base44.auth.logout("/login");
   };
 
-  const visibleNavItems = navItems.filter(item => !item.adminOnly || isAdmin);
+  const visibleSections = sections.filter((s) => !s.adminOnly || isAdmin);
 
-  const sidebarContent =
-  <div className="flex flex-col h-full">
-      <div className="p-4 border-b border-slate-700/50">
-        <div className="flex items-center justify-between">
-          {!collapsed &&
-        <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
-                <Shield className="w-5 h-5 text-white" />
-              </div>
-              <span className="font-bold text-white text-lg tracking-tight">OCRP ROSTER</span>
-            </div>
-        }
-          <button
+  const navRow = (item) => {
+    const on = location.pathname === item.path;
+    return (
+      <Link
+        key={item.path}
+        to={item.path}
+        onClick={() => setMobileOpen(false)}
+        title={collapsed ? item.label : undefined}
+        className={`flex items-center gap-2 px-2.5 h-7 text-[12px] border-b border-mdt-line/60 ${
+          on
+            ? "bg-mdt-accent/15 text-mdt-text"
+            : "text-mdt-muted hover:bg-mdt-surface-3/60 hover:text-mdt-text"
+        }`}
+        style={{ boxShadow: on ? "inset 2px 0 0 hsl(var(--mdt-accent))" : undefined }}
+      >
+        <item.icon className="w-3.5 h-3.5 flex-shrink-0" />
+        {!collapsed && <span className="truncate">{item.label}</span>}
+      </Link>
+    );
+  };
+
+  const sidebarContent = (
+    <div className="flex flex-col h-full">
+      <div className="h-11 px-3 flex items-center justify-between border-b border-mdt-line bg-mdt-surface-2 flex-shrink-0">
+        {!collapsed && (
+          <div className="min-w-0">
+            <div className="text-[12.5px] font-semibold leading-tight truncate">OCRP Roster</div>
+            <div className="text-[10px] uppercase tracking-[0.1em] text-mdt-dim truncate">Personnel · Operations</div>
+          </div>
+        )}
+        <button
           onClick={() => setCollapsed(!collapsed)}
-          className="hidden lg:flex p-1.5 rounded-lg hover:bg-slate-700/50 text-slate-400 hover:text-white transition-colors">
-          
-            {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-          </button>
-        </div>
+          className="hidden lg:flex items-center justify-center w-6 h-6 rounded-sm text-mdt-dim hover:bg-mdt-surface-3 hover:text-mdt-text flex-shrink-0"
+        >
+          {collapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronLeft className="w-3.5 h-3.5" />}
+        </button>
       </div>
 
-      <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
+      <nav className="flex-1 min-h-0 overflow-auto mdt-scroll">
         <Link
           to="/"
-          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-700/40 transition-all mb-2 border-b border-slate-700/30 pb-3"
+          onClick={() => setMobileOpen(false)}
+          title={collapsed ? "Home" : undefined}
+          className="flex items-center gap-2 px-2.5 h-7 text-[12px] text-mdt-muted hover:bg-mdt-surface-3/60 hover:text-mdt-text border-b border-mdt-line"
         >
-          <Home className="w-4.5 h-4.5 flex-shrink-0" />
-          {!collapsed && <span>Back to Home</span>}
+          <Home className="w-3.5 h-3.5 flex-shrink-0" />
+          {!collapsed && <span className="truncate">Back to Home</span>}
         </Link>
-        {visibleNavItems.map((item) => {
-        const isActive = location.pathname === item.path;
-        return (
-          <Link
-            key={item.path}
-            to={item.path}
-            onClick={() => setMobileOpen(false)}
-            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 ${
-            isActive ?
-            "bg-blue-500/15 text-blue-400 border border-blue-500/20" :
-            "text-slate-400 hover:text-white hover:bg-slate-700/40"}`
-            }>
-            
-              <item.icon className={`w-4.5 h-4.5 flex-shrink-0 ${isActive ? "text-blue-400" : ""}`} />
-              {!collapsed && <span>{item.label}</span>}
-            </Link>);
-
-      })}
+        {visibleSections.map((section) => (
+          <div key={section.title}>
+            {!collapsed && (
+              <p className="h-6 px-2.5 flex items-center text-[10px] font-semibold uppercase tracking-[0.1em] text-mdt-dim bg-mdt-surface-3">
+                {section.title}
+              </p>
+            )}
+            {section.items.map(navRow)}
+          </div>
+        ))}
       </nav>
 
-      <div className="p-3 border-t border-slate-700/50 space-y-1">
-        {canAdmin &&
-        <Link
-          to="/cad/admin"
-          onClick={() => setMobileOpen(false)}
-          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-blue-400 hover:bg-blue-500/10 transition-all w-full">
-            <Shield className="w-4.5 h-4.5" />
+      <div className="border-t border-mdt-line flex-shrink-0">
+        {canAdmin && (
+          <Link
+            to="/cad/admin"
+            onClick={() => setMobileOpen(false)}
+            title={collapsed ? "Admin Console" : undefined}
+            className="flex items-center gap-2 px-2.5 h-8 text-[11.5px] text-mdt-muted hover:text-mdt-text hover:bg-mdt-surface-3/60 border-b border-mdt-line/60"
+          >
+            <Shield className="w-3.5 h-3.5 flex-shrink-0" />
             {!collapsed && <span>Admin Console</span>}
           </Link>
-        }
+        )}
         <button
-        onClick={handleLogout}
-        className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-all w-full">
-        
-          <LogOut className="w-4.5 h-4.5" />
+          onClick={handleLogout}
+          className="w-full flex items-center gap-2 px-2.5 h-8 text-[11.5px] text-mdt-muted hover:text-red-300 hover:bg-red-500/10"
+        >
+          <LogOut className="w-3.5 h-3.5 flex-shrink-0" />
           {!collapsed && <span>Logout</span>}
         </button>
       </div>
-    </div>;
-
+    </div>
+  );
 
   return (
     <>
       {/* Mobile toggle */}
       <button
         onClick={() => setMobileOpen(true)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-slate-800 rounded-lg text-white shadow-lg">
-        
-        <Menu className="w-5 h-5" />
+        className="lg:hidden fixed top-3 left-3 z-50 w-8 h-8 flex items-center justify-center bg-mdt-surface-2 border border-mdt-line rounded-sm text-mdt-text"
+      >
+        <Menu className="w-4 h-4" />
       </button>
 
       {/* Mobile overlay */}
-      {mobileOpen &&
-      <div className="lg:hidden fixed inset-0 z-50">
+      {mobileOpen && (
+        <div className="lg:hidden fixed inset-0 z-50 mdt">
           <div className="absolute inset-0 bg-black/60" onClick={() => setMobileOpen(false)} />
-          <div className="relative w-64 h-full bg-slate-900 border-r border-slate-700/50 shadow-2xl">
+          <div className="relative w-60 h-full bg-mdt-surface border-r border-mdt-line text-mdt-text">
             <button
-            onClick={() => setMobileOpen(false)}
-            className="absolute top-4 right-4 text-slate-400 hover:text-white">
-            
-              <X className="w-5 h-5" />
+              onClick={() => setMobileOpen(false)}
+              className="absolute top-3 right-3 z-10 text-mdt-dim hover:text-mdt-text"
+            >
+              <X className="w-4 h-4" />
             </button>
             {sidebarContent}
           </div>
         </div>
-      }
+      )}
 
       {/* Desktop sidebar */}
       <div
-        className={`hidden lg:flex flex-col h-screen bg-slate-900 border-r border-slate-700/50 transition-all duration-200 ${
-        collapsed ? "w-16" : "w-60"}`
-        }>
-        
+        className={`hidden lg:flex flex-col h-screen bg-mdt-surface border-r border-mdt-line text-mdt-text transition-all duration-150 flex-shrink-0 ${
+          collapsed ? "w-11" : "w-[188px] xl:w-[212px]"
+        }`}
+      >
         {sidebarContent}
       </div>
-    </>);
-
+    </>
+  );
 }

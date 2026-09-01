@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { Network, ChevronDown, ChevronRight, Users } from "lucide-react";
+import { Network, ChevronDown, ChevronRight } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Panel, StatusPill, EmptyState } from "@/components/mdt/ui/primitives";
 
 export default function OrgChart() {
   const [members, setMembers] = useState([]);
@@ -31,7 +32,7 @@ export default function OrgChart() {
   }, []);
 
   if (loading) {
-    return <div className="flex items-center justify-center h-64"><div className="w-8 h-8 border-4 border-slate-700 border-t-blue-500 rounded-full animate-spin" /></div>;
+    return <div className="flex items-center justify-center h-64"><div className="w-7 h-7 border-2 border-mdt-line border-t-mdt-accent rounded-full animate-spin" /></div>;
   }
 
   const toggleExpand = (key) => {
@@ -40,18 +41,20 @@ export default function OrgChart() {
 
   const filteredDepts = selectedDept === "all" ? departments : departments.filter(d => d.id === selectedDept);
 
+  const statusTone = (s) => (s === "Active" ? "ok" : s === "On LOA" ? "warn" : "neutral");
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Org Chart</h1>
-          <p className="text-sm text-slate-400 mt-1">Chain of command and hierarchy</p>
+          <h1 className="text-[15px] font-semibold text-mdt-text tracking-tight">Org Chart</h1>
+          <p className="text-[11.5px] text-mdt-dim">Chain of command and hierarchy</p>
         </div>
         <Select value={selectedDept} onValueChange={setSelectedDept}>
-          <SelectTrigger className="w-48 bg-slate-900 border-slate-700 text-white"><SelectValue /></SelectTrigger>
-          <SelectContent className="bg-slate-800 border-slate-700">
-            <SelectItem value="all" className="text-white">All Departments</SelectItem>
-            {departments.map(d => <SelectItem key={d.id} value={d.id} className="text-white">{d.name}</SelectItem>)}
+          <SelectTrigger className="w-48 h-8 rounded-sm bg-mdt-surface-2 border-mdt-line-2 text-mdt-text text-[12px]"><SelectValue /></SelectTrigger>
+          <SelectContent className="bg-mdt-surface-2 border-mdt-line-2 text-mdt-text rounded-sm">
+            <SelectItem value="all">All Departments</SelectItem>
+            {departments.map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
           </SelectContent>
         </Select>
       </div>
@@ -61,50 +64,38 @@ export default function OrgChart() {
         const ranks = (dept.ranks || []).sort((a, b) => b.level - a.level);
 
         return (
-          <div key={dept.id} className="bg-slate-900/80 border border-slate-800 rounded-xl overflow-hidden">
-            <div className="px-5 py-4 border-b border-slate-800 bg-slate-800/30">
-              <h2 className="font-semibold text-white flex items-center gap-2">
-                <Network className="w-4 h-4 text-blue-400" />
-                {dept.name}
-              </h2>
-            </div>
-            <div className="p-4 space-y-1">
+          <Panel key={dept.id} title={dept.name} scroll={false}>
+            <div className="p-2">
               {ranks.map((rank) => {
                 const key = `${dept.id}-${rank.name}`;
                 const rankMembers = deptMembers.filter(m => m.rank === rank.name);
                 const isExpanded = expanded[key];
 
                 return (
-                  <div key={key} style={{ marginLeft: `${(10 - rank.level) * 16}px` }}>
+                  <div key={key} style={{ marginLeft: `${(10 - rank.level) * 14}px` }}>
                     <button
                       onClick={() => toggleExpand(key)}
-                      className="flex items-center gap-2 py-2 px-3 rounded-lg hover:bg-slate-800/50 transition-colors w-full text-left"
+                      className="flex items-center gap-2 h-7 px-2 hover:bg-mdt-surface-2 w-full text-left border-b border-mdt-line/40"
                     >
                       {rankMembers.length > 0 ? (
-                        isExpanded ? <ChevronDown className="w-3.5 h-3.5 text-slate-500" /> : <ChevronRight className="w-3.5 h-3.5 text-slate-500" />
+                        isExpanded ? <ChevronDown className="w-3 h-3 text-mdt-dim" /> : <ChevronRight className="w-3 h-3 text-mdt-dim" />
                       ) : (
-                        <div className="w-3.5" />
+                        <div className="w-3" />
                       )}
-                      <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: rank.color || "#64748B" }} />
-                      <span className="text-sm font-medium text-white">{rank.name}</span>
-                      <span className="text-xs text-slate-500 ml-1">({rankMembers.length})</span>
+                      <span className="w-2 h-2 rounded-sm flex-shrink-0" style={{ backgroundColor: rank.color || "#64748B" }} />
+                      <span className="text-[12px] font-medium text-mdt-text">{rank.name}</span>
+                      <span className="text-[10.5px] text-mdt-dim">({rankMembers.length})</span>
                     </button>
                     {isExpanded && rankMembers.length > 0 && (
-                      <div className="ml-8 space-y-1 pb-1">
+                      <div className="ml-7">
                         {rankMembers.map((m) => (
-                          <div key={m.id} className="flex items-center gap-2 py-1.5 px-3 rounded text-sm">
-                            <div className="w-6 h-6 rounded-full bg-slate-800 flex items-center justify-center text-[10px] font-bold text-slate-300">
+                          <div key={m.id} className="flex items-center gap-2 h-7 px-2 text-[12px] border-b border-mdt-line/40">
+                            <div className="w-5 h-5 bg-mdt-surface-3 border border-mdt-line-2 flex items-center justify-center text-[9px] font-bold text-mdt-muted flex-shrink-0">
                               {m.name?.charAt(0)?.toUpperCase()}
                             </div>
-                            <span className="text-slate-300">{m.name}</span>
-                            {m.badge_number && <span className="text-xs text-slate-500">#{m.badge_number}</span>}
-                            <span className={`text-[10px] px-1.5 py-0.5 rounded-full ml-auto ${
-                              m.status === "Active" ? "bg-emerald-500/10 text-emerald-400" :
-                              m.status === "On LOA" ? "bg-amber-500/10 text-amber-400" :
-                              "bg-slate-500/10 text-slate-400"
-                            }`}>
-                              {m.status}
-                            </span>
+                            <span className="text-mdt-muted truncate">{m.name}</span>
+                            {m.badge_number && <span className="text-[10.5px] text-mdt-dim">#{m.badge_number}</span>}
+                            <span className="ml-auto"><StatusPill tone={statusTone(m.status)}>{m.status}</StatusPill></span>
                           </div>
                         ))}
                       </div>
@@ -113,10 +104,10 @@ export default function OrgChart() {
                 );
               })}
               {ranks.length === 0 && (
-                <p className="text-sm text-slate-500 text-center py-4">No ranks configured for this department</p>
+                <div className="py-2"><EmptyState icon={Network} title="No ranks configured for this department" /></div>
               )}
             </div>
-          </div>
+          </Panel>
         );
       })}
     </div>

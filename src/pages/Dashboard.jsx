@@ -2,10 +2,11 @@ import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/lib/AuthContext";
-import { 
-  Users, Clock, CalendarDays, Shield, Flame, HeartPulse, 
-  Landmark, Lock, Bike, Radio, TrendingUp, AlertCircle, ArrowRight, Activity
+import {
+  Users, Clock, CalendarDays, Shield, Flame, HeartPulse,
+  Landmark, Lock, Bike, Radio, ArrowRight, Activity
 } from "lucide-react";
+import { Panel, StatusPill, EmptyState } from "@/components/mdt/ui/primitives";
 
 const categoryIcons = {
   "Police & Sheriff": Shield,
@@ -17,30 +18,6 @@ const categoryIcons = {
   "Civilians": Users,
   "Communications": Radio,
   "Other": Shield,
-};
-
-const categoryColors = {
-  "Police & Sheriff": "from-blue-500/20 to-blue-600/5 border-blue-500/20",
-  "Fire & EMS": "from-red-500/20 to-red-600/5 border-red-500/20",
-  "Hospitals & Medical": "from-emerald-500/20 to-emerald-600/5 border-emerald-500/20",
-  "Government & State": "from-amber-500/20 to-amber-600/5 border-amber-500/20",
-  "Private Security": "from-purple-500/20 to-purple-600/5 border-purple-500/20",
-  "Motorcycle Clubs": "from-orange-500/20 to-orange-600/5 border-orange-500/20",
-  "Civilians": "from-teal-500/20 to-teal-600/5 border-teal-500/20",
-  "Communications": "from-cyan-500/20 to-cyan-600/5 border-cyan-500/20",
-  "Other": "from-slate-500/20 to-slate-600/5 border-slate-500/20",
-};
-
-const categoryIconColors = {
-  "Police & Sheriff": "text-blue-400",
-  "Fire & EMS": "text-red-400",
-  "Hospitals & Medical": "text-emerald-400",
-  "Government & State": "text-amber-400",
-  "Private Security": "text-purple-400",
-  "Motorcycle Clubs": "text-orange-400",
-  "Civilians": "text-teal-400",
-  "Communications": "text-cyan-400",
-  "Other": "text-slate-400",
 };
 
 export default function Dashboard() {
@@ -77,100 +54,107 @@ export default function Dashboard() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-4 border-slate-700 border-t-blue-500 rounded-full animate-spin" />
+        <div className="w-7 h-7 border-2 border-mdt-line border-t-mdt-accent rounded-full animate-spin" />
       </div>
     );
   }
 
-  const activeMembers = members.filter(m => m.status === "Active").length;
-  const onLoa = members.filter(m => m.status === "On LOA").length;
+  const activeMembers = members.filter((m) => m.status === "Active").length;
 
   const stats = [
-    { label: "Total Members", value: members.length, icon: Users, color: "text-blue-400" },
-    { label: "Active", value: activeMembers, icon: Activity, color: "text-emerald-400" },
-    { label: "On Duty", value: shifts.length, icon: Clock, color: "text-amber-400" },
-    { label: "Pending LOA", value: loaRequests.length, icon: CalendarDays, color: "text-purple-400" },
+    { label: "Total Members", value: members.length, icon: Users },
+    { label: "Active", value: activeMembers, icon: Activity },
+    { label: "On Duty", value: shifts.length, icon: Clock },
+    { label: "Pending LOA", value: loaRequests.length, icon: CalendarDays },
   ];
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold text-white tracking-tight">Dashboard</h1>
-        <p className="text-slate-400 mt-1">Overview of all departments and operations</p>
+    <div className="space-y-3">
+      <div className="flex items-baseline justify-between">
+        <div>
+          <h1 className="text-[15px] font-semibold text-mdt-text tracking-tight">Dashboard</h1>
+          <p className="text-[11.5px] text-mdt-dim">Overview of all departments and operations</p>
+        </div>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
         {stats.map((stat) => (
-          <div key={stat.label} className="bg-slate-900/80 border border-slate-800 rounded-xl p-5">
-            <div className="flex items-center justify-between mb-3">
-              <stat.icon className={`w-5 h-5 ${stat.color}`} />
-              <TrendingUp className="w-4 h-4 text-slate-600" />
+          <div key={stat.label} className="bg-mdt-surface border border-mdt-line px-3 py-2.5 flex items-center gap-3">
+            <div className="w-8 h-8 flex items-center justify-center bg-mdt-surface-3 border border-mdt-line-2 flex-shrink-0">
+              <stat.icon className="w-4 h-4 text-mdt-muted" />
             </div>
-            <p className="text-2xl font-bold text-white">{stat.value}</p>
-            <p className="text-xs text-slate-500 mt-1">{stat.label}</p>
+            <div className="min-w-0">
+              <p className="text-[17px] font-bold text-mdt-text leading-tight">{stat.value}</p>
+              <p className="text-[10px] uppercase tracking-[0.08em] text-mdt-dim truncate">{stat.label}</p>
+            </div>
           </div>
         ))}
       </div>
 
       {/* Departments */}
-      <div>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-white">Departments</h2>
-          <Link to={isAdmin ? "/departments" : "/org-chart"} className="text-sm text-blue-400 hover:text-blue-300 flex items-center gap-1">
-            View All <ArrowRight className="w-3.5 h-3.5" />
+      <Panel
+        title="Departments"
+        actions={
+          <Link
+            to={isAdmin ? "/departments" : "/org-chart"}
+            className="flex items-center gap-1 text-[11px] text-mdt-muted hover:text-mdt-text"
+          >
+            View All <ArrowRight className="w-3 h-3" />
           </Link>
-        </div>
+        }
+        scroll={false}
+      >
         {departments.length === 0 ? (
-          <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-12 text-center">
-            <Shield className="w-10 h-10 text-slate-600 mx-auto mb-3" />
-            <p className="text-slate-400 mb-2">No departments yet</p>
-            {isAdmin && (
-            <Link to="/departments" className="text-sm text-blue-400 hover:text-blue-300">
-              Create your first department →
-            </Link>
-            )}
+          <div className="py-8">
+            <EmptyState
+              icon={Shield}
+              title="No departments yet"
+              hint={isAdmin ? "Create your first department from the Departments page" : undefined}
+            />
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-px bg-mdt-line">
             {departments.map((dept) => {
               const Icon = categoryIcons[dept.category] || Shield;
-              const deptMembers = members.filter(m => m.department_id === dept.id || (m.additional_department_ids || []).includes(dept.id));
-              const activeCount = deptMembers.filter(m => m.status === "Active").length;
+              const deptMembers = members.filter(
+                (m) => m.department_id === dept.id || (m.additional_department_ids || []).includes(dept.id)
+              );
+              const activeCount = deptMembers.filter((m) => m.status === "Active").length;
               return (
                 <Link
                   key={dept.id}
                   to={isAdmin ? `/departments/${dept.id}` : "/org-chart"}
-                  className={`bg-gradient-to-br ${categoryColors[dept.category] || categoryColors["Other"]} border rounded-xl p-5 hover:scale-[1.02] transition-transform duration-150`}
+                  className="bg-mdt-surface hover:bg-mdt-surface-2 p-3 block"
                 >
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-3">
-                      {dept.logo_url ? (
-                        <img src={dept.logo_url} alt="" className="w-10 h-10 rounded-lg object-cover" />
-                      ) : (
-                        <div className="w-10 h-10 rounded-lg bg-slate-800/80 flex items-center justify-center">
-                          <Icon className={`w-5 h-5 ${categoryIconColors[dept.category] || "text-slate-400"}`} />
-                        </div>
-                      )}
-                      <div>
-                        <h3 className="font-semibold text-white">{dept.name}</h3>
-                        <p className="text-xs text-slate-400">{dept.category}</p>
+                  <div className="flex items-center gap-2.5">
+                    {dept.logo_url ? (
+                      <img src={dept.logo_url} alt="" className="w-8 h-8 object-cover flex-shrink-0" />
+                    ) : (
+                      <div className="w-8 h-8 bg-mdt-surface-3 border border-mdt-line-2 flex items-center justify-center flex-shrink-0">
+                        <Icon className="w-4 h-4 text-mdt-muted" />
                       </div>
+                    )}
+                    <div className="min-w-0">
+                      <h3 className="text-[12.5px] font-semibold text-mdt-text truncate">{dept.name}</h3>
+                      <p className="text-[10px] uppercase tracking-[0.08em] text-mdt-dim truncate">{dept.category}</p>
                     </div>
                   </div>
-                  <div className="mt-4 flex items-center gap-4">
+                  <div className="mt-2.5 flex items-center gap-4">
                     <div>
-                      <p className="text-lg font-bold text-white">{deptMembers.length}</p>
-                      <p className="text-xs text-slate-500">Members</p>
+                      <p className="text-[13px] font-bold text-mdt-text leading-tight">{deptMembers.length}</p>
+                      <p className="text-[9.5px] uppercase tracking-[0.08em] text-mdt-dim">Members</p>
                     </div>
                     <div>
-                      <p className="text-lg font-bold text-emerald-400">{activeCount}</p>
-                      <p className="text-xs text-slate-500">Active</p>
+                      <p className="text-[13px] font-bold text-emerald-300 leading-tight">{activeCount}</p>
+                      <p className="text-[9.5px] uppercase tracking-[0.08em] text-mdt-dim">Active</p>
                     </div>
                     {dept.max_slots && (
                       <div>
-                        <p className="text-lg font-bold text-amber-400">{dept.max_slots - deptMembers.length}</p>
-                        <p className="text-xs text-slate-500">Open Slots</p>
+                        <p className="text-[13px] font-bold text-amber-300 leading-tight">
+                          {dept.max_slots - deptMembers.length}
+                        </p>
+                        <p className="text-[9.5px] uppercase tracking-[0.08em] text-mdt-dim">Open Slots</p>
                       </div>
                     )}
                   </div>
@@ -179,34 +163,31 @@ export default function Dashboard() {
             })}
           </div>
         )}
-      </div>
+      </Panel>
 
       {/* Pending LOA */}
       {loaRequests.length > 0 && (
-        <div>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-              <AlertCircle className="w-4.5 h-4.5 text-amber-400" />
-              Pending LOA Requests
-            </h2>
-            <Link to="/loa" className="text-sm text-blue-400 hover:text-blue-300 flex items-center gap-1">
-              View All <ArrowRight className="w-3.5 h-3.5" />
+        <Panel
+          title="Pending LOA Requests"
+          actions={
+            <Link to="/loa" className="flex items-center gap-1 text-[11px] text-mdt-muted hover:text-mdt-text">
+              View All <ArrowRight className="w-3 h-3" />
             </Link>
-          </div>
-          <div className="bg-slate-900/80 border border-slate-800 rounded-xl divide-y divide-slate-800">
+          }
+          scroll={false}
+        >
+          <div className="divide-y divide-mdt-line/60">
             {loaRequests.slice(0, 5).map((loa) => (
-              <div key={loa.id} className="px-5 py-3 flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-white">{loa.member_name || "Unknown"}</p>
-                  <p className="text-xs text-slate-500">{loa.start_date} — {loa.end_date}</p>
+              <div key={loa.id} className="px-3 h-9 flex items-center justify-between">
+                <div className="min-w-0 flex items-baseline gap-2">
+                  <p className="text-[12px] font-medium text-mdt-text truncate">{loa.member_name || "Unknown"}</p>
+                  <p className="text-[10.5px] text-mdt-dim">{loa.start_date} — {loa.end_date}</p>
                 </div>
-                <span className="text-xs px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                  Pending
-                </span>
+                <StatusPill tone="warn">Pending</StatusPill>
               </div>
             ))}
           </div>
-        </div>
+        </Panel>
       )}
     </div>
   );

@@ -6,10 +6,10 @@ import { useCommunityBranding } from "@/hooks/useCommunityBranding";
 export default function AppLayout() {
   useCommunityBranding();
   return (
-    <div className="flex h-screen bg-slate-950 overflow-hidden">
+    <div className="mdt flex h-screen bg-mdt-bg text-mdt-text overflow-hidden">
       <Sidebar />
-      <main className="flex-1 overflow-y-auto">
-        <div className="p-4 lg:p-8 pt-16 lg:pt-8">
+      <main className="flex-1 min-w-0 overflow-y-auto mdt-scroll">
+        <div className="p-3 lg:p-4 pt-14 lg:pt-4">
           <Outlet />
         </div>
       </main>

@@ -2,12 +2,18 @@ import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
 import { Award, Plus, Edit, Trash2, UserPlus, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
+import { Btn, EmptyState } from "@/components/mdt/ui/primitives";
+import ConfirmDialog from "@/components/mdt/ui/ConfirmDialog";
+
+const inputCls = "h-8 rounded-sm bg-mdt-surface-2 border-mdt-line-2 text-mdt-text text-[12px] mt-1";
+const selCls = "h-8 rounded-sm bg-mdt-surface-2 border-mdt-line-2 text-mdt-text text-[12px] mt-1";
+const selContentCls = "bg-mdt-surface-2 border-mdt-line-2 text-mdt-text rounded-sm";
+const labelCls = "text-[10px] font-semibold uppercase tracking-[0.09em] text-mdt-dim";
 
 export default function Certifications() {
   const [certs, setCerts] = useState([]);
@@ -18,6 +24,7 @@ export default function Certifications() {
   const [editing, setEditing] = useState(null);
   const [showAssign, setShowAssign] = useState(null);
   const [assignMemberId, setAssignMemberId] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState(null);
   const [form, setForm] = useState({ name: "", department_id: "", description: "", color: "#3B82F6" });
   const { toast } = useToast();
   const { user } = useAuth();
@@ -57,7 +64,6 @@ export default function Certifications() {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm("Delete this certification?")) return;
     await base44.entities.Certification.delete(id);
     toast({ title: "Deleted" });
     loadData();
@@ -92,56 +98,53 @@ export default function Certifications() {
   const getDeptName = (id) => departments.find(d => d.id === id)?.name || "—";
 
   if (loading) {
-    return <div className="flex items-center justify-center h-64"><div className="w-8 h-8 border-4 border-slate-700 border-t-blue-500 rounded-full animate-spin" /></div>;
+    return <div className="flex items-center justify-center h-64"><div className="w-7 h-7 border-2 border-mdt-line border-t-mdt-accent rounded-full animate-spin" /></div>;
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Certifications</h1>
-          <p className="text-sm text-slate-400 mt-1">Manage certifications and assignments</p>
+          <h1 className="text-[15px] font-semibold text-mdt-text tracking-tight">Certifications</h1>
+          <p className="text-[11.5px] text-mdt-dim">Manage certifications and assignments</p>
         </div>
-        {isAdmin && <Button onClick={() => { setEditing(null); setForm({ name: "", department_id: "", description: "", color: "#3B82F6" }); setShowForm(true); }} className="bg-blue-600 hover:bg-blue-700">
-          <Plus className="w-4 h-4 mr-2" /> New Certification
-        </Button>}
+        {isAdmin && <Btn variant="primary" icon={Plus} onClick={() => { setEditing(null); setForm({ name: "", department_id: "", description: "", color: "#3B82F6" }); setShowForm(true); }}>New Certification</Btn>}
       </div>
 
       {certs.length === 0 ? (
-        <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-12 text-center">
-          <Award className="w-10 h-10 text-slate-600 mx-auto mb-3" />
-          <p className="text-slate-400">No certifications yet</p>
+        <div className="bg-mdt-surface border border-mdt-line py-10">
+          <EmptyState icon={Award} title="No certifications yet" />
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2">
           {certs.map((cert) => {
             const certified = members.filter(m => m.certifications?.includes(cert.name));
             return (
-              <div key={cert.id} className="bg-slate-900/80 border border-slate-800 rounded-xl p-5">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: cert.color + "20" }}>
+              <div key={cert.id} className="bg-mdt-surface border border-mdt-line p-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-8 h-8 flex items-center justify-center border border-mdt-line-2 flex-shrink-0" style={{ backgroundColor: cert.color + "20" }}>
                       <Award className="w-4 h-4" style={{ color: cert.color }} />
                     </div>
-                    <div>
-                      <h3 className="font-semibold text-white">{cert.name}</h3>
-                      <p className="text-xs text-slate-500">{getDeptName(cert.department_id)}</p>
+                    <div className="min-w-0">
+                      <h3 className="text-[12.5px] font-semibold text-mdt-text truncate">{cert.name}</h3>
+                      <p className="text-[10px] uppercase tracking-[0.08em] text-mdt-dim truncate">{getDeptName(cert.department_id)}</p>
                     </div>
                   </div>
-                  <div className={isAdmin ? "flex gap-1" : "hidden"}>
-                    <button onClick={() => setShowAssign(cert)} className="p-1.5 rounded-lg hover:bg-slate-700 text-slate-400"><UserPlus className="w-3.5 h-3.5" /></button>
-                    <button onClick={() => { setEditing(cert); setForm({ name: cert.name, department_id: cert.department_id, description: cert.description || "", color: cert.color || "#3B82F6" }); setShowForm(true); }} className="p-1.5 rounded-lg hover:bg-slate-700 text-slate-400"><Edit className="w-3.5 h-3.5" /></button>
-                    <button onClick={() => handleDelete(cert.id)} className="p-1.5 rounded-lg hover:bg-red-500/10 text-slate-400 hover:text-red-400"><Trash2 className="w-3.5 h-3.5" /></button>
+                  <div className={isAdmin ? "flex gap-0.5 flex-shrink-0" : "hidden"}>
+                    <button onClick={() => setShowAssign(cert)} className="w-6 h-6 flex items-center justify-center rounded-sm text-mdt-dim hover:bg-mdt-surface-3 hover:text-mdt-text"><UserPlus className="w-3.5 h-3.5" /></button>
+                    <button onClick={() => { setEditing(cert); setForm({ name: cert.name, department_id: cert.department_id, description: cert.description || "", color: cert.color || "#3B82F6" }); setShowForm(true); }} className="w-6 h-6 flex items-center justify-center rounded-sm text-mdt-dim hover:bg-mdt-surface-3 hover:text-mdt-text"><Edit className="w-3.5 h-3.5" /></button>
+                    <button onClick={() => setDeleteTarget(cert)} className="w-6 h-6 flex items-center justify-center rounded-sm text-mdt-dim hover:bg-red-500/10 hover:text-red-300"><Trash2 className="w-3.5 h-3.5" /></button>
                   </div>
                 </div>
-                {cert.description && <p className="text-xs text-slate-400 mt-2">{cert.description}</p>}
-                <div className="mt-3">
-                  <p className="text-xs text-slate-500 mb-1.5">{certified.length} certified member{certified.length !== 1 ? "s" : ""}</p>
+                {cert.description && <p className="text-[11px] text-mdt-muted mt-2">{cert.description}</p>}
+                <div className="mt-2.5">
+                  <p className="text-[10px] uppercase tracking-[0.08em] text-mdt-dim mb-1">{certified.length} certified member{certified.length !== 1 ? "s" : ""}</p>
                   <div className="flex flex-wrap gap-1">
                     {certified.map(m => (
-                      <span key={m.id} className="text-[11px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 flex items-center gap-1">
+                      <span key={m.id} className="text-[10.5px] px-1.5 h-[18px] rounded-sm bg-mdt-surface-3 border border-mdt-line-2 text-mdt-muted inline-flex items-center gap-1">
                         {m.name}
-                        {isAdmin && <button onClick={() => removeCert(m.id, cert.name)} className="hover:text-red-400"><X className="w-2.5 h-2.5" /></button>}
+                        {isAdmin && <button onClick={() => removeCert(m.id, cert.name)} className="hover:text-red-300"><X className="w-2.5 h-2.5" /></button>}
                       </span>
                     ))}
                   </div>
@@ -154,33 +157,33 @@ export default function Certifications() {
 
       {/* Create/Edit Dialog */}
       <Dialog open={showForm} onOpenChange={setShowForm}>
-        <DialogContent className="bg-slate-900 border-slate-700 text-white max-w-md">
-          <DialogHeader><DialogTitle>{editing ? "Edit Certification" : "New Certification"}</DialogTitle></DialogHeader>
-          <div className="space-y-4 mt-4">
+        <DialogContent className="mdt bg-mdt-surface border-mdt-line text-mdt-text max-w-md rounded-none sm:rounded-none">
+          <DialogHeader><DialogTitle className="text-[13px] font-semibold uppercase tracking-[0.06em]">{editing ? "Edit Certification" : "New Certification"}</DialogTitle></DialogHeader>
+          <div className="space-y-3 mt-2">
             <div>
-              <Label className="text-slate-300">Name *</Label>
-              <Input value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="bg-slate-800 border-slate-700 text-white mt-1" placeholder="e.g. FTO, SWAT, K9" />
+              <Label className={labelCls}>Name *</Label>
+              <Input value={form.name} onChange={e => setForm({...form, name: e.target.value})} className={inputCls} placeholder="e.g. FTO, SWAT, K9" />
             </div>
             <div>
-              <Label className="text-slate-300">Department</Label>
+              <Label className={labelCls}>Department</Label>
               <Select value={form.department_id} onValueChange={v => setForm({...form, department_id: v})}>
-                <SelectTrigger className="bg-slate-800 border-slate-700 text-white mt-1"><SelectValue placeholder="Select" /></SelectTrigger>
-                <SelectContent className="bg-slate-800 border-slate-700">
-                  {departments.map(d => <SelectItem key={d.id} value={d.id} className="text-white">{d.name}</SelectItem>)}
+                <SelectTrigger className={selCls}><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectContent className={selContentCls}>
+                  {departments.map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <Label className="text-slate-300">Description</Label>
-              <Input value={form.description} onChange={e => setForm({...form, description: e.target.value})} className="bg-slate-800 border-slate-700 text-white mt-1" />
+              <Label className={labelCls}>Description</Label>
+              <Input value={form.description} onChange={e => setForm({...form, description: e.target.value})} className={inputCls} />
             </div>
             <div>
-              <Label className="text-slate-300">Color</Label>
-              <Input type="color" value={form.color} onChange={e => setForm({...form, color: e.target.value})} className="bg-slate-800 border-slate-700 h-10 mt-1 w-20" />
+              <Label className={labelCls}>Color</Label>
+              <Input type="color" value={form.color} onChange={e => setForm({...form, color: e.target.value})} className="h-9 mt-1 w-20 rounded-sm bg-mdt-surface-2 border-mdt-line-2" />
             </div>
-            <div className="flex justify-end gap-3">
-              <Button variant="ghost" onClick={() => setShowForm(false)} className="text-slate-400">Cancel</Button>
-              <Button onClick={handleSave} disabled={!form.name} className="bg-blue-600 hover:bg-blue-700">{editing ? "Update" : "Create"}</Button>
+            <div className="flex justify-end gap-2 pt-1">
+              <Btn variant="ghost" onClick={() => setShowForm(false)}>Cancel</Btn>
+              <Btn variant="primary" onClick={handleSave} disabled={!form.name}>{editing ? "Update" : "Create"}</Btn>
             </div>
           </div>
         </DialogContent>
@@ -188,24 +191,33 @@ export default function Certifications() {
 
       {/* Assign Dialog */}
       <Dialog open={!!showAssign} onOpenChange={() => setShowAssign(null)}>
-        <DialogContent className="bg-slate-900 border-slate-700 text-white max-w-sm">
-          <DialogHeader><DialogTitle>Assign: {showAssign?.name}</DialogTitle></DialogHeader>
-          <div className="space-y-4 mt-4">
+        <DialogContent className="mdt bg-mdt-surface border-mdt-line text-mdt-text max-w-sm rounded-none sm:rounded-none">
+          <DialogHeader><DialogTitle className="text-[13px] font-semibold uppercase tracking-[0.06em]">Assign: {showAssign?.name}</DialogTitle></DialogHeader>
+          <div className="space-y-3 mt-2">
             <Select value={assignMemberId} onValueChange={setAssignMemberId}>
-              <SelectTrigger className="bg-slate-800 border-slate-700 text-white"><SelectValue placeholder="Select member" /></SelectTrigger>
-              <SelectContent className="bg-slate-800 border-slate-700">
+              <SelectTrigger className={`${selCls} mt-0`}><SelectValue placeholder="Select member" /></SelectTrigger>
+              <SelectContent className={selContentCls}>
                 {members.filter(m => !showAssign?.department_id || m.department_id === showAssign.department_id).map(m => (
-                  <SelectItem key={m.id} value={m.id} className="text-white">{m.name}</SelectItem>
+                  <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            <div className="flex justify-end gap-3">
-              <Button variant="ghost" onClick={() => setShowAssign(null)} className="text-slate-400">Cancel</Button>
-              <Button onClick={handleAssign} disabled={!assignMemberId} className="bg-blue-600 hover:bg-blue-700">Assign</Button>
+            <div className="flex justify-end gap-2 pt-1">
+              <Btn variant="ghost" onClick={() => setShowAssign(null)}>Cancel</Btn>
+              <Btn variant="primary" onClick={handleAssign} disabled={!assignMemberId}>Assign</Btn>
             </div>
           </div>
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(o) => !o && setDeleteTarget(null)}
+        title="Delete Certification"
+        description={`Delete "${deleteTarget?.name}"? This cannot be undone.`}
+        confirmLabel="Delete"
+        onConfirm={() => handleDelete(deleteTarget.id)}
+      />
     </div>
   );
 }
