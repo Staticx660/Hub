@@ -3,11 +3,12 @@ import { useParams, useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
 import { useToast } from "@/components/ui/use-toast";
-import { AlertTriangle, ChevronLeft, UserPlus } from "lucide-react";
+import { AlertTriangle, ChevronLeft, UserPlus, IdCard, Car, FileText, PhoneCall, Pencil } from "lucide-react";
 import CharacterForm from "@/components/cad/civilian/CharacterForm";
 import DMVPane from "@/components/cad/civilian/terminal/DMVPane";
 import Call911Dialog from "@/components/cad/civilian/Call911Dialog";
-import CharacterRail from "@/components/cad/civilian/terminal/CharacterRail";
+import PersonaList from "@/components/cad/civilian/terminal/PersonaList";
+import WorkspaceShell from "@/components/mdt/shell/WorkspaceShell";
 import IdentityPane from "@/components/cad/civilian/terminal/IdentityPane";
 import RecordsPane from "@/components/cad/civilian/terminal/RecordsPane";
 import { Btn, EmptyState } from "@/components/mdt/ui/primitives";
@@ -131,41 +132,55 @@ export default function CADCivilian() {
 
   const fullName = selectedChar ? `${selectedChar.first_name} ${selectedChar.middle_name ? selectedChar.middle_name + " " : ""}${selectedChar.last_name}` : "";
 
+  const navItems = [
+    { key: "identity", label: "Identity", icon: IdCard },
+    { key: "dmv", label: "DMV", icon: Car },
+    { key: "records", label: "Records", icon: FileText },
+  ];
+
+  const menus = [
+    {
+      label: "Persona",
+      items: [
+        { label: "New Persona", icon: UserPlus, onSelect: () => { setEditingChar(null); setCharFormOpen(true); } },
+        { label: "Edit Persona", icon: Pencil, disabled: !selectedChar, onSelect: () => { setEditingChar(selectedChar); setCharFormOpen(true); } },
+        { label: "Call 911", icon: PhoneCall, disabled: !selectedChar, onSelect: () => setCall911Open(true) },
+      ],
+    },
+  ];
+
   return (
-    <div className="mdt fixed inset-0 flex flex-col bg-mdt-bg text-mdt-text">
-      <div className="flex items-center gap-3 h-11 px-3 border-b border-mdt-line bg-mdt-surface-2 flex-shrink-0">
-        <div className="min-w-0">
-          <div className="text-[12.5px] font-semibold text-mdt-text truncate leading-tight">Civilian Device</div>
-          <div className="text-[10px] uppercase tracking-[0.1em] text-mdt-dim truncate">{department.name}</div>
+    <>
+      <WorkspaceShell
+        agency="Civilian Device"
+        subtitle={department.name}
+        unit={fullName || "NO PERSONA"}
+        metrics={[{ label: "Personas", value: characters.length }]}
+        navItems={navItems}
+        active={panel || "identity"}
+        onNavigate={(key) => setPanel(key === "identity" ? null : key)}
+        menus={menus}
+        headerRight={<Btn icon={ChevronLeft} onClick={() => navigate("/cad")}>Exit</Btn>}
+      >
+        <div className="flex-1 min-h-0 flex">
+          <PersonaList
+            characters={characters}
+            selectedChar={selectedChar}
+            onSelect={(id) => { setSelectedChar(characters.find(c => c.id === id)); setPanel(null); }}
+          />
+          <div className="flex-1 min-w-0 overflow-auto mdt-scroll">
+            {!selectedChar ? (
+              <EmptyState icon={UserPlus} title="No persona on this device" hint="Create a persona to use the civilian terminal" />
+            ) : panel === "records" ? (
+              <RecordsPane fullName={fullName} warrants={warrants} bolos={bolos} reports={reports} />
+            ) : panel === "dmv" ? (
+              <DMVPane character={selectedChar} department={department} user={user} onUpdate={reloadCharacter} />
+            ) : (
+              <IdentityPane character={selectedChar} fullName={fullName} />
+            )}
+          </div>
         </div>
-        <span className="ml-auto text-[11.5px] font-mono text-mdt-dim truncate">{fullName || "NO PERSONA"}</span>
-        <Btn icon={ChevronLeft} onClick={() => navigate("/cad")}>Exit</Btn>
-      </div>
-
-      <div className="flex-1 min-h-0 flex">
-        <CharacterRail
-          characters={characters}
-          selectedChar={selectedChar}
-          onSelect={(id) => { setSelectedChar(characters.find(c => c.id === id)); setPanel(null); }}
-          panel={panel}
-          setPanel={setPanel}
-          onNew={() => { setEditingChar(null); setCharFormOpen(true); }}
-          onEdit={() => { setEditingChar(selectedChar); setCharFormOpen(true); }}
-          on911={() => setCall911Open(true)}
-        />
-
-        <div className="flex-1 min-w-0 overflow-auto mdt-scroll">
-          {!selectedChar ? (
-            <EmptyState icon={UserPlus} title="No persona on this device" hint="Create a persona to use the civilian terminal" />
-          ) : panel === "records" ? (
-            <RecordsPane fullName={fullName} warrants={warrants} bolos={bolos} reports={reports} />
-          ) : panel === "dmv" ? (
-            <DMVPane character={selectedChar} department={department} user={user} onUpdate={reloadCharacter} />
-          ) : (
-            <IdentityPane character={selectedChar} fullName={fullName} />
-          )}
-        </div>
-      </div>
+      </WorkspaceShell>
 
       <CharacterForm open={charFormOpen} onOpenChange={setCharFormOpen} editing={editingChar} department={department} user={user} onSaved={reloadCharacters} />
 
@@ -177,6 +192,6 @@ export default function CADCivilian() {
         callerLabel={`${fullName}${selectedChar?.phone ? ` · ${selectedChar.phone}` : ""}`}
         onSubmit={handle911}
       />
-    </div>
+    </>
   );
 }
