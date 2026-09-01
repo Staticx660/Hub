@@ -16,6 +16,8 @@ export function useUserPermissions() {
   const { user } = useAuth();
   const [perms, setPerms] = useState({
     isPlatformAdmin: false,
+    isSystemManager: false,
+    isSystemAdmin: false,
     isCADAdmin: false,
     isSupervisor: false,
     deptAdminIds: [],
@@ -24,7 +26,7 @@ export function useUserPermissions() {
 
   useEffect(() => {
     if (!user) {
-      setPerms({ isPlatformAdmin: false, isCADAdmin: false, isSupervisor: false, deptAdminIds: [], loading: false });
+      setPerms({ isPlatformAdmin: false, isSystemManager: false, isSystemAdmin: false, isCADAdmin: false, isSupervisor: false, deptAdminIds: [], loading: false });
       return;
     }
 
@@ -35,6 +37,8 @@ export function useUserPermissions() {
         const data = res.data;
         setPerms({
           isPlatformAdmin: data.isPlatformAdmin || false,
+          isSystemManager: data.isSystemManager || false,
+          isSystemAdmin: data.isSystemAdmin || false,
           isCADAdmin: data.isCADAdmin || false,
           isSupervisor: data.isSupervisor || false,
           deptAdminIds: data.deptAdminIds || [],
@@ -47,7 +51,9 @@ export function useUserPermissions() {
         const isPlatformAdmin = user.role === 'admin';
         setPerms({
           isPlatformAdmin,
-          isCADAdmin: false,
+          isSystemManager: isPlatformAdmin,
+          isSystemAdmin: isPlatformAdmin,
+          isCADAdmin: isPlatformAdmin,
           isSupervisor: false,
           deptAdminIds: [],
           loading: false,

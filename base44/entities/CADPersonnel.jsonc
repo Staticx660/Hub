@@ -48,6 +48,10 @@
     "is_cad_admin": {
       "type": "boolean",
       "default": false
+    },
+    "is_system_manager": {
+      "type": "boolean",
+      "default": false
     }
   },
   "required": [

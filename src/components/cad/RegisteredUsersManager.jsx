@@ -24,12 +24,12 @@ export default function RegisteredUsersManager() {
 
   const load = async () => {
     try {
-      const [list, p] = await Promise.all([
+      const [list, pRes] = await Promise.all([
         base44.entities.User.list(),
-        base44.entities.CADPersonnel.list().catch(() => []),
+        base44.functions.invoke('manageCADPermissions', { action: 'list' }).catch(() => null),
       ]);
       setUsers(list);
-      setPersonnel(p);
+      setPersonnel(pRes?.data?.personnel || []);
     } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
     finally { setLoading(false); }
   };
@@ -67,7 +67,8 @@ export default function RegisteredUsersManager() {
     if (!cp) { toast({ title: "No personnel record", description: "This user has no linked CAD personnel record to update.", variant: "destructive" }); return; }
     setUpdatingIds(prev => new Set(prev).add(user.id));
     try {
-      await base44.entities.CADPersonnel.update(cp.id, { is_supervisor: !cp.is_supervisor });
+      const res = await base44.functions.invoke('manageCADPermissions', { action: 'setFlag', id: cp.id, field: 'is_supervisor', value: !cp.is_supervisor });
+      if (res.data?.error) throw new Error(res.data.error);
       setPersonnel(prev => prev.map(p => p.id === cp.id ? { ...p, is_supervisor: !cp.is_supervisor } : p));
       toast({ title: `Supervisor ${!cp.is_supervisor ? "granted" : "revoked"}`, duration: 2000 });
     } catch (e) { toast({ title: "Error", description: e.message, variant: "destructive" }); }
@@ -80,7 +81,7 @@ export default function RegisteredUsersManager() {
     setUpdatingIds(prev => new Set(prev).add(user.id));
     try {
       if (cp) {
-        await base44.entities.CADPersonnel.delete(cp.id);
+        await base44.functions.invoke('manageCADPermissions', { action: 'delete', id: cp.id });
         setPersonnel(prev => prev.filter(p => p.id !== cp.id));
       }
       await base44.entities.User.delete(user.id);

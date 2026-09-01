@@ -1,11 +1,12 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { requireSystemManager } from '../../shared/authGuards.js';
 
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    if (user.role !== 'admin') return Response.json({ error: 'Admin access required' }, { status: 403 });
+    // This payload contains Discord IDs and account emails — System Manager only.
+    const actor = await requireSystemManager(base44);
+    if (actor.error) return actor.error;
 
     const botToken = Deno.env.get("DISCORD_BOT_TOKEN");
     const guildId = Deno.env.get("DISCORD_GUILD_ID");
@@ -42,9 +43,9 @@ Deno.serve(async (req) => {
       if (batch.length < 1000) hasMore = false;
     }
 
-    // Get all registered users to cross-reference (user-scoped: built-in security already
-    // restricts listing users to admins, and the caller has been verified as admin above)
-    const registeredUsers = await base44.entities.User.filter({});
+    // Cross-reference registered accounts. Service role is used because the caller has
+    // already been verified as a System Manager above.
+    const registeredUsers = await base44.asServiceRole.entities.User.filter({});
     const usersByDiscordId = {};
     for (const u of registeredUsers) {
       if (u.discord_id) usersByDiscordId[u.discord_id] = u;

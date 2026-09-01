@@ -1,11 +1,17 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useToast } from "@/components/ui/use-toast";
-import { ShieldAlert, Loader2, Search, Crown, Eye } from "lucide-react";
+import { ShieldAlert, Loader2, Search, Crown, Eye, ShieldCheck } from "lucide-react";
 import { Btn, StatusPill, EmptyState } from "@/components/mdt/ui/primitives";
 
 const input = "h-7 px-2 bg-mdt-bg border border-mdt-line-2 text-[12px] text-mdt-text placeholder:text-mdt-dim focus:outline-none focus:border-mdt-accent";
 const cap = "text-[9.5px] font-semibold uppercase tracking-[0.09em] text-mdt-dim";
+
+const FLAG_LABELS = {
+  is_supervisor: "Supervisor",
+  is_cad_admin: "System Admin",
+  is_system_manager: "System Manager",
+};
 
 export default function PermissionsManager() {
   const [personnel, setPersonnel] = useState([]);
@@ -21,12 +27,14 @@ export default function PermissionsManager() {
 
   const load = async () => {
     try {
-      const [p, d, dm] = await Promise.all([
-        base44.entities.CADPersonnel.list(),
+      // Personnel + permission flags come from the System Manager guarded function,
+      // which never returns account emails to the client.
+      const [pRes, d, dm] = await Promise.all([
+        base44.functions.invoke('manageCADPermissions', { action: 'list' }),
         base44.entities.CADDepartment.list(),
         base44.functions.invoke('getDiscordMembers', {}).catch(() => null),
       ]);
-      setPersonnel(p);
+      setPersonnel(pRes.data.personnel || []);
       setDepartments(d);
       const list = dm?.data?.members || dm?.members;
       if (Array.isArray(list)) setGuildIds(new Set(list.map((m) => m.discord_id)));
@@ -44,12 +52,10 @@ export default function PermissionsManager() {
   const toggleFlag = async (id, field, currentValue) => {
     setUpdatingIds((prev) => new Set(prev).add(id));
     try {
-      await base44.entities.CADPersonnel.update(id, { [field]: !currentValue });
+      const res = await base44.functions.invoke('manageCADPermissions', { action: 'setFlag', id, field, value: !currentValue });
+      if (res.data?.error) throw new Error(res.data.error);
       setPersonnel((prev) => prev.map((p) => (p.id === id ? { ...p, [field]: !currentValue } : p)));
-      toast({
-        title: `${field === "is_supervisor" ? "Supervisor" : "CAD Admin"} ${!currentValue ? "granted" : "revoked"}`,
-        duration: 2000,
-      });
+      toast({ title: `${FLAG_LABELS[field]} ${!currentValue ? "granted" : "revoked"}`, duration: 2000 });
     } catch (e) {
       toast({ title: "Error", description: e.message, variant: "destructive" });
     } finally {
@@ -60,7 +66,8 @@ export default function PermissionsManager() {
   const updateDepts = async (id, data) => {
     setUpdatingIds((prev) => new Set(prev).add(id));
     try {
-      await base44.entities.CADPersonnel.update(id, data);
+      const res = await base44.functions.invoke('manageCADPermissions', { action: 'setDepartments', id, ...data });
+      if (res.data?.error) throw new Error(res.data.error);
       setPersonnel((prev) => prev.map((p) => (p.id === id ? { ...p, ...data } : p)));
       toast({ title: "Department updated", duration: 2000 });
     } catch (e) {
@@ -85,7 +92,7 @@ export default function PermissionsManager() {
     if (!window.confirm(`Remove ${departed.length} personnel record(s) for members who left Discord?`)) return;
     setPurging(true);
     try {
-      for (const p of departed) await base44.entities.CADPersonnel.delete(p.id);
+      for (const p of departed) await base44.functions.invoke('manageCADPermissions', { action: 'delete', id: p.id });
       setPersonnel((prev) => prev.filter((p) => !departed.some((d) => d.id === p.id)));
       toast({ title: `Removed ${departed.length} departed member(s)` });
     } catch (e) {
@@ -133,6 +140,7 @@ export default function PermissionsManager() {
                 <span className="block text-[10.5px] text-mdt-dim truncate">{deptName(p.department_id)}</span>
               </span>
               <span className="ml-auto flex gap-1">
+                {p.is_system_manager && <StatusPill tone="warn">M</StatusPill>}
                 {p.is_cad_admin && <StatusPill tone="info">A</StatusPill>}
                 {p.is_supervisor && <StatusPill tone="ok">S</StatusPill>}
               </span>
@@ -164,10 +172,17 @@ export default function PermissionsManager() {
                     </Btn>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Crown className="w-3.5 h-3.5 text-mdt-dim" />
-                    <span className="text-[12px]">CAD Admin — full admin console access</span>
+                    <ShieldCheck className="w-3.5 h-3.5 text-mdt-dim" />
+                    <span className="text-[12px]">System Admin — create, edit &amp; remove operational records</span>
                     <Btn className="ml-auto" variant={selected.is_cad_admin ? "primary" : "default"} onClick={() => toggleFlag(selected.id, "is_cad_admin", selected.is_cad_admin)}>
                       {selected.is_cad_admin ? "Granted" : "Grant"}
+                    </Btn>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Crown className="w-3.5 h-3.5 text-amber-300" />
+                    <span className="text-[12px]">System Manager — full control: permissions, identifiers, Discord config, data wipes</span>
+                    <Btn className="ml-auto" variant={selected.is_system_manager ? "primary" : "default"} onClick={() => toggleFlag(selected.id, "is_system_manager", selected.is_system_manager)}>
+                      {selected.is_system_manager ? "Granted" : "Grant"}
                     </Btn>
                   </div>
                 </div>

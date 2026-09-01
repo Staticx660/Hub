@@ -1,18 +1,13 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { requireSystemManager } from '../../shared/authGuards.js';
 
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    if (user.role !== 'admin') return Response.json({ error: 'Forbidden — Admin only' }, { status: 403 });
-
-    // Secondary check: re-verify the caller's role from the current database record
-    // (not just the token claims) before allowing mass deletion via service role.
-    const freshUser = await base44.asServiceRole.entities.User.get(user.id);
-    if (!freshUser || freshUser.role !== 'admin') {
-      return Response.json({ error: 'Forbidden — Admin only' }, { status: 403 });
-    }
+    // Mass deletion is System Manager only; the guard re-reads the role from the
+    // database rather than trusting token claims.
+    const actor = await requireSystemManager(base44);
+    if (actor.error) return actor.error;
 
     // Require explicit confirmation phrase in the request body
     let body = {};

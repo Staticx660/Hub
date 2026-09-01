@@ -21,44 +21,46 @@ import { ClipboardList, Network } from "lucide-react";
 import { APP_VERSION } from "@/lib/version";
 import { useCommunityBranding } from "@/hooks/useCommunityBranding";
 
-// access: "supervisor" = visible to supervisors+, "admin" = visible to CAD/platform admins,
-// "platform" = platform admins only (roster administration keeps its original gating)
+// access tiers:
+//   "supervisor" = supervisors and above
+//   "admin"      = System Admins and above (create / edit / remove operational data)
+//   "manager"    = System Managers only (permissions, identifiers/emails, Discord config, wipes)
 const ALL_SECTIONS = [
   { title: "ROSTER", items: [
-    { id: "roster", label: "Full Roster", icon: ClipboardList, access: "platform" },
-    { id: "rosterdepts", label: "Roster Departments", icon: Network, access: "platform" },
+    { id: "roster", label: "Full Roster", icon: ClipboardList, access: "manager" },
+    { id: "rosterdepts", label: "Roster Departments", icon: Network, access: "manager" },
   ]},
   { title: "ACCOUNTS", items: [
-    { id: "members", label: "Members", icon: Users, access: "supervisor" },
-    { id: "permissions", label: "Role Permissions", icon: KeyRound, access: "admin" },
-    { id: "identifiers", label: "Identifiers", icon: IdCard, access: "admin" },
+    { id: "members", label: "Members", icon: Users, access: "manager" },
+    { id: "permissions", label: "Role Permissions", icon: KeyRound, access: "manager" },
+    { id: "identifiers", label: "Identifiers", icon: IdCard, access: "manager" },
   ]},
   { title: "CUSTOMIZATION", items: [
     { id: "community", label: "Community Info", icon: Settings, access: "admin" },
     { id: "departments", label: "Departments", icon: Building2, access: "supervisor" },
     { id: "addresses", label: "Addresses", icon: MapPin, access: "supervisor" },
     { id: "penal", label: "Penal Codes", icon: Gavel, access: "admin" },
-    { id: "restrictions", label: "User Restrictions", icon: ShieldCheck, access: "admin" },
+    { id: "restrictions", label: "User Restrictions", icon: ShieldCheck, access: "manager" },
     { id: "tones", label: "Notification Tones", icon: Bell, access: "admin" },
   ]},
   { title: "ADVANCED", items: [
     { id: "autodispatch", label: "Auto Dispatch", icon: Bot, access: "admin" },
-    { id: "discord", label: "Discord", icon: MessageCircle, access: "admin" },
-    { id: "logs", label: "Logs", icon: ScrollText, access: "admin" },
-    { id: "danger", label: "Danger Zone", icon: Trash2, access: "admin" },
+    { id: "discord", label: "Discord", icon: MessageCircle, access: "manager" },
+    { id: "logs", label: "Logs", icon: ScrollText, access: "manager" },
+    { id: "danger", label: "Danger Zone", icon: Trash2, access: "manager" },
   ]},
 ];
 
 export default function CADAdmin() {
-  const { isPlatformAdmin, isCADAdmin, isSupervisor } = useUserPermissions();
+  const { isPlatformAdmin, isSystemManager, isSystemAdmin, isSupervisor } = useUserPermissions();
   const { branding } = useCommunityBranding();
-  const canSeeAdminSections = isPlatformAdmin || isCADAdmin;
+  const canSeeAdminSections = isSystemAdmin;
   const [active, setActive] = useState(null);
 
   const visibleSections = ALL_SECTIONS.map((section) => ({
     ...section,
     items: section.items.filter((item) => {
-      if (item.access === "platform") return isPlatformAdmin;
+      if (item.access === "manager") return isSystemManager;
       if (item.access === "admin") return canSeeAdminSections;
       return canSeeAdminSections || isSupervisor;
     }),
@@ -98,7 +100,8 @@ export default function CADAdmin() {
         active={effectiveActive}
         onSelect={setActive}
         isPlatformAdmin={isPlatformAdmin}
-        isCADAdmin={isCADAdmin}
+        isSystemManager={isSystemManager}
+        isSystemAdmin={isSystemAdmin}
         isSupervisor={isSupervisor}
         communityName={branding?.community_name}
       />

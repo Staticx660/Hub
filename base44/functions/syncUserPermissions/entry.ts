@@ -113,9 +113,14 @@ Deno.serve(async (req) => {
       deptAdminIds = await resolveDeptAdminIds(base44, user);
     } catch (_e) { /* non-fatal */ }
 
+    const isSystemManager = isPlatformAdmin || !!(personnel[0]?.is_system_manager);
+    const isSystemAdmin = isSystemManager || isCADAdmin;
+
     return Response.json({
       isPlatformAdmin,
-      isCADAdmin,
+      isSystemManager,
+      isSystemAdmin,
+      isCADAdmin: isSystemAdmin,
       isSupervisor,
       deptAdminIds,
       personnelId,

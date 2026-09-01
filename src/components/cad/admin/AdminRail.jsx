@@ -5,7 +5,7 @@ import { ArrowLeft, Crown, ShieldCheck } from "lucide-react";
 import { StatusPill } from "@/components/mdt/ui/primitives";
 
 /** Flat operational rail for the admin console — no glass, no rounded cards. */
-export default function AdminRail({ sections, active, onSelect, isPlatformAdmin, isCADAdmin, isSupervisor, communityName }) {
+export default function AdminRail({ sections, active, onSelect, isPlatformAdmin, isSystemManager, isSystemAdmin, isSupervisor, communityName }) {
   const navigate = useNavigate();
   return (
     <aside className="w-[180px] xl:w-[228px] flex-shrink-0 border-r border-mdt-line bg-mdt-surface flex flex-col min-h-0">
@@ -17,9 +17,9 @@ export default function AdminRail({ sections, active, onSelect, isPlatformAdmin,
       </div>
 
       <div className="flex flex-wrap gap-1 px-2 py-1.5 border-b border-mdt-line">
-        {isPlatformAdmin && <StatusPill tone="info"><Crown className="w-2.5 h-2.5" /> Platform</StatusPill>}
-        {isCADAdmin && <StatusPill tone="info"><ShieldCheck className="w-2.5 h-2.5" /> CAD Admin</StatusPill>}
-        {isSupervisor && <StatusPill tone="ok"><ShieldCheck className="w-2.5 h-2.5" /> Supervisor</StatusPill>}
+        {isSystemManager && <StatusPill tone="info"><Crown className="w-2.5 h-2.5" /> System Manager</StatusPill>}
+        {isSystemAdmin && !isSystemManager && <StatusPill tone="info"><ShieldCheck className="w-2.5 h-2.5" /> System Admin</StatusPill>}
+        {isSupervisor && !isSystemAdmin && <StatusPill tone="ok"><ShieldCheck className="w-2.5 h-2.5" /> Supervisor</StatusPill>}
       </div>
 
       <nav className="flex-1 min-h-0 overflow-auto mdt-scroll">
