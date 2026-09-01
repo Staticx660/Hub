@@ -18,12 +18,13 @@ export function useUserPermissions() {
     isPlatformAdmin: false,
     isCADAdmin: false,
     isSupervisor: false,
+    deptAdminIds: [],
     loading: true,
   });
 
   useEffect(() => {
     if (!user) {
-      setPerms({ isPlatformAdmin: false, isCADAdmin: false, isSupervisor: false, loading: false });
+      setPerms({ isPlatformAdmin: false, isCADAdmin: false, isSupervisor: false, deptAdminIds: [], loading: false });
       return;
     }
 
@@ -36,6 +37,7 @@ export function useUserPermissions() {
           isPlatformAdmin: data.isPlatformAdmin || false,
           isCADAdmin: data.isCADAdmin || false,
           isSupervisor: data.isSupervisor || false,
+          deptAdminIds: data.deptAdminIds || [],
           loading: false,
         });
       })
@@ -47,6 +49,7 @@ export function useUserPermissions() {
           isPlatformAdmin,
           isCADAdmin: false,
           isSupervisor: false,
+          deptAdminIds: [],
           loading: false,
         });
       });

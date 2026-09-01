@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { ArrowUp, ArrowDown, GripVertical } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
 /** Reorder a department's ranks. Saving renumbers levels (top = highest)
  *  and re-syncs every member's rank_level so the roster sorts correctly. */
-export default function RankOrderManager({ department, onSaved }) {
+export default function RankOrderManager({ department, onSaved, saveRanks }) {
   const [ranks, setRanks] = useState([]);
   const [dirty, setDirty] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -30,15 +29,7 @@ export default function RankOrderManager({ department, onSaved }) {
     setSaving(true);
     try {
       const renumbered = ranks.map((r, i) => ({ ...r, level: ranks.length - i }));
-      await base44.entities.Department.update(department.id, { ranks: renumbered });
-      const members = await base44.entities.RosterMember.filter({ department_id: department.id });
-      const updates = members
-        .map((m) => {
-          const r = renumbered.find((x) => x.name === m.rank);
-          return r && r.level !== m.rank_level ? { id: m.id, rank_level: r.level } : null;
-        })
-        .filter(Boolean);
-      if (updates.length) await base44.entities.RosterMember.bulkUpdate(updates);
+      await saveRanks(renumbered);
       setDirty(false);
       toast({ title: "Rank order saved" });
       onSaved?.();

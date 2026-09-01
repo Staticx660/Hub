@@ -9,6 +9,7 @@ import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import ScrollToTop from './components/ScrollToTop';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import AdminRoute from '@/components/AdminRoute';
+import DeptAdminRoute from '@/components/DeptAdminRoute';
 import CADAdminRoute from '@/components/CADAdminRoute';
 import Login from '@/pages/Login';
 import Register from '@/pages/Register';
@@ -92,9 +93,12 @@ const AuthenticatedApp = () => {
           <Route path="/documents" element={<Documents />} />
           <Route path="/vehicles" element={<Vehicles />} />
           <Route path="/uniforms" element={<Uniforms />} />
-          <Route element={<AdminRoute />}>
+          {/* Department admins manage their own departments */}
+          <Route element={<DeptAdminRoute />}>
             <Route path="/departments" element={<Departments />} />
             <Route path="/departments/:id" element={<DepartmentDetail />} />
+          </Route>
+          <Route element={<AdminRoute />}>
             <Route path="/roster" element={<Roster />} />
             <Route path="/discord-sync" element={<DiscordSync />} />
           </Route>

@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/components/ui/use-toast";
 import RankOrderManager from "@/components/roster/RankOrderManager";
+import { useUserPermissions } from "@/hooks/useUserPermissions";
 
 const statusColors = {
   "Active": "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
@@ -46,6 +47,13 @@ export default function DepartmentDetail() {
     additional_department_ids: [],
   });
   const { toast } = useToast();
+  const { isPlatformAdmin, deptAdminIds, loading: permsLoading } = useUserPermissions();
+  const canManage = isPlatformAdmin || (deptAdminIds || []).includes(id);
+
+  // Department admins can't write RosterMember directly (RLS) — route through
+  // the department-scoped backend function instead.
+  const rosterAction = (payload) =>
+    base44.functions.invoke("manageDepartmentRoster", { departmentId: id, ...payload });
 
   const loadData = async () => {
     try {
@@ -76,13 +84,8 @@ export default function DepartmentDetail() {
         rank_level: rankObj?.level || 0,
         is_admin: form.is_admin === true || form.is_admin === "true",
       };
-      if (editing) {
-        await base44.entities.RosterMember.update(editing.id, data);
-        toast({ title: "Member updated" });
-      } else {
-        await base44.entities.RosterMember.create(data);
-        toast({ title: "Member added" });
-      }
+      await rosterAction({ action: "saveMember", memberId: editing?.id, data });
+      toast({ title: editing ? "Member updated" : "Member added" });
       setShowForm(false);
       setEditing(null);
       resetForm();
@@ -105,21 +108,26 @@ export default function DepartmentDetail() {
     }
   };
 
+  const [deleteTarget, setDeleteTarget] = useState(null);
+
   const handleDelete = async (memberId) => {
-    if (!confirm("Remove this member?")) return;
-    await base44.entities.RosterMember.delete(memberId);
-    toast({ title: "Member removed" });
-    loadData();
+    try {
+      await rosterAction({ action: "deleteMember", memberId });
+      toast({ title: "Member removed" });
+      loadData();
+    } catch (e) {
+      toast({ title: "Error", description: e.message, variant: "destructive" });
+    }
   };
 
   const updateStatus = async (memberId, status) => {
-    await base44.entities.RosterMember.update(memberId, { status });
+    await rosterAction({ action: "saveMember", memberId, data: { status } });
     toast({ title: `Status changed to ${status}` });
     loadData();
   };
 
   const updateSlotStatus = async (memberId, slot_status) => {
-    await base44.entities.RosterMember.update(memberId, { slot_status });
+    await rosterAction({ action: "saveMember", memberId, data: { slot_status } });
     toast({ title: `Slot marked as ${slot_status}` });
     loadData();
   };
@@ -161,9 +169,11 @@ export default function DepartmentDetail() {
           <h1 className="text-2xl font-bold text-white">{department.name}</h1>
           <p className="text-sm text-slate-400">{department.category} · {members.length}{department.max_slots ? `/${department.max_slots} slots` : " members"}</p>
         </div>
-        <Button onClick={() => { setEditing(null); resetForm(); setShowForm(true); }} className="bg-blue-600 hover:bg-blue-700">
-          <Plus className="w-4 h-4 mr-2" /> Add Member
-        </Button>
+        {canManage && (
+          <Button onClick={() => { setEditing(null); resetForm(); setShowForm(true); }} className="bg-blue-600 hover:bg-blue-700">
+            <Plus className="w-4 h-4 mr-2" /> Add Member
+          </Button>
+        )}
       </div>
 
       <Input
@@ -231,6 +241,7 @@ export default function DepartmentDetail() {
                       </td>
                       <td className="px-5 py-3.5 text-sm text-slate-400">{member.discord_username || "—"}</td>
                       <td className="px-5 py-3.5 text-right">
+                        {!canManage ? <span className="text-xs text-slate-600">—</span> : (
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <button className="p-1.5 rounded-lg hover:bg-slate-700 text-slate-400">
@@ -267,11 +278,12 @@ export default function DepartmentDetail() {
                             <DropdownMenuItem onClick={() => updateSlotStatus(member.id, "Unavailable")} className="text-red-400">
                               <UserX className="w-3.5 h-3.5 mr-2" /> Mark Unavailable
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleDelete(member.id)} className="text-red-400">
+                            <DropdownMenuItem onClick={() => setDeleteTarget(member)} className="text-red-400">
                               <Trash2 className="w-3.5 h-3.5 mr-2" /> Remove from Roster
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
+                        )}
                       </td>
                     </tr>
                   );
@@ -282,7 +294,33 @@ export default function DepartmentDetail() {
         </div>
       )}
 
-      <RankOrderManager department={department} onSaved={loadData} />
+      {canManage && (
+        <RankOrderManager
+          department={department}
+          onSaved={loadData}
+          saveRanks={(ranks) => rosterAction({ action: "saveRanks", ranks })}
+        />
+      )}
+
+      <Dialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
+        <DialogContent className="bg-slate-900 border-slate-700 text-white max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Remove Member</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-slate-400">
+            Remove <span className="text-white font-medium">{deleteTarget?.name}</span> from this roster? This can't be undone.
+          </p>
+          <div className="flex justify-end gap-3 mt-4">
+            <Button variant="ghost" onClick={() => setDeleteTarget(null)} className="text-slate-400">Cancel</Button>
+            <Button
+              onClick={() => { const t = deleteTarget; setDeleteTarget(null); handleDelete(t.id); }}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Remove
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={showForm} onOpenChange={setShowForm}>
         <DialogContent className="bg-slate-900 border-slate-700 text-white max-w-lg max-h-[90vh] overflow-y-auto">

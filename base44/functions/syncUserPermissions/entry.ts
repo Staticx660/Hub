@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { resolveDeptAdminIds } from '../../shared/deptAdmin.js';
 
 Deno.serve(async (req) => {
   try {
@@ -107,10 +108,16 @@ Deno.serve(async (req) => {
       isCADAdmin = isPlatformAdmin;
     }
 
+    let deptAdminIds = [];
+    try {
+      deptAdminIds = await resolveDeptAdminIds(base44, user);
+    } catch (_e) { /* non-fatal */ }
+
     return Response.json({
       isPlatformAdmin,
       isCADAdmin,
       isSupervisor,
+      deptAdminIds,
       personnelId,
       discordId,
       email,

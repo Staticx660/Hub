@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
+import { useUserPermissions } from "@/hooks/useUserPermissions";
 
 const categories = ["Police & Sheriff", "Fire & EMS", "Hospitals & Medical", "Government & State", "Private Security", "Motorcycle Clubs", "Civilians", "Communications", "Other"];
 
@@ -135,6 +136,13 @@ export default function Departments() {
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState({ name: "", category: "", description: "", max_slots: "", discord_webhook_url: "", shift_quota_weekly: "", ranks: [] });
   const { toast } = useToast();
+  const { isPlatformAdmin, deptAdminIds } = useUserPermissions();
+
+  // Department admins see only the departments they administer; creating,
+  // editing and deleting departments stays platform-admin only.
+  const visibleDepartments = isPlatformAdmin
+    ? departments
+    : departments.filter((d) => (deptAdminIds || []).includes(d.id));
 
   const loadData = async () => {
     try {
@@ -238,25 +246,33 @@ export default function Departments() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-white">Departments</h1>
-          <p className="text-slate-400 text-sm mt-1">Manage all department rosters</p>
+          <p className="text-slate-400 text-sm mt-1">{isPlatformAdmin ? "Manage all department rosters" : "Departments you administer"}</p>
         </div>
-        <Button onClick={() => { setEditing(null); setForm({ name: "", category: "", description: "", max_slots: "", discord_webhook_url: "", shift_quota_weekly: "", ranks: [] }); setShowForm(true); }} className="bg-blue-600 hover:bg-blue-700">
-          <Plus className="w-4 h-4 mr-2" /> New Department
-        </Button>
+        {isPlatformAdmin && (
+          <Button onClick={() => { setEditing(null); setForm({ name: "", category: "", description: "", max_slots: "", discord_webhook_url: "", shift_quota_weekly: "", ranks: [] }); setShowForm(true); }} className="bg-blue-600 hover:bg-blue-700">
+            <Plus className="w-4 h-4 mr-2" /> New Department
+          </Button>
+        )}
       </div>
 
-      {departments.length === 0 ? (
+      {visibleDepartments.length === 0 ? (
         <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-16 text-center">
           <Shield className="w-12 h-12 text-slate-600 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-white mb-2">No departments yet</h3>
-          <p className="text-slate-400 mb-4">Create your first department to start building rosters</p>
-          <Button onClick={() => setShowForm(true)} className="bg-blue-600 hover:bg-blue-700">
-            <Plus className="w-4 h-4 mr-2" /> Create Department
-          </Button>
+          <h3 className="text-lg font-semibold text-white mb-2">{isPlatformAdmin ? "No departments yet" : "No departments assigned"}</h3>
+          {isPlatformAdmin ? (
+            <>
+              <p className="text-slate-400 mb-4">Create your first department to start building rosters</p>
+              <Button onClick={() => setShowForm(true)} className="bg-blue-600 hover:bg-blue-700">
+                <Plus className="w-4 h-4 mr-2" /> Create Department
+              </Button>
+            </>
+          ) : (
+            <p className="text-slate-400">You aren't set as an admin for any department yet.</p>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {departments.map((dept) => {
+          {visibleDepartments.map((dept) => {
             const Icon = categoryIcons[dept.category] || Shield;
             const deptMembers = members.filter(m => m.department_id === dept.id || (m.additional_department_ids || []).includes(dept.id));
             return (
@@ -272,14 +288,16 @@ export default function Departments() {
                         <p className="text-xs text-slate-500">{dept.category}</p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button onClick={() => openEdit(dept)} className="p-1.5 rounded-lg hover:bg-slate-700 text-slate-400">
-                        <Edit className="w-3.5 h-3.5" />
-                      </button>
-                      <button onClick={() => handleDelete(dept.id)} className="p-1.5 rounded-lg hover:bg-red-500/10 text-slate-400 hover:text-red-400">
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
+                    {isPlatformAdmin && (
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onClick={() => openEdit(dept)} className="p-1.5 rounded-lg hover:bg-slate-700 text-slate-400">
+                          <Edit className="w-3.5 h-3.5" />
+                        </button>
+                        <button onClick={() => handleDelete(dept.id)} className="p-1.5 rounded-lg hover:bg-red-500/10 text-slate-400 hover:text-red-400">
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    )}
                   </div>
                   {dept.description && (
                     <p className="text-sm text-slate-400 mt-3 line-clamp-2">{dept.description}</p>
