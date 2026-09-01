@@ -9,7 +9,7 @@ export default function ThemePicker() {
   const { themeId, setTheme } = useUITheme();
 
   return (
-    <Panel title="Interface Theme" scroll={false}>
+    <Panel title="Interface Theme & Layout" scroll={false}>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-px bg-mdt-line">
         {THEMES.map((theme) => {
           const on = theme.id === themeId;

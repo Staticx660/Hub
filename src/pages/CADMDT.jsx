@@ -23,7 +23,7 @@ import { startPanicSound, stopPanicSound, playStatusBeep, stopPanicVoice, loadNo
 import StationSignOn from "@/components/mdt/shell/StationSignOn";
 import { Btn } from "@/components/mdt/ui/primitives";
 import ConfirmDialog from "@/components/mdt/ui/ConfirmDialog";
-import MDTShell from "@/components/mdt/shell/MDTShell";
+import WorkspaceShell from "@/components/mdt/shell/WorkspaceShell";
 import useWorkspaceTabs from "@/components/mdt/shell/useWorkspaceTabs";
 import { AlertBanner } from "@/components/mdt/shell/StatusStrip";
 import UnitControls from "@/components/mdt/shell/UnitControls";
@@ -369,7 +369,7 @@ export default function CADMDT() {
   if (department.category === "Police") {
     return (
       <>
-        <MDTShell
+        <WorkspaceShell
           agency={department.name}
           subtitle="MDT"
           unit={`${session.callsign ? session.callsign + " · " : ""}${session.user_name}${session.rank ? " · " + session.rank : ""}`}
@@ -430,7 +430,7 @@ export default function CADMDT() {
               <div className="flex-1 min-h-0 overflow-hidden">{views}</div>
             )
           )}
-        </MDTShell>
+        </WorkspaceShell>
         <PanicDialog open={panicOpen} department={department} session={session} onClose={() => setPanicOpen(false)} onActivated={(s) => setSession(s)} />
         <KeybindsDialog open={keybindsOpen} onOpenChange={setKeybindsOpen} keybinds={keybinds} setKeybinds={setKeybinds} />
         <ConfirmDialog open={clockOutConfirm} onOpenChange={setClockOutConfirm} title="Clock Out" description="Clock out and end your shift?" confirmLabel="Clock Out" onConfirm={confirmClockOut} />

@@ -10,8 +10,9 @@ export const THEMES = [
   {
     id: "enterprise",
     name: "Enterprise",
-    description: "Flat graphite workstation with a single teal accent.",
+    description: "Desktop workstation layout: menu strip, record tabs and toolbar. Graphite with a teal accent.",
     swatch: ["#1a1e1f", "#2b3132", "#14b8a6"],
+    layout: "enterprise",
     radius: "0.125rem",
     tokens: {
       bg: "200 9% 11%",
@@ -28,10 +29,11 @@ export const THEMES = [
     },
   },
   {
-    id: "la",
-    name: "LA Style",
-    description: "Deep midnight navy with a bright patrol-blue accent.",
+    id: "metro",
+    name: "Metro",
+    description: "Side navigation rail with a tall unit header. Midnight navy with a patrol-blue accent.",
     swatch: ["#0d1526", "#1b2740", "#3b82f6"],
+    layout: "metro",
     radius: "0.375rem",
     tokens: {
       bg: "220 45% 8%",
@@ -48,10 +50,11 @@ export const THEMES = [
     },
   },
   {
-    id: "pa",
-    name: "PA Style",
-    description: "Charcoal state-trooper look with a gold accent.",
+    id: "keystone",
+    name: "Keystone",
+    description: "Station banner with full-width segmented tabs and a docked command bar. Charcoal with a gold accent.",
     swatch: ["#16181c", "#2a2d34", "#d4a017"],
+    layout: "keystone",
     radius: "0rem",
     tokens: {
       bg: "225 8% 10%",

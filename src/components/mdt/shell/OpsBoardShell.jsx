@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import MDTShell from "@/components/mdt/shell/MDTShell";
+import WorkspaceShell from "@/components/mdt/shell/WorkspaceShell";
 import useWorkspaceTabs from "@/components/mdt/shell/useWorkspaceTabs";
 import { AlertBanner } from "@/components/mdt/shell/StatusStrip";
 import UnitControls from "@/components/mdt/shell/UnitControls";
@@ -80,7 +80,7 @@ export default function OpsBoardShell({
 
   return (
     <>
-    <MDTShell
+    <WorkspaceShell
       agency={department.name}
       subtitle={subtitle}
       unit={`${session.callsign ? session.callsign + " · " : ""}${session.user_name}${session.rank ? " · " + session.rank : ""}`}
@@ -142,7 +142,7 @@ export default function OpsBoardShell({
           />
         )
       )}
-    </MDTShell>
+    </WorkspaceShell>
     <SessionEditDialog open={editUnitOpen} onOpenChange={setEditUnitOpen} session={session} onSaved={setSession} />
     </>
   );
