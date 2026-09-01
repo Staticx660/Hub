@@ -13,6 +13,7 @@ export default function ShellMenu({ menus = [], label = "Menu", className = "" }
   const [pos, setPos] = useState({ top: 0, right: 0 });
   const ref = useRef(null);
   const btnRef = useRef(null);
+  const popRef = useRef(null);
 
   const place = () => {
     const r = btnRef.current?.getBoundingClientRect();
@@ -21,7 +22,9 @@ export default function ShellMenu({ menus = [], label = "Menu", className = "" }
 
   useEffect(() => {
     const onDown = (e) => {
-      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+      const inTrigger = ref.current?.contains(e.target);
+      const inPopup = popRef.current?.contains(e.target);
+      if (!inTrigger && !inPopup) setOpen(false);
     };
     document.addEventListener("mousedown", onDown);
     return () => document.removeEventListener("mousedown", onDown);
@@ -54,6 +57,7 @@ export default function ShellMenu({ menus = [], label = "Menu", className = "" }
       </button>
       {open && createPortal(
         <div
+          ref={popRef}
           className="mdt fixed z-[200] w-[min(250px,calc(100vw-1.5rem))] max-h-[70vh] overflow-auto mdt-scroll border border-mdt-line-2 bg-mdt-surface shadow-2xl py-1 text-mdt-text"
           style={{ top: pos.top, right: pos.right }}
         >
