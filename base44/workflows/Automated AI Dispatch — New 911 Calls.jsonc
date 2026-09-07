@@ -1,0 +1,39 @@
+{
+  "name": "Automated AI Dispatch \u2014 New 911 Calls",
+  "description": "Routes new 911 calls automatically (categorize, assign departments, recommend units, notify Discord) whenever no dispatcher is on duty.",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "entity",
+      "events": [
+        "create"
+      ],
+      "entity_name": "ActiveCall"
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "automated_ai_dispatch_new_911_calls",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "autoDispatchCall",
+            "args": {
+              "trigger_token": "7e8bec2e738b7028e3032c36cf8f2f5cb840875f9d431ab2"
+            }
+          },
+          "then": "end"
+        }
+      }
+    ]
+  },
+  "x-base44-migrated-from-automation": {
+    "legacy_payload_function": "autoDispatchCall"
+  }
+}
